@@ -1,6 +1,9 @@
 package NoDam.Demo.user.controller;
 
 import NoDam.Demo.common.SuccessResponse;
+import NoDam.Demo.common.domain.DomainResult;
+import NoDam.Demo.common.excetion.CustomException;
+import NoDam.Demo.common.excetion.ErrorCode;
 import NoDam.Demo.user.domain.User;
 import NoDam.Demo.user.dto.request.LoginDto;
 import NoDam.Demo.user.dto.request.RefreshTokenDto;
@@ -41,7 +44,9 @@ public class UserController {
 
     @PostMapping("/public/login")
     public ResponseEntity login(@RequestBody @Valid LoginDto dto) {
-        User user = userService.login(dto.getEmail(), dto.getPassword());
+        User user = userService.login(dto.getEmail(), dto.getPassword()).orElseThrow(
+                ()->new CustomException(ErrorCode.CONFLICT)
+        );
 
         String accessToken = jwtService.generateAccessToken(user.getId());
         String refreshToken = jwtService.generateRefreshToken(user.getId());
@@ -54,7 +59,9 @@ public class UserController {
 
     @PostMapping("/public/token-refresh")
     public ResponseEntity refresh(@RequestBody @Valid RefreshTokenDto dto) {
-        Long userId = jwtService.decodeRefreshToken(dto.getToken());
+        Long userId = jwtService.decodeRefreshToken(dto.getToken()).orElseThrow(
+                ()-> new CustomException(ErrorCode.CONFLICT)
+        );
 
         String newAccessToken = jwtService.generateAccessToken(userId);
         String newRefreshToken = jwtService.generateRefreshToken(userId);

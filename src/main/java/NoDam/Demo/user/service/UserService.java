@@ -1,5 +1,6 @@
 package NoDam.Demo.user.service;
 
+import NoDam.Demo.common.domain.DomainResult;
 import NoDam.Demo.common.excetion.CustomException;
 import NoDam.Demo.common.excetion.ErrorCode;
 import NoDam.Demo.user.domain.User;
@@ -43,7 +44,7 @@ public class UserService {
     }
 
     @Validated
-    public User login(
+    public DomainResult<User> login(
             @NotEmpty String email,
             @NotEmpty String password
     ) {
@@ -52,9 +53,9 @@ public class UserService {
         );
 
         if(user.login(passwordEncoder, password))
-            return user;
+            return DomainResult.success(user);
 
-        throw new CustomException(ErrorCode.CONFLICT);
+        return DomainResult.fail();
     }
 
 }
