@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: Demo
+  config:
+    import: optional:file:.env[.properties]
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    hikari:
+      maximum-pool-size: 3
+  jpa:
+    properties:
+      hibernate:
+        show_sql: true
+    hibernate:
+      ddl-auto: update
+
+token:
+  SECRET_KEY: ${SECRET_KEY}
+  ACCESS_EXPIRATION_SECOND: 3600000 # 1시간
+  REFRESH_EXPIRATION_SECOND: 922337203685477580 # test 환경 무한대
