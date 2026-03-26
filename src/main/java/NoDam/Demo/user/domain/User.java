@@ -1,5 +1,6 @@
 package NoDam.Demo.user.domain;
 
+import NoDam.Demo.common.domain.BaseEntity;
 import NoDam.Demo.common.excetion.CustomException;
 import NoDam.Demo.common.excetion.ErrorCode;
 import jakarta.persistence.Column;
@@ -12,13 +13,17 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.Where;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Entity
 @Table(name = "user")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
-public class User {
+@SQLDelete(sql = "UPDATE user SET is_deleted = true WHERE id = ?")
+@Where(clause = "is_deleted = false")
+public class User extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -33,19 +38,16 @@ public class User {
     @Column
     private String name;
 
-    public void updatePassword(String newPassword, PasswordEncoder passwordEncoder) {
-        if(passwordEncoder.matches(newPassword, password)) {}
+    public void updatePassword(String newPassword) {
+        if(newPassword != null && !newPassword.isEmpty())
             this.password = newPassword;
     }
 
-    public boolean login(
-            PasswordEncoder passwordEncoder,
-            String inputPassword
+    public void update(
+            String name
     ) {
-        if(email.equals(this.email) && passwordEncoder.matches(inputPassword, this.password))
-            return true;
-
-        return false;
+        if(name != null && !name.isEmpty())
+            this.name = name;
     }
 
     @Builder
