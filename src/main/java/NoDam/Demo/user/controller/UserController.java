@@ -8,6 +8,7 @@ import NoDam.Demo.user.domain.User;
 import NoDam.Demo.user.dto.request.LoginDto;
 import NoDam.Demo.user.dto.request.RefreshTokenDto;
 import NoDam.Demo.user.dto.request.RegisterDto;
+import NoDam.Demo.user.dto.request.UpdateUserInfoDto;
 import NoDam.Demo.user.dto.response.UserInfoDto;
 import NoDam.Demo.user.service.JWTService;
 import NoDam.Demo.user.service.UserService;
@@ -20,7 +21,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -75,6 +78,23 @@ public class UserController {
     @GetMapping("/api")
     public ResponseEntity getUser(@AuthenticationPrincipal User user) {
         return ResponseEntity.ok().body(UserInfoDto.of(user));
+    }
+
+    @PatchMapping("/api")
+    @Operation(summary = "update user info")
+    public ResponseEntity updateUserInfo(
+            @AuthenticationPrincipal User user,
+            @RequestBody @Valid UpdateUserInfoDto dto
+    ) {
+        User updatedUser = userService.updateUserInfo(user, dto);
+        return ResponseEntity.ok().body(new SuccessResponse("success", UserInfoDto.of(updatedUser)));
+    }
+
+    @DeleteMapping("/api")
+    @Operation(summary = "delete user")
+    public ResponseEntity deleteUser(@AuthenticationPrincipal User user) {
+        userService.deleteUser(user);
+        return ResponseEntity.ok().body(new SuccessResponse("success", null));
     }
 
 }
