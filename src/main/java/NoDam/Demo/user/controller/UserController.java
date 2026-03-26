@@ -84,7 +84,7 @@ public class UserController {
     @Operation(summary = "update user info")
     public ResponseEntity updateUserInfo(
             @AuthenticationPrincipal User user,
-            @RequestBody @Valid UpdateUserInfoDto dto
+            @RequestBody UpdateUserInfoDto dto
     ) {
         User updatedUser = userService.updateUserInfo(user, dto);
         return ResponseEntity.ok().body(new SuccessResponse("success", UserInfoDto.of(updatedUser)));
