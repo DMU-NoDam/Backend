@@ -9,11 +9,14 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -47,9 +50,11 @@ public class AccessTokenFilter extends OncePerRequestFilter {
         Optional<User> userOpt = userRepository.findById(userId);
 
         if (userOpt.isPresent()) {
-            SecurityContextHolder.getContext().setAuthentication(
-                    new UsernamePasswordAuthenticationToken(userOpt.get(), null));
-            log.info("Access Token Success userId = " + userId);
+            User user = userOpt.get();
+            Collection<GrantedAuthority> authorities = user.getRole().getAuthorities(AuthorityMapper::toSpringAuthority);
+
+            SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(user, null, authorities));
+            log.info("Access Token Success userId = " + userId + ", authorities = " + authorities);
         } else {
             log.info("Access Token Fail");
         }
