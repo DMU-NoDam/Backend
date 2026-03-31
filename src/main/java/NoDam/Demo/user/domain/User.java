@@ -1,21 +1,18 @@
 package NoDam.Demo.user.domain;
 
 import NoDam.Demo.common.domain.BaseEntity;
-import NoDam.Demo.common.excetion.CustomException;
-import NoDam.Demo.common.excetion.ErrorCode;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.Where;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Entity
 @Table(name = "user")
@@ -38,6 +35,9 @@ public class User extends BaseEntity {
     @Column
     private String name;
 
+    @Enumerated
+    private UserRole role = UserRole.VISITOR;
+
     public void updatePassword(String newPassword) {
         if(newPassword != null && !newPassword.isEmpty())
             this.password = newPassword;
@@ -50,12 +50,38 @@ public class User extends BaseEntity {
             this.name = name;
     }
 
-    @Builder
-    public User(String email, String password, String name) {
-        this.id = id;
+    private User(String email, String password, String name, UserRole role) {
         this.email = email;
         this.password = password;
         this.name = name;
+        this.role = role;
+    }
+
+    public static UserBuilder builder() {
+        return new UserBuilder();
+    }
+
+    public static class UserBuilder {
+        private String email;
+        private String password;
+        private String name;
+        private UserRole role = UserRole.VISITOR; // 기본값
+
+        public UserBuilder email(String email) {
+            this.email = email; return this;
+        }
+        public UserBuilder password(String password) {
+            this.password = password; return this;
+        }
+        public UserBuilder name(String name) {
+            this.name = name; return this;
+        }
+        public UserBuilder role(UserRole role) {
+            this.role = role; return this;
+        }
+        public User build() {
+            return new User(email, password, name, role);
+        }
     }
 
 }
