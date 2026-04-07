@@ -1,6 +1,7 @@
 package NoDam.Demo.user.domain;
 
 import NoDam.Demo.common.domain.BaseEntity;
+import NoDam.Demo.util.StringUtil;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Enumerated;
@@ -8,6 +9,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -27,16 +29,24 @@ public class User extends BaseEntity {
     private Long id;
 
     @Column
-    private String email;
-
-    @Column
-    private String password;
-
-    @Column
     private String name;
 
     @Enumerated
     private UserRole role = UserRole.VISITOR;
+
+    @Column
+    private String email;
+
+    // email user
+    @Column
+    @Transient
+    private String password;
+
+    // social user
+    @Column
+    private String oAuthProvider;
+    @Column
+    private String oAuthId;
 
     public void updatePassword(String newPassword) {
         if(newPassword != null && !newPassword.isEmpty())
@@ -50,38 +60,47 @@ public class User extends BaseEntity {
             this.name = name;
     }
 
-    private User(String email, String password, String name, UserRole role) {
+    public static User emailUser(
+            String name,
+            String email, String password
+    ) {
+        if(StringUtil.isEmpty(email, password))
+            throw new IllegalArgumentException("Email, Password is empty");
+
+        return new User(name, null, email, password, null, null);
+    }
+
+    public static User oAuthUser(
+            String name, String email,
+            String oAuthProvider, String oAuthId
+    ) {
+        if(StringUtil.isEmpty(oAuthProvider, oAuthId))
+            throw new IllegalArgumentException("OAuthId, Provider is empty");
+
+        return new User(name, null, email, null, oAuthProvider, oAuthId);
+    }
+
+    private User(
+            String name, UserRole role,
+            String email, String password,
+            String oAuthProvider, String oAuthId
+    ) {
+        if(StringUtil.isEmpty(oAuthProvider, oAuthId) && StringUtil.isEmpty(email, password))
+            throw new IllegalArgumentException();
+
+        if(role == null)
+            role = UserRole.VISITOR;
+
         this.email = email;
         this.password = password;
         this.name = name;
         this.role = role;
+        this.oAuthProvider = oAuthProvider;
+        this.oAuthId = oAuthId;
     }
 
-    public static UserBuilder builder() {
-        return new UserBuilder();
-    }
-
-    public static class UserBuilder {
-        private String email;
-        private String password;
-        private String name;
-        private UserRole role = UserRole.VISITOR; // 기본값
-
-        public UserBuilder email(String email) {
-            this.email = email; return this;
-        }
-        public UserBuilder password(String password) {
-            this.password = password; return this;
-        }
-        public UserBuilder name(String name) {
-            this.name = name; return this;
-        }
-        public UserBuilder role(UserRole role) {
-            this.role = role; return this;
-        }
-        public User build() {
-            return new User(email, password, name, role);
-        }
+    public boolean isOAuthUser() {
+        return oAuthProvider != null && oAuthId != null;
     }
 
 }

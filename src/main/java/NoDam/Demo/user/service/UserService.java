@@ -7,8 +7,10 @@ import NoDam.Demo.common.excetion.CustomException;
 import NoDam.Demo.common.excetion.ErrorCode;
 import NoDam.Demo.user.domain.User;
 import NoDam.Demo.user.dto.request.UpdateUserInfoDto;
+import NoDam.Demo.user.oauth.OAuthUserInfo;
 import NoDam.Demo.user.repository.UserRepository;
 import jakarta.validation.constraints.NotEmpty;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -38,12 +40,8 @@ public class UserService {
             if(userRepository.findByEmail(email).isPresent())
                 throw new CustomException(ErrorCode.CONFLICT);
 
-            return userRepository.save(User
-                    .builder()
-                    .email(email)
-                    .name(name)
-                    .password(encodePassword)
-                    .build()
+            return userRepository.save(
+                    User.emailUser(email, name, encodePassword)
             );
         });
 
@@ -51,8 +49,31 @@ public class UserService {
         return createdUser;
     }
 
+    public User loginWithOAuth(OAuthUserInfo userInfo) {
+        Optional<User> userOpt = userRepository.findByOAuthIdAndProvider(userInfo.getOAuthId(), userInfo.getOAuthProvider());
+
+        if(userOpt.isPresent())
+            return userOpt.get();
+        else {
+            // try register
+            User newUser = transactionTemplate.execute(status -> {
+                User user = User.oAuthUser(userInfo.getName(), userInfo.getEmail(), userInfo.getOAuthProvider(), userInfo.getOAuthId());
+
+                // validate duplicate (oAuthId,provider), email (with write lock)
+                Optional<User> userOAuthOpt = userRepository.findByOAuthIdAndProviderWithLock(user.getOAuthId(), user.getOAuthProvider());
+                Optional<User> userEmailOpt = userRepository.findByEmail(user.getEmail());
+
+                if(userOAuthOpt.isPresent() || userEmailOpt.isPresent())
+                    throw new CustomException(ErrorCode.CONFLICT);
+
+                return userRepository.save(user);
+            });
+            return newUser;
+        }
+    }
+
     @Validated
-    public DomainResult<User> login(
+    public DomainResult<User> loginWithEmail(
             @NotEmpty String email,
             @NotEmpty String password
     ) {
