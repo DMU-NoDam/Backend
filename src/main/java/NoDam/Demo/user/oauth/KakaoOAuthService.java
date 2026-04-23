@@ -61,6 +61,7 @@ public class KakaoOAuthService implements OAuthService {
                 .bodyToMono(Map.class)
                 .block();
 
+        // String email = (String) ((Map<String, Object>) userInfoMap.get("kakao_account")).get("email");
         return OAuthUserInfo
                 .builder()
                 .oAuthProvider("kakao")
@@ -68,7 +69,7 @@ public class KakaoOAuthService implements OAuthService {
                 // .nickName( (String) ((Map<String, Object>)userInfoMap.get("properties")).get("nickname") )
                 .name((String) ((Map<String, Object>)userInfoMap.get("kakao_account")).get("name"))
                 // .number((String) ((Map<String, Object>)userInfoMap.get("kakao_account")).get("phone"))
-                .email( (String) ((Map<String, Object>)userInfoMap.get("kakao_account")).get("email") )
+                // .email( (String) ((Map<String, Object>)userInfoMap.get("kakao_account")).get("email") )
                 .build();
     }
 }

@@ -11,7 +11,4 @@ public class UpdateUserInfoDto {
 
     private String name;
 
-    private String oldPassword;
-    private String newPassword;
-
 }

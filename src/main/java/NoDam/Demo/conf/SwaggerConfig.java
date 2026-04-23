@@ -1,7 +1,6 @@
 package NoDam.Demo.conf;
 
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
-import io.swagger.v3.oas.annotations.info.Contact;
 import io.swagger.v3.oas.annotations.info.Info;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.models.Components;
@@ -14,11 +13,7 @@ import org.springframework.context.annotation.Configuration;
         info = @Info(
                 title = "spring commerce API 명세서",
                 description = "API 명세서",
-                version = "v1",
-                contact = @Contact(
-                        name = "beginners",
-                        email = "sample@email.co.kr"
-                )
+                version = "v1"
         ),
         security = @SecurityRequirement(name = "bearerAuth")
 )

@@ -1,16 +1,20 @@
 package NoDam.Demo.user.domain;
 
+import static NoDam.Demo.util.StringUtil.isEmpty;
+
 import NoDam.Demo.common.domain.BaseEntity;
-import NoDam.Demo.util.StringUtil;
+import NoDam.Demo.common.excetion.CustomException;
+import NoDam.Demo.common.excetion.ErrorCode;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.SQLDelete;
@@ -31,27 +35,14 @@ public class User extends BaseEntity {
     @Column
     private String name;
 
-    @Enumerated
+    @Enumerated(EnumType.STRING)
     private UserRole role = UserRole.VISITOR;
 
     @Column
-    private String email;
-
-    // email user
-    @Column
-    @Transient
-    private String password;
-
-    // social user
-    @Column
     private String oAuthProvider;
+
     @Column
     private String oAuthId;
-
-    public void updatePassword(String newPassword) {
-        if(newPassword != null && !newPassword.isEmpty())
-            this.password = newPassword;
-    }
 
     public void update(
             String name
@@ -60,39 +51,17 @@ public class User extends BaseEntity {
             this.name = name;
     }
 
-    public static User emailUser(
-            String name,
-            String email, String password
-    ) {
-        if(StringUtil.isEmpty(email, password))
-            throw new IllegalArgumentException("Email, Password is empty");
-
-        return new User(name, null, email, password, null, null);
-    }
-
-    public static User oAuthUser(
-            String name, String email,
-            String oAuthProvider, String oAuthId
-    ) {
-        if(StringUtil.isEmpty(oAuthProvider, oAuthId))
-            throw new IllegalArgumentException("OAuthId, Provider is empty");
-
-        return new User(name, null, email, null, oAuthProvider, oAuthId);
-    }
-
+    @Builder
     private User(
             String name, UserRole role,
-            String email, String password,
             String oAuthProvider, String oAuthId
     ) {
-        if(StringUtil.isEmpty(oAuthProvider, oAuthId) && StringUtil.isEmpty(email, password))
-            throw new IllegalArgumentException();
-
         if(role == null)
             role = UserRole.VISITOR;
 
-        this.email = email;
-        this.password = password;
+        if (isEmpty(oAuthProvider) || isEmpty(oAuthId))
+            throw new CustomException(ErrorCode.CONFLICT);
+
         this.name = name;
         this.role = role;
         this.oAuthProvider = oAuthProvider;

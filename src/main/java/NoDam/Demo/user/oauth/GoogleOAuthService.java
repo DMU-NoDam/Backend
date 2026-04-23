@@ -60,10 +60,11 @@ public class GoogleOAuthService implements OAuthService {
                 .bodyToMono(Map.class)
                 .block();
 
+        // String email = userInfoMap.get("email");
         return OAuthUserInfo.builder()
                 .oAuthProvider("google")
                 .oAuthId(userInfoMap.get("id"))
-                .email(userInfoMap.get("email"))
+                // .email(userInfoMap.get("email"))
                 .name(userInfoMap.get("name"))
                 // .nickName(userInfoMap.get("given_name"))
                 .build();
