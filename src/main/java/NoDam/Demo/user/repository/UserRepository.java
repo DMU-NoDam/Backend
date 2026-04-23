@@ -11,7 +11,6 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface UserRepository extends JpaRepository<User,Long> {
-    Optional<User> findByEmail(String email);
 
     @Query("select u from User u where u.oAuthId = :oAuthId and u.oAuthProvider = :oAuthProvider")
     Optional<User> findByOAuthIdAndProvider(@Param("oAuthId") String socialId, @Param("oAuthProvider") String oAuthProvider);
