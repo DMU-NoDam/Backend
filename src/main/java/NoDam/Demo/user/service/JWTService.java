@@ -1,8 +1,5 @@
 package NoDam.Demo.user.service;
 
-import NoDam.Demo.common.domain.DomainResult;
-import NoDam.Demo.common.excetion.CustomException;
-import NoDam.Demo.common.excetion.ErrorCode;
 import NoDam.Demo.user.jwt.JWTException;
 import NoDam.Demo.user.jwt.JWTUtil;
 import NoDam.Demo.user.jwt.JWTUtil.TokenDto;
@@ -30,26 +27,14 @@ public class JWTService {
         return JWTUtil.encodeToken(new TokenDto(userId, Map.of()), RefreshExpireSecond, secretKey);
     }
 
-    public DomainResult<Long> decodeAccessToken(String token) {
-        TokenDto tokenDto;
-        try {
-            tokenDto = JWTUtil.decodeToken(token, secretKey);
-        } catch (JWTException e) {
-            return DomainResult.fail();
-        }
-        Long userId = Long.valueOf(tokenDto.getSubject().toString());
-        return DomainResult.success(userId);
+    public Long decodeAccessToken(String token) throws JWTException {
+        TokenDto tokenDto = JWTUtil.decodeToken(token, secretKey);
+        return Long.valueOf(tokenDto.getSubject().toString());
     }
 
-    public DomainResult<Long> decodeRefreshToken(String token) {
-        TokenDto tokenDto;
-        try {
-            tokenDto = JWTUtil.decodeToken(token, secretKey);
-        } catch (JWTException e) {
-            return DomainResult.fail();
-        }
-        Long userId = Long.valueOf(tokenDto.getSubject().toString());
-        return DomainResult.success(userId);
+    public Long decodeRefreshToken(String token) throws JWTException {
+        TokenDto tokenDto = JWTUtil.decodeToken(token, secretKey);
+        return Long.valueOf(tokenDto.getSubject().toString());
     }
 
 }
