@@ -1,13 +1,10 @@
 package NoDam.Demo.user.controller;
 
 import NoDam.Demo.common.SuccessResponse;
-import NoDam.Demo.common.domain.DomainResult;
 import NoDam.Demo.common.excetion.CustomException;
 import NoDam.Demo.common.excetion.ErrorCode;
 import NoDam.Demo.user.domain.User;
-import NoDam.Demo.user.dto.request.LoginDto;
 import NoDam.Demo.user.dto.request.RefreshTokenDto;
-import NoDam.Demo.user.dto.request.RegisterDto;
 import NoDam.Demo.user.dto.request.UpdateUserInfoDto;
 import NoDam.Demo.user.dto.response.UserInfoDto;
 import NoDam.Demo.user.jwt.JWTException;
@@ -18,13 +15,12 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -38,28 +34,6 @@ public class UserController {
 
     private final UserService userService;
     private final JWTService jwtService;
-
-    @PostMapping("/public/register")
-    @Operation(summary = "register")
-    public ResponseEntity register(@RequestBody @Valid RegisterDto dto) {
-        userService.registerWithEmail(dto.getEmail(), dto.getPassword(), dto.getName());
-        return ResponseEntity.ok().body("success");
-    }
-
-    @PostMapping("/public/login")
-    public ResponseEntity login(@RequestBody @Valid LoginDto dto) {
-        User user = userService.login(dto.getEmail(), dto.getPassword()).orElseThrow(
-                ()->new CustomException(ErrorCode.CONFLICT)
-        );
-
-        String accessToken = jwtService.generateAccessToken(user.getId());
-        String refreshToken = jwtService.generateRefreshToken(user.getId());
-
-        return ResponseEntity.status(HttpStatus.OK).body(new SuccessResponse(
-                "success",
-                Map.of("accessToken", accessToken, "refreshToken", refreshToken)
-        ));
-    }
 
     @PostMapping("/public/token-refresh")
     public ResponseEntity refresh(@RequestBody @Valid RefreshTokenDto dto) {
@@ -88,7 +62,7 @@ public class UserController {
     @Operation(summary = "update user info")
     public ResponseEntity updateUserInfo(
             @AuthenticationPrincipal User user,
-            @RequestBody @Valid UpdateUserInfoDto dto
+            @RequestBody UpdateUserInfoDto dto
     ) {
         User updatedUser = userService.updateUserInfo(user, dto);
         return ResponseEntity.ok().body(new SuccessResponse("success", UserInfoDto.of(updatedUser)));

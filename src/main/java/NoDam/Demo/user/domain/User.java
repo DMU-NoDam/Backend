@@ -1,10 +1,14 @@
 package NoDam.Demo.user.domain;
 
+import static NoDam.Demo.util.StringUtil.isEmpty;
+
 import NoDam.Demo.common.domain.BaseEntity;
 import NoDam.Demo.common.excetion.CustomException;
 import NoDam.Demo.common.excetion.ErrorCode;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -15,7 +19,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.Where;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Entity
 @Table(name = "user")
@@ -30,18 +33,16 @@ public class User extends BaseEntity {
     private Long id;
 
     @Column
-    private String email;
-
-    @Column
-    private String password;
-
-    @Column
     private String name;
 
-    public void updatePassword(String newPassword) {
-        if(newPassword != null && !newPassword.isEmpty())
-            this.password = newPassword;
-    }
+    @Enumerated(EnumType.STRING)
+    private UserRole role = UserRole.VISITOR;
+
+    @Column
+    private String oAuthProvider;
+
+    @Column
+    private String oAuthId;
 
     public void update(
             String name
@@ -51,11 +52,24 @@ public class User extends BaseEntity {
     }
 
     @Builder
-    public User(String email, String password, String name) {
-        this.id = id;
-        this.email = email;
-        this.password = password;
+    private User(
+            String name, UserRole role,
+            String oAuthProvider, String oAuthId
+    ) {
+        if(role == null)
+            role = UserRole.VISITOR;
+
+        if (isEmpty(oAuthProvider) || isEmpty(oAuthId))
+            throw new CustomException(ErrorCode.CONFLICT);
+
         this.name = name;
+        this.role = role;
+        this.oAuthProvider = oAuthProvider;
+        this.oAuthId = oAuthId;
+    }
+
+    public boolean isOAuthUser() {
+        return oAuthProvider != null && oAuthId != null;
     }
 
 }

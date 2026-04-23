@@ -10,13 +10,16 @@ import lombok.Setter;
 @Getter
 public class UserInfoDto {
 
-    private String email;
     private String name;
+
+    private boolean isOAuthUser;
+    private String provider;
 
     public static UserInfoDto of(User user) {
         UserInfoDto dto = new UserInfoDto();
-        dto.email = user.getEmail();
         dto.name = user.getName();
+        dto.isOAuthUser = user.isOAuthUser();
+        dto.provider = user.getOAuthProvider();
         return dto;
     }
 

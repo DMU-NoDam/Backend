@@ -1,6 +1,7 @@
 package NoDam.Demo.conf;
 
 import NoDam.Demo.conf.security.AccessTokenFilter;
+import NoDam.Demo.user.domain.UserRole;
 import NoDam.Demo.user.repository.UserRepository;
 import NoDam.Demo.user.service.JWTService;
 import lombok.RequiredArgsConstructor;
@@ -33,12 +34,10 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/*/public/**").permitAll()
-                        .requestMatchers("/*/api/**").access((authentication, context) -> {
-                            if (authentication.get() instanceof AnonymousAuthenticationToken)
-                                return new AuthorizationDecision(false);
-                            return new AuthorizationDecision(true);
-                        })
+                        .requestMatchers("/*/public/**", "/test/**").permitAll()
+                        .requestMatchers("/*/visit/**").hasRole(UserRole.VISITOR.name())
+                        .requestMatchers("/*/api/**").hasRole(UserRole.USER.name())
+                        .requestMatchers("/*/admin/**").hasRole(UserRole.ADMIN.name())
                         .anyRequest().permitAll()
                 )
 
