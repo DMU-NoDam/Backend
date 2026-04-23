@@ -59,10 +59,11 @@ public class NaverOAuthService implements OAuthService {
                 })
                 .block();
 
+        // String email = userInfoMap.get("email");
         return OAuthUserInfo.builder()
                 .oAuthProvider("naver")
                 .oAuthId(userInfoMap.get("id"))
-                .email(userInfoMap.get("email"))
+                // .email(userInfoMap.get("email"))
                 .name(userInfoMap.get("name"))
                 // .number(userInfoMap.get("mobile"))
                 // .nickName(userInfoMap.get("nickname"))

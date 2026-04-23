@@ -16,7 +16,6 @@ public class OAuthUserInfo {
     private String oAuthProvider;
     private String oAuthId;
 
-    private String email;
     private String name;
     private int age;
 

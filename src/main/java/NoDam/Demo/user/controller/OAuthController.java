@@ -64,7 +64,7 @@ public class OAuthController {
             case "google":
                 url = "https://accounts.google.com/o/oauth2/v2/auth?client_id=" + googleClientId +
                         "&redirect_uri=" + googleRedirectUri +
-                        "&response_type=code&scope=email profile";
+                        "&response_type=code&scope=profile";
                 break;
             case "kakao":
                 url = "https://kauth.kakao.com/oauth/authorize?client_id=" + kakaoClientId +
