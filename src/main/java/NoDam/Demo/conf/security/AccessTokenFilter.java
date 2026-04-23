@@ -1,7 +1,7 @@
 package NoDam.Demo.conf.security;
 
-import NoDam.Demo.common.domain.DomainResult;
 import NoDam.Demo.user.domain.User;
+import NoDam.Demo.user.jwt.JWTException;
 import NoDam.Demo.user.repository.UserRepository;
 import NoDam.Demo.user.service.JWTService;
 import jakarta.servlet.FilterChain;
@@ -36,14 +36,14 @@ public class AccessTokenFilter extends OncePerRequestFilter {
 
         String token = bearer.substring(7);
 
-        DomainResult<Long> userIdResult = jwtService.decodeAccessToken(token);
-        if(userIdResult.isFail()) {
+        Long userId;
+        try {
+            userId = jwtService.decodeAccessToken(token);
+        } catch (JWTException e) {
             // invalid token todo : add log, add black list
             filterChain.doFilter(request, response);
             return;
         }
-
-        Long userId = userIdResult.getResult();
         Optional<User> userOpt = userRepository.findById(userId);
 
         if (userOpt.isPresent()) {

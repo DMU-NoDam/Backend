@@ -10,6 +10,7 @@ import NoDam.Demo.user.dto.request.RefreshTokenDto;
 import NoDam.Demo.user.dto.request.RegisterDto;
 import NoDam.Demo.user.dto.request.UpdateUserInfoDto;
 import NoDam.Demo.user.dto.response.UserInfoDto;
+import NoDam.Demo.user.jwt.JWTException;
 import NoDam.Demo.user.service.JWTService;
 import NoDam.Demo.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -62,9 +63,12 @@ public class UserController {
 
     @PostMapping("/public/token-refresh")
     public ResponseEntity refresh(@RequestBody @Valid RefreshTokenDto dto) {
-        Long userId = jwtService.decodeRefreshToken(dto.getToken()).orElseThrow(
-                ()-> new CustomException(ErrorCode.CONFLICT)
-        );
+        Long userId;
+        try {
+            userId = jwtService.decodeRefreshToken(dto.getToken());
+        } catch (JWTException e) {
+            throw new CustomException(ErrorCode.CONFLICT);
+        }
 
         String newAccessToken = jwtService.generateAccessToken(userId);
         String newRefreshToken = jwtService.generateRefreshToken(userId);
