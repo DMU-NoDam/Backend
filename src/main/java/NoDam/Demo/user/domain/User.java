@@ -58,7 +58,7 @@ public class User extends BaseEntity {
         if(role == null)
             role = UserRole.VISITOR;
 
-        if (isEmpty(oAuthProvider) && !isEmpty(oAuthId))
+        if (!isEmpty(oAuthProvider) || !isEmpty(oAuthId))
             throw new CustomException(ErrorCode.CONFLICT);
 
         this.name = name;
