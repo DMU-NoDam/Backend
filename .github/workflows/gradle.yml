@@ -52,6 +52,3 @@ jobs:
             cd /home/ubuntu
 
             docker compose up -d
-
-            # latest 태그가 아닌 dangling 이미지 정리
-            docker image prune -f
