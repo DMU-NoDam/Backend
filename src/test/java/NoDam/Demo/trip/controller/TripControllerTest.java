@@ -10,6 +10,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import NoDam.Demo.conf.security.AuthorityMapper;
+import NoDam.Demo.common.type.TripThemeType;
 import NoDam.Demo.trip.domain.Trip;
 import NoDam.Demo.trip.dto.request.CreateTripRequest;
 import NoDam.Demo.trip.service.TripService;
@@ -73,6 +74,7 @@ class TripControllerTest {
         request.setUuid("uuid-1234");
         request.setPersonCount(2);
         request.setSite("일본");
+        request.setTripThemeType(TripThemeType.HEALING);
         request.setStartDate("2026-05-01");
         request.setEndDate("2026-05-05");
 
@@ -81,6 +83,7 @@ class TripControllerTest {
                 .uuid("uuid-1234")
                 .userId(1L)
                 .siteId(1L)
+                .tripThemeType(TripThemeType.HEALING)
                 .startDate(LocalDate.of(2026, 5, 1))
                 .endDate(LocalDate.of(2026, 5, 5))
                 .build();
@@ -95,6 +98,7 @@ class TripControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("success"))
                 .andExpect(jsonPath("$.body.name").value("Tokyo Trip"))
+                .andExpect(jsonPath("$.body.tripThemeType").value("HEALING"))
                 .andExpect(jsonPath("$.body.site").value("일본"));
     }
 

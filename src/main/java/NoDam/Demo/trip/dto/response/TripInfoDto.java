@@ -1,8 +1,8 @@
 package NoDam.Demo.trip.dto.response;
 
-import NoDam.Demo.common.type.PersonType;
 import NoDam.Demo.common.type.ScheduleType;
 import NoDam.Demo.common.type.TransportType;
+import NoDam.Demo.common.type.TripThemeType;
 import NoDam.Demo.common.util.DateUtil;
 import NoDam.Demo.trip.domain.Trip;
 import java.util.List;
@@ -19,7 +19,7 @@ public class TripInfoDto {
     private String site;
     private ScheduleType scheduleType;
     private TransportType transportType;
-    private PersonType personType;
+    private TripThemeType tripThemeType;
     private String startDate;
     private String endDate;
     private Long price;
@@ -32,10 +32,10 @@ public class TripInfoDto {
                 .site("일본")
                 .scheduleType(trip.getScheduleType())
                 .transportType(trip.getTransportType())
-                .personType(trip.getPersonType())
+                .tripThemeType(trip.getTripThemeType())
                 .startDate(DateUtil.fromLocalDate(trip.getStartDate()))
                 .endDate(DateUtil.fromLocalDate(trip.getEndDate()))
-                .price(trip.getPrice())
+                .price(trip.getTotalPrice())
                 .build();
     }
 
