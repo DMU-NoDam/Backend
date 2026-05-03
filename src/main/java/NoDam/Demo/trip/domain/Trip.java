@@ -1,9 +1,9 @@
 package NoDam.Demo.trip.domain;
 
 import NoDam.Demo.common.domain.BaseEntity;
-import NoDam.Demo.common.type.PersonType;
 import NoDam.Demo.common.type.ScheduleType;
 import NoDam.Demo.common.type.TransportType;
+import NoDam.Demo.common.type.TripThemeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -32,7 +32,7 @@ public class Trip extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(length = 30)
+    @Column(length = 30, nullable = false)
     private String name;
 
     @Column(nullable = false)
@@ -41,23 +41,23 @@ public class Trip extends BaseEntity {
     @Column(nullable = false, unique = true, length = 36)
     private String uuid;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private Long siteId;
 
     @Column(nullable = false)
     private int personCount;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 5)
+    @Column(nullable = true, length = 15)
     private ScheduleType scheduleType;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 8)
-    private PersonType personType;
+    @Column(nullable = true, length = 15)
+    private TransportType transportType;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 7)
-    private TransportType transportType;
+    @Column(nullable = true, length = 15)
+    private TripThemeType tripThemeType;
 
     @Column(nullable = false)
     private LocalDate startDate;
@@ -65,23 +65,23 @@ public class Trip extends BaseEntity {
     @Column(nullable = false)
     private LocalDate endDate;
 
-    @Column
-    private Long price;
+    @Column(nullable = true)
+    private Long totalPrice;
 
     @Builder
     public Trip(String name, Long userId, String uuid, Long siteId, int personCount,
-                ScheduleType scheduleType, PersonType personType, TransportType transportType,
-                LocalDate startDate, LocalDate endDate, Long price) {
+                ScheduleType scheduleType, TransportType transportType, TripThemeType tripThemeType,
+                LocalDate startDate, LocalDate endDate, Long totalPrice) {
         this.name = name;
         this.userId = userId;
         this.uuid = uuid;
         this.siteId = siteId != null ? siteId : 1L;
         this.personCount = personCount;
         this.scheduleType = scheduleType;
-        this.personType = personType;
         this.transportType = transportType;
+        this.tripThemeType = tripThemeType;
         this.startDate = startDate;
         this.endDate = endDate;
-        this.price = price;
+        this.totalPrice = totalPrice;
     }
 }

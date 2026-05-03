@@ -30,11 +30,11 @@ public class TripService {
                 .siteId(1L)
                 .personCount(request.getPersonCount())
                 .scheduleType(request.getScheduleType())
-                .personType(request.getPersonType())
+                .tripThemeType(request.getTripThemeType())
                 .transportType(request.getTransportType())
                 .startDate(DateUtil.toLocalDate(request.getStartDate()))
                 .endDate(DateUtil.toLocalDate(request.getEndDate()))
-                .price(request.getPrice())
+                .totalPrice(request.getPrice())
                 .build();
 
         try {

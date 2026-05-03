@@ -6,13 +6,13 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import NoDam.Demo.common.type.PersonType;
 import NoDam.Demo.common.type.ScheduleType;
 import NoDam.Demo.common.type.TransportType;
+import NoDam.Demo.common.type.TripThemeType;
 import NoDam.Demo.trip.domain.Trip;
 import NoDam.Demo.trip.dto.request.CreateTripRequest;
 import NoDam.Demo.trip.repository.TripRepository;
-import java.time.LocalDate;
+
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -129,9 +129,10 @@ class TripServiceTest {
         request.setSite("JAPAN");
         request.setScheduleType(ScheduleType.TIGHT);
         request.setTransportType(TransportType.PUBLIC);
-        request.setPersonType(PersonType.FRIEND);
+        request.setTripThemeType(TripThemeType.FOOD);
         request.setStartDate("2026-04-27");
         request.setEndDate("2026-04-30");
+        request.setPrice(100000L);
         return request;
     }
 

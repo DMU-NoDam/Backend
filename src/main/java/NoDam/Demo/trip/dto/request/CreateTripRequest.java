@@ -1,12 +1,10 @@
 package NoDam.Demo.trip.dto.request;
 
-import NoDam.Demo.common.type.PersonType;
 import NoDam.Demo.common.type.ScheduleType;
 import NoDam.Demo.common.type.TransportType;
-import jakarta.validation.constraints.Min;
+import NoDam.Demo.common.type.TripThemeType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import java.time.LocalDate;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -28,7 +26,7 @@ public class CreateTripRequest {
 
     private ScheduleType scheduleType;
     private TransportType transportType;
-    private PersonType personType;
+    private TripThemeType tripThemeType;
 
     @NotBlank
     private String startDate;
