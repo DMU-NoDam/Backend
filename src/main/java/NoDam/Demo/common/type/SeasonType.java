@@ -1,6 +1,6 @@
 package NoDam.Demo.common.type;
 
-public enum Weather {
+public enum SeasonType {
     SPRING,
     SUMMER,
     FALL,
