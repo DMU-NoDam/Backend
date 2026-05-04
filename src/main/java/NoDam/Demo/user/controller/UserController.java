@@ -36,7 +36,7 @@ public class UserController {
     private final JWTService jwtService;
 
     @PostMapping("/public/token-refresh")
-    public ResponseEntity refresh(@RequestBody @Valid RefreshTokenDto dto) {
+    public ResponseEntity<SuccessResponse<Map<String, String>>> refresh(@RequestBody @Valid RefreshTokenDto dto) {
         Long userId;
         try {
             userId = jwtService.decodeRefreshToken(dto.getToken());
@@ -47,32 +47,32 @@ public class UserController {
         String newAccessToken = jwtService.generateAccessToken(userId);
         String newRefreshToken = jwtService.generateRefreshToken(userId);
 
-        return ResponseEntity.ok().body(Map.of(
+        return ResponseEntity.ok().body(new SuccessResponse<>("success", Map.of(
                 "accessToken", newAccessToken,
                 "refreshToken", newRefreshToken
-        ));
+        )));
     }
 
     @GetMapping("/api")
-    public ResponseEntity getUser(@AuthenticationPrincipal User user) {
-        return ResponseEntity.ok().body(UserInfoDto.of(user));
+    public ResponseEntity<SuccessResponse<UserInfoDto>> getUser(@AuthenticationPrincipal User user) {
+        return ResponseEntity.ok().body(new SuccessResponse<>("success", UserInfoDto.of(user)));
     }
 
     @PatchMapping("/api")
     @Operation(summary = "update user info")
-    public ResponseEntity updateUserInfo(
+    public ResponseEntity<SuccessResponse<UserInfoDto>> updateUserInfo(
             @AuthenticationPrincipal User user,
             @RequestBody UpdateUserInfoDto dto
     ) {
         User updatedUser = userService.updateUserInfo(user, dto);
-        return ResponseEntity.ok().body(new SuccessResponse("success", UserInfoDto.of(updatedUser)));
+        return ResponseEntity.ok().body(new SuccessResponse<>("success", UserInfoDto.of(updatedUser)));
     }
 
     @DeleteMapping("/api")
     @Operation(summary = "delete user")
-    public ResponseEntity deleteUser(@AuthenticationPrincipal User user) {
+    public ResponseEntity<SuccessResponse<Void>> deleteUser(@AuthenticationPrincipal User user) {
         userService.deleteUser(user);
-        return ResponseEntity.ok().body(new SuccessResponse("success", null));
+        return ResponseEntity.ok().body(new SuccessResponse<>("success", null));
     }
 
 }

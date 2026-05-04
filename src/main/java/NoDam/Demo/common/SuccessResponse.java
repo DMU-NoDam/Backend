@@ -7,11 +7,11 @@ import lombok.Setter;
 @NoArgsConstructor
 @Getter
 @Setter
-public class SuccessResponse {
+public class SuccessResponse<T> {
     private String message;
-    private Object body;
+    private T body;
 
-    public SuccessResponse(String message, Object body) {
+    public SuccessResponse(String message, T body) {
         this.message = message;
         this.body = body;
     }
