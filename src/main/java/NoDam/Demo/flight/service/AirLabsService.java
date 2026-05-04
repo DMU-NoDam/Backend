@@ -16,7 +16,7 @@ public class AirLabsService {
 
     public FlightInfoResponseDto getFlightInfo(String flightIata) {
 
-        String raw = webClientBuilder.build()
+        String raw = webClientBuilder.build() //
                 .get()
                 .uri(uriBuilder -> uriBuilder
                         .scheme("https")
@@ -32,7 +32,7 @@ public class AirLabsService {
         System.out.println("🔥 AirLabs raw 응답 = " + raw);
 
         // 기존 DTO 파싱
-        AirLabsResponseDto response = webClientBuilder.build()
+        AirLabsResponseDto response = webClientBuilder.build() // todo : spring web flux 사용!
                 .get()
                 .uri(uriBuilder -> uriBuilder
                         .scheme("https")
@@ -45,10 +45,10 @@ public class AirLabsService {
                 .bodyToMono(AirLabsResponseDto.class)
                 .block();
 
-        System.out.println("🔥 DTO 변환 결과 = " + response);
+        System.out.println("🔥 DTO 변환 결과 = " + response); // todo : logger 사용!!
 
         if (response == null || response.getResponse() == null) {
-            throw new RuntimeException("항공편 정보를 찾을 수 없습니다.");
+            throw new RuntimeException("항공편 정보를 찾을 수 없습니다."); // todo : error code 사용!!
         }
 
         var data = response.getResponse();

@@ -41,32 +41,6 @@ public class SecurityRoleTest {
     private UserRepository userRepository;
 
     @Test
-    @DisplayName("VISITOR 권한을 가진 유저는 /domain/visit, /domain/api에 접근 가능해야 한다")
-    void visitorAccessTest() throws Exception {
-        User visitorUser = User.builder()
-                .role(UserRole.VISITOR)
-                .build();
-
-        when(userRepository.findById(anyLong())).thenReturn(Optional.of(visitorUser));
-        String accessToken = jwtService.generateAccessToken(1L);
-
-        mockMvc.perform(get("/domain/visit")
-                        .header("Authorization", "Bearer " + accessToken))
-                .andDo(print())
-                .andExpect(status().isOk());
-
-        mockMvc.perform(get("/domain/api")
-                        .header("Authorization", "Bearer " + accessToken))
-                .andDo(print())
-                .andExpect(status().isOk());
-
-        mockMvc.perform(get("/domain/admin")
-                        .header("Authorization", "Bearer " + accessToken))
-                .andDo(print())
-                .andExpect(status().isForbidden());
-    }
-
-    @Test
     @DisplayName("USER 권한을 가진 유저는 /domain/api에만 접근 가능해야 한다")
     void userAccessTest() throws Exception {
         User user = User.builder()
@@ -75,11 +49,6 @@ public class SecurityRoleTest {
 
         when(userRepository.findById(anyLong())).thenReturn(Optional.of(user));
         String accessToken = jwtService.generateAccessToken(1L);
-
-        mockMvc.perform(get("/domain/visit")
-                        .header("Authorization", "Bearer " + accessToken))
-                .andDo(print())
-                .andExpect(status().isForbidden());
 
         mockMvc.perform(get("/domain/api")
                         .header("Authorization", "Bearer " + accessToken))
@@ -102,11 +71,6 @@ public class SecurityRoleTest {
         when(userRepository.findById(anyLong())).thenReturn(Optional.of(adminUser));
         String accessToken = jwtService.generateAccessToken(1L);
 
-        mockMvc.perform(get("/domain/visit")
-                        .header("Authorization", "Bearer " + accessToken))
-                .andDo(print())
-                .andExpect(status().isForbidden());
-
         mockMvc.perform(get("/domain/api")
                         .header("Authorization", "Bearer " + accessToken))
                 .andDo(print())
@@ -123,9 +87,6 @@ public class SecurityRoleTest {
     void unauthenticatedAccessTest() throws Exception {
         mockMvc.perform(get("/test"))
                 .andExpect(status().isOk());
-
-        mockMvc.perform(get("/domain/visit"))
-                .andExpect(status().isForbidden());
 
         mockMvc.perform(get("/domain/api"))
                 .andExpect(status().isForbidden());

@@ -8,8 +8,7 @@ import java.util.function.Function;
 
 public enum UserRole {
 
-    USER(), // user /*/visite/** 접근 불가
-    VISITOR(UserRole.USER), // todo : delete UserRole.USER!! (개발 환경에서 세팅)
+    USER(),
     ADMIN(UserRole.USER),
     ;
 
