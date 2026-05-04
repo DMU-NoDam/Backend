@@ -36,7 +36,7 @@ public class User extends BaseEntity {
     private String name;
 
     @Enumerated(EnumType.STRING)
-    private UserRole role = UserRole.VISITOR;
+    private UserRole role = UserRole.USER;
 
     @Column
     private String oAuthProvider;
@@ -57,7 +57,7 @@ public class User extends BaseEntity {
             String oAuthProvider, String oAuthId
     ) {
         if(role == null)
-            role = UserRole.VISITOR;
+            role = UserRole.USER;
 
         if (isEmpty(oAuthProvider) || isEmpty(oAuthId))
             throw new CustomException(ErrorCode.CONFLICT);

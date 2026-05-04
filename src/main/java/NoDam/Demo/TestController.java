@@ -31,6 +31,11 @@ public class TestController {
         return ResponseEntity.ok().body(new SuccessResponse("success", Map.of("ping", "pong")));
     }
 
+    @GetMapping("/test/public")
+    public ResponseEntity testPublic() {
+        return ResponseEntity.ok().body(new SuccessResponse("success", Map.of("ping", "pong")));
+    }
+
     @GetMapping("/domain/visit")
     public ResponseEntity testVisitor() {
         return ResponseEntity.ok().body(new SuccessResponse("success", Map.of("ping", "pong")));
