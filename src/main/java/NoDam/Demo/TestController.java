@@ -27,32 +27,32 @@ public class TestController {
     private final JWTService jwtService;
 
     @GetMapping("/test")
-    public ResponseEntity ping() {
-        return ResponseEntity.ok().body(new SuccessResponse("success", Map.of("ping", "pong")));
+    public ResponseEntity<SuccessResponse<Map<String, String>>> ping() {
+        return ResponseEntity.ok().body(new SuccessResponse<>("success", Map.of("ping", "pong")));
     }
 
     @GetMapping("/test/public")
-    public ResponseEntity testPublic() {
-        return ResponseEntity.ok().body(new SuccessResponse("success", Map.of("ping", "pong")));
+    public ResponseEntity<SuccessResponse<Map<String, String>>> testPublic() {
+        return ResponseEntity.ok().body(new SuccessResponse<>("success", Map.of("ping", "pong")));
     }
 
     @GetMapping("/domain/visit")
-    public ResponseEntity testVisitor() {
-        return ResponseEntity.ok().body(new SuccessResponse("success", Map.of("ping", "pong")));
+    public ResponseEntity<SuccessResponse<Map<String, String>>> testVisitor() {
+        return ResponseEntity.ok().body(new SuccessResponse<>("success", Map.of("ping", "pong")));
     }
 
     @GetMapping("/domain/api")
-    public ResponseEntity testApi() {
-        return ResponseEntity.ok().body(new SuccessResponse("success", Map.of("ping", "pong")));
+    public ResponseEntity<SuccessResponse<Map<String, String>>> testApi() {
+        return ResponseEntity.ok().body(new SuccessResponse<>("success", Map.of("ping", "pong")));
     }
 
     @GetMapping("/domain/admin")
-    public ResponseEntity testAdmin() {
-        return ResponseEntity.ok().body(new SuccessResponse("success", Map.of("ping", "pong")));
+    public ResponseEntity<SuccessResponse<Map<String, String>>> testAdmin() {
+        return ResponseEntity.ok().body(new SuccessResponse<>("success", Map.of("ping", "pong")));
     }
 
     @PostMapping("/test/user")
-    public ResponseEntity createOrIssueTestUserToken(@RequestBody TestUserRequest request) {
+    public ResponseEntity<SuccessResponse<Map<String, Object>>> createOrIssueTestUserToken(@RequestBody TestUserRequest request) {
         User user;
 
         if (request.getId() == null) {
@@ -69,7 +69,7 @@ public class TestController {
                     .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
         }
 
-        return ResponseEntity.ok().body(new SuccessResponse(
+        return ResponseEntity.ok().body(new SuccessResponse<>(
                 "success",
                 Map.of(
                         "userId",  user.getId(),

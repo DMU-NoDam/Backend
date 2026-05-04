@@ -15,7 +15,7 @@ public class FlightController {
     private final AirLabsService airLabsService;
 
     @GetMapping("/{flightIata}")
-    public ResponseEntity getFlight(@PathVariable String flightIata) {
-        return ResponseEntity.ok().body(new SuccessResponse("success", airLabsService.getFlightInfo(flightIata)));
+    public ResponseEntity<SuccessResponse<FlightInfoResponseDto>> getFlight(@PathVariable String flightIata) {
+        return ResponseEntity.ok().body(new SuccessResponse<>("success", airLabsService.getFlightInfo(flightIata)));
     }
 }

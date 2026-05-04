@@ -83,7 +83,7 @@ public class OAuthController {
     }
 
     @GetMapping("/{provider}")
-    public ResponseEntity loginWithOAuth(
+    public ResponseEntity<SuccessResponse<Map<String, Object>>> loginWithOAuth(
             @RequestParam("code") String code,
             @PathVariable("provider") String provider
     ) {
@@ -108,7 +108,7 @@ public class OAuthController {
         String accessToken = jwtService.generateAccessToken(user.getId());
         String refreshToken = jwtService.generateRefreshToken(user.getId());
 
-        return ResponseEntity.status(HttpStatus.OK).body(new SuccessResponse(
+        return ResponseEntity.status(HttpStatus.OK).body(new SuccessResponse<>(
                 "success",
                 Map.of(
                         "user", UserInfoDto.of(user),
