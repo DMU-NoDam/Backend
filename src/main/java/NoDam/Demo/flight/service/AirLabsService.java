@@ -1,12 +1,16 @@
 package NoDam.Demo.flight.service;
 
+import NoDam.Demo.common.excetion.CustomException; // 추가
+import NoDam.Demo.common.excetion.ErrorCode; // 추가
 import NoDam.Demo.flight.config.AirLabsProperties;
 import NoDam.Demo.flight.dto.AirLabsResponseDto;
 import NoDam.Demo.flight.dto.FlightInfoResponseDto;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j; // 추가
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
+@Slf4j // 추가 : logger 사용
 @Service
 @RequiredArgsConstructor
 public class AirLabsService {
@@ -16,23 +20,11 @@ public class AirLabsService {
 
     public FlightInfoResponseDto getFlightInfo(String flightIata) {
 
-        String raw = webClientBuilder.build() //
-                .get()
-                .uri(uriBuilder -> uriBuilder
-                        .scheme("https")
-                        .host("airlabs.co")
-                        .path("/api/v9/flight")
-                        .queryParam("flight_iata", flightIata)
-                        .queryParam("api_key", properties.getApiKey())
-                        .build())
-                .retrieve()
-                .bodyToMono(String.class)
-                .block();
+        // 추가 : logger 사용
+        log.info("AirLabs flight lookup request flightIata={}", flightIata);
 
-        System.out.println("🔥 AirLabs raw 응답 = " + raw);
-
-        // 기존 DTO 파싱
-        AirLabsResponseDto response = webClientBuilder.build() // todo : spring web flux 사용!
+        // 수정 : Spring WebFlux WebClient 사용 + API 1번만 호출
+        AirLabsResponseDto response = webClientBuilder.build()
                 .get()
                 .uri(uriBuilder -> uriBuilder
                         .scheme("https")
@@ -45,13 +37,25 @@ public class AirLabsService {
                 .bodyToMono(AirLabsResponseDto.class)
                 .block();
 
-        System.out.println("🔥 DTO 변환 결과 = " + response); // todo : logger 사용!!
-
+        // 수정 : RuntimeException -> CustomException + ErrorCode 사용
         if (response == null || response.getResponse() == null) {
-            throw new RuntimeException("항공편 정보를 찾을 수 없습니다."); // todo : error code 사용!!
+
+            // 추가 : logger 사용
+            log.warn("Flight not found. flightIata={}", flightIata);
+
+            throw new CustomException(ErrorCode.NOT_FOUND);
         }
 
         var data = response.getResponse();
+
+        // 추가 : 시간 데이터 검증
+        if (data.getDep_time() == null || data.getArr_time() == null) {
+
+            // 추가 : logger 사용
+            log.warn("Flight time is missing. flightIata={}", flightIata);
+
+            throw new CustomException(ErrorCode.BAD_REQUEST);
+        }
 
         return FlightInfoResponseDto.builder()
                 .flightIata(data.getFlight_iata())
