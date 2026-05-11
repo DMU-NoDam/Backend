@@ -2,6 +2,7 @@ package NoDam.Demo.common.util;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 public class DateUtil {
 
@@ -25,5 +26,18 @@ public class DateUtil {
             return null;
         }
         return date.format(FORMATTER);
+    }
+
+    /**
+     * 시작일 ~ 종료일 사이의 모든 날짜를 List로 반환 (양 끝 포함)
+     */
+    public static List<LocalDate> toDateRange(String startDate, String endDate) {
+        return toLocalDate(startDate)
+                .datesUntil(toLocalDate(endDate).plusDays(1))
+                .toList();
+    }
+
+    public static List<LocalDate> toDateRange(LocalDate startDate, LocalDate endDate) {
+        return startDate.datesUntil(endDate.plusDays(1)).toList();
     }
 }
