@@ -52,3 +52,8 @@ external:
   airlabs:
     base-url: https://airlabs.co/api/v9
     api-key: ${AIRLABS_API_KEY}
+  xotelo:
+    search-url: https://xotelo-hotel-prices.p.rapidapi.com/api/search
+    rates-url: https://data.xotelo.com/api/rates
+    rapid-api-key: ${XOTELO_RAPID_API_KEY}
+    rapid-api-host: xotelo-hotel-prices.p.rapidapi.com
