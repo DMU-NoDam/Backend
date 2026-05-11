@@ -1,6 +1,5 @@
 package NoDam.Demo.user.service;
 
-import NoDam.Demo.common.event.DeleteEvent;
 import NoDam.Demo.common.excetion.CustomException;
 import NoDam.Demo.common.excetion.ErrorCode;
 import NoDam.Demo.user.domain.User;
@@ -58,7 +57,6 @@ public class UserService {
 
     public void deleteUser(User user) {
         userRepository.delete(user);
-        eventPublisher.publishEvent(new DeleteEvent<User>(user.getId(), user.getId()));
     }
 
 }
