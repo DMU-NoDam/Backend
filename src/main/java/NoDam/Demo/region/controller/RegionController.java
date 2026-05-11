@@ -25,10 +25,10 @@ public class RegionController {
 
     @GetMapping
     @Operation(summary = "전체 지역 목록 조회")
-    public ResponseEntity<SuccessResponse> getRegions() {
+    public ResponseEntity<SuccessResponse<List<RegionResponseDto>>> getRegions() {
         List<RegionResponseDto> regions = regionQueryService.findAll().stream()
                 .map(RegionResponseDto::from)
                 .collect(Collectors.toList());
-        return ResponseEntity.ok().body(new SuccessResponse("success", regions));
+        return ResponseEntity.ok().body(new SuccessResponse<>("success", regions));
     }
 }
