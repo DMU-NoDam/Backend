@@ -23,31 +23,49 @@ public class AirLabsService {
     // - startDate, endDate 형식 : "yyyy-MM-dd"
     // - 범위 내 매칭되는 가장 빠른 운항편 1건 반환
     public FlightInfoResponseDto getFlightInfo(String flightIata, String startDate, String endDate) {
+        // 정제 : 대문자 변환 및 공백 제거
+        String cleanFlightIata = (flightIata != null) ? flightIata.toUpperCase().trim() : "";
 
         // 추가 : logger 사용
-        log.info("AirLabs flight lookup request flightIata={}, startDate={}, endDate={}",
-                flightIata, startDate, endDate);
+        log.info("AirLabs flight lookup request cleanFlightIata={}, startDate={}, endDate={}",
+                cleanFlightIata, startDate, endDate);
 
-        // 수정 : /flight 는 현재 시점 1건만 반환하므로 /schedules 로 변경
-        AirLabsResponseDto response = webClientBuilder.build()
+        // 수정 : API 응답을 String으로 먼저 받아 로그를 찍은 뒤 파싱 (디버깅 강화)
+        String rawResponse = webClientBuilder.build()
                 .get()
                 .uri(uriBuilder -> uriBuilder
                         .scheme("https")
                         .host("airlabs.co")
                         .path("/api/v9/schedules")
-                        .queryParam("flight_iata", flightIata)
+                        .queryParam("flight_iata", cleanFlightIata)
                         .queryParam("api_key", properties.getApiKey())
                         .build())
                 .retrieve()
-                .bodyToMono(AirLabsResponseDto.class)
+                .bodyToMono(String.class)
                 .block();
 
-        // 수정 : RuntimeException -> CustomException + ErrorCode 사용
-        if (response == null || response.getResponse() == null || response.getResponse().isEmpty()) {
+        log.info("AirLabs Raw Response for {}: {}", cleanFlightIata, rawResponse);
 
-            // 추가 : logger 사용
-            log.warn("Flight not found. flightIata={}", flightIata);
+        // JSON 파싱 (ObjectMapper 또는 직접 변환)
+        AirLabsResponseDto response;
+        try {
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            response = mapper.readValue(rawResponse, AirLabsResponseDto.class);
+        } catch (Exception e) {
+            log.error("Failed to parse AirLabs response", e);
+            throw new CustomException(ErrorCode.BAD_REQUEST);
+        }
 
+        if (response == null || response.getResponse() == null) {
+            log.warn("AirLabs API returned null response object for flightIata={}", cleanFlightIata);
+            if (response != null && response.getError() != null) {
+                log.warn("AirLabs API Error Details: {}", response.getError());
+            }
+            throw new CustomException(ErrorCode.NOT_FOUND);
+        }
+
+        if (response.getResponse().isEmpty()) {
+            log.warn("Empty schedule list from AirLabs for flightIata={}", cleanFlightIata);
             throw new CustomException(ErrorCode.NOT_FOUND);
         }
 
