@@ -33,37 +33,37 @@ public class TripController {
 
     @PostMapping("/api")
     @Operation(summary = "여행 일정 생성")
-    public ResponseEntity createTrip(
+    public ResponseEntity<SuccessResponse<TripInfoDto>> createTrip(
             @AuthenticationPrincipal User user,
             @RequestBody @Valid TripCreateFacadeRequestDto request
     ) {
         Trip trip = tripFacadeService.createTrip(user.getId(), request);
-        return ResponseEntity.ok().body(new SuccessResponse("success", TripInfoDto.from(trip)));
+        return ResponseEntity.ok().body(new SuccessResponse<>("success", TripInfoDto.from(trip)));
     }
 
     @GetMapping("/api")
     @Operation(summary = "여행 리스트 조회")
-    public ResponseEntity getTripList(@AuthenticationPrincipal User user) {
+    public ResponseEntity<SuccessResponse<List<TripInfoDto>>> getTripList(@AuthenticationPrincipal User user) {
         List<Trip> trips = tripFacadeService.getTripList(user.getId());
-        return ResponseEntity.ok().body(new SuccessResponse("success", TripInfoDto.from(trips)));
+        return ResponseEntity.ok().body(new SuccessResponse<>("success", TripInfoDto.from(trips)));
     }
 
     @GetMapping("/api/today")
     @Operation(summary = "오늘의 고정된 여행 조회")
-    public ResponseEntity getTodayTrip(@AuthenticationPrincipal User user) {
+    public ResponseEntity<SuccessResponse<TripInfoDto>> getTodayTrip(@AuthenticationPrincipal User user) {
         Optional<Trip> trip = tripFacadeService.getTodayTrip(user.getId());
         TripInfoDto response = (trip.isPresent()) ? TripInfoDto.from(trip.get()) : null;
-        return ResponseEntity.ok().body(new SuccessResponse("success", response));
+        return ResponseEntity.ok().body(new SuccessResponse<>("success", response));
     }
 
     @PatchMapping("/api/{tripId}/fixed")
     @Operation(summary = "여행 고정 여부 수정")
-    public ResponseEntity updateTripFixed(
+    public ResponseEntity<SuccessResponse<TripInfoDto>> updateTripFixed(
             @AuthenticationPrincipal User user,
             @PathVariable Long tripId,
             @RequestBody boolean isFixed
     ) {
         Trip trip = tripFacadeService.updateTripFixed(user.getId(), tripId, isFixed);
-        return ResponseEntity.ok().body(new SuccessResponse("success", TripInfoDto.from(trip)));
+        return ResponseEntity.ok().body(new SuccessResponse<>("success", TripInfoDto.from(trip)));
     }
 }
