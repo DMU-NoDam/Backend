@@ -9,6 +9,7 @@ public class AirLabsResponseDto {
 
     // 수정 : /schedules API 는 response 가 배열로 반환됨
     private List<FlightData> response;
+    private ErrorData error;
 
     @Getter
     public static class FlightData {
@@ -17,5 +18,16 @@ public class AirLabsResponseDto {
         private String arr_iata;
         private String dep_time;
         private String arr_time;
+    }
+
+    @Getter
+    public static class ErrorData {
+        private String message;
+        private String code;
+
+        @Override
+        public String toString() {
+            return String.format("[%s] %s", code, message);
+        }
     }
 }
