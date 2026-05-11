@@ -1,7 +1,7 @@
 package NoDam.Demo.trip.dto.response;
 
+import NoDam.Demo.common.type.PriceType;
 import NoDam.Demo.common.type.ScheduleType;
-import NoDam.Demo.common.type.TransportType;
 import NoDam.Demo.common.type.TripThemeType;
 import NoDam.Demo.common.util.DateUtil;
 import NoDam.Demo.trip.domain.Trip;
@@ -16,26 +16,26 @@ public class TripInfoDto {
     private Long id;
     private String name;
     private int personCount;
-    private String site;
     private ScheduleType scheduleType;
-    private TransportType transportType;
-    private TripThemeType tripThemeType;
+    private TripThemeType tripThemeType; // can null, if null -> user not selected trip theme
+    private PriceType priceType;
     private String startDate;
     private String endDate;
-    private Long price;
+    private boolean isFixed;
+    private Boolean isPlanning;
 
     public static TripInfoDto from(Trip trip) {
         return TripInfoDto.builder()
                 .id(trip.getId())
                 .name(trip.getName())
                 .personCount(trip.getPersonCount())
-                .site("일본")
                 .scheduleType(trip.getScheduleType())
-                .transportType(trip.getTransportType())
                 .tripThemeType(trip.getTripThemeType())
+                .priceType(trip.getPriceType())
                 .startDate(DateUtil.fromLocalDate(trip.getStartDate()))
                 .endDate(DateUtil.fromLocalDate(trip.getEndDate()))
-                .price(trip.getTotalPrice())
+                .isFixed(trip.isFixed())
+                .isPlanning(trip.getIsPlanning())
                 .build();
     }
 

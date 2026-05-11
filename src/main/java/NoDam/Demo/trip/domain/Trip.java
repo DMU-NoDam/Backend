@@ -1,18 +1,15 @@
 package NoDam.Demo.trip.domain;
 
 import NoDam.Demo.common.domain.BaseEntity;
+import NoDam.Demo.common.type.PriceType;
 import NoDam.Demo.common.type.ScheduleType;
-import NoDam.Demo.common.type.TransportType;
 import NoDam.Demo.common.type.TripThemeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import NoDam.Demo.plan.domain.DatePlan;
+import jakarta.persistence.*;
+
 import java.time.LocalDate;
+import java.util.List;
+
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -41,8 +38,8 @@ public class Trip extends BaseEntity {
     @Column(nullable = false, unique = true, length = 36)
     private String uuid;
 
-    @Column(nullable = true)
-    private Long siteId;
+    // @Column(nullable = true)
+    // private Long siteId;
 
     @Column(nullable = false)
     private int personCount;
@@ -53,11 +50,11 @@ public class Trip extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = true, length = 15)
-    private TransportType transportType;
+    private TripThemeType tripThemeType;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = true, length = 15)
-    private TripThemeType tripThemeType;
+    private PriceType priceType;
 
     @Column(nullable = false)
     private LocalDate startDate;
@@ -65,23 +62,32 @@ public class Trip extends BaseEntity {
     @Column(nullable = false)
     private LocalDate endDate;
 
-    @Column(nullable = true)
-    private Long totalPrice;
+    @Column(nullable = false)
+    private boolean isFixed;
+
+    @Column(nullable = false)
+    private Boolean isPlanning = false;
+
+    @OneToMany(mappedBy = "trip")
+    private List<TripDate> tripDates;
 
     @Builder
-    public Trip(String name, Long userId, String uuid, Long siteId, int personCount,
-                ScheduleType scheduleType, TransportType transportType, TripThemeType tripThemeType,
-                LocalDate startDate, LocalDate endDate, Long totalPrice) {
+    public Trip(String name, Long userId, String uuid, int personCount,
+                ScheduleType scheduleType, PriceType priceType,
+                LocalDate startDate, LocalDate endDate, boolean isFixed) {
         this.name = name;
         this.userId = userId;
         this.uuid = uuid;
-        this.siteId = siteId != null ? siteId : 1L;
         this.personCount = personCount;
         this.scheduleType = scheduleType;
-        this.transportType = transportType;
-        this.tripThemeType = tripThemeType;
+        this.priceType = priceType;
         this.startDate = startDate;
         this.endDate = endDate;
-        this.totalPrice = totalPrice;
+        this.isFixed = isFixed;
     }
+
+    public void updateFixed(boolean isFixed) {
+        this.isFixed = isFixed;
+    }
+
 }
