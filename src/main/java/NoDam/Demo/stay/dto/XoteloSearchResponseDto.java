@@ -20,6 +20,10 @@ public class XoteloSearchResponseDto {
     private String image;
     private String url;
 
+    // 추가 : 추후 위치 기반 추천 / 지도 표시용 좌표
+    private Double latitude;
+    private Double longitude;
+
     @Getter
     @NoArgsConstructor
     public static class RawResult {
@@ -31,6 +35,10 @@ public class XoteloSearchResponseDto {
         private String image;
         private String url;
 
+        // 추가 : Xotelo 응답의 좌표 매핑
+        private Double latitude;
+        private Double longitude;
+
         public XoteloSearchResponseDto toDto() {
             return XoteloSearchResponseDto.builder()
                     .hotelKey(this.hotelKey)
@@ -38,6 +46,8 @@ public class XoteloSearchResponseDto {
                     .address(this.streetAddress)
                     .image(this.image)
                     .url(this.url)
+                    .latitude(this.latitude)
+                    .longitude(this.longitude)
                     .build();
         }
     }
