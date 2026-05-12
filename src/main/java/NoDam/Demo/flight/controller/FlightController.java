@@ -20,10 +20,10 @@ public class FlightController {
     @GetMapping("/{flightIata}")
     public ResponseEntity<SuccessResponse<FlightInfoResponseDto>> getFlight(
             @PathVariable String flightIata,
-            @RequestParam String startDate,
-            @RequestParam String endDate) {
+            @RequestParam String date
+    ) {
         return ResponseEntity.ok().body(
-                new SuccessResponse<>("success", airLabsService.getFlightInfo(flightIata, startDate, endDate))
+                new SuccessResponse<>("success", airLabsService.getFlightInfo(flightIata, date))
         );
     }
 }

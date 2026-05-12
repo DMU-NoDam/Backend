@@ -22,13 +22,13 @@ public class AirLabsService {
     // 사용자가 선택한 여행 시작일 ~ 종료일 범위 안에서 운항하는 항공편을 찾아 반환
     // - startDate, endDate 형식 : "yyyy-MM-dd"
     // - 범위 내 매칭되는 가장 빠른 운항편 1건 반환
-    public FlightInfoResponseDto getFlightInfo(String flightIata, String startDate, String endDate) {
+    public FlightInfoResponseDto getFlightInfo(String flightIata, String date) {
         // 정제 : 대문자 변환 및 공백 제거
         String cleanFlightIata = (flightIata != null) ? flightIata.toUpperCase().trim() : "";
 
         // 추가 : logger 사용
         log.info("AirLabs flight lookup request cleanFlightIata={}, startDate={}, endDate={}",
-                cleanFlightIata, startDate, endDate);
+                cleanFlightIata, date);
 
         // 수정 : API 응답을 String으로 먼저 받아 로그를 찍은 뒤 파싱 (디버깅 강화)
         String rawResponse = webClientBuilder.build()
@@ -77,12 +77,12 @@ public class AirLabsService {
                 .filter(f -> f.getDep_time() != null && f.getDep_time().length() >= 10)
                 .filter(f -> {
                     String depDate = f.getDep_time().substring(0, 10); // "yyyy-MM-dd"
-                    return depDate.compareTo(startDate) >= 0 && depDate.compareTo(endDate) <= 0;
+                    return depDate.equals(date);
                 })
                 .min(java.util.Comparator.comparing(AirLabsResponseDto.FlightData::getDep_time))
                 .orElseThrow(() -> {
                     log.warn("Flight not found in trip date range. flightIata={}, startDate={}, endDate={}",
-                            flightIata, startDate, endDate);
+                            flightIata, date);
                     return new CustomException(ErrorCode.NOT_FOUND);
                 });
 
