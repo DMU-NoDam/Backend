@@ -2,6 +2,7 @@ package NoDam.Demo.trip.service;
 
 import NoDam.Demo.common.excetion.CustomException;
 import NoDam.Demo.common.excetion.ErrorCode;
+import NoDam.Demo.common.type.TripThemeType;
 import NoDam.Demo.trip.domain.Trip;
 import NoDam.Demo.trip.domain.UserFixedTrip;
 import NoDam.Demo.trip.repository.TripRepository;
@@ -20,6 +21,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 public class TripFixedService {
 
     private final UserFixedTripRepository userFixedTripRepository;
+    private final TripRepository tripRepository;
     private final TransactionTemplate transactionTemplate;
 
     public Optional<Trip> getTodayTrip(Long userId) {
@@ -74,5 +76,10 @@ public class TripFixedService {
             trip.updateFixed(false);
             return trip;
         });
+    }
+
+    public Trip updateTripTheme(Trip trip, TripThemeType themeType) {
+        trip.updateTheme(themeType);
+        return tripRepository.save(trip);
     }
 }
