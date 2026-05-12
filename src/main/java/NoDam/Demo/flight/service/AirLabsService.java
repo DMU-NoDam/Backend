@@ -50,6 +50,8 @@ public class AirLabsService {
         AirLabsResponseDto response;
         try {
             com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            // 알 수 없는 필드가 있어도 에러를 내지 않도록 설정 (DTO 어노테이션과 함께 2중 방어)
+            mapper.configure(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
             response = mapper.readValue(rawResponse, AirLabsResponseDto.class);
         } catch (Exception e) {
             log.error("Failed to parse AirLabs response", e);
