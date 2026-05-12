@@ -1,10 +1,12 @@
 package NoDam.Demo.flight.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Getter;
 
 import java.util.List;
 
 @Getter
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class AirLabsResponseDto {
 
     // 수정 : /schedules API 는 response 가 배열로 반환됨
