@@ -2,6 +2,7 @@ package NoDam.Demo.place.domain;
 
 import NoDam.Demo.common.domain.BaseEntity;
 import NoDam.Demo.common.type.PlaceType;
+import NoDam.Demo.common.type.PriceType;
 import NoDam.Demo.common.type.SeasonType;
 import NoDam.Demo.common.type.TripThemeType;
 import NoDam.Demo.common.type.WeatherType;
@@ -62,10 +63,14 @@ public class Place extends BaseEntity {
     @Column(nullable = true, length = 15)
     private SeasonType recommendSeasonType;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = true, length = 15)
+    private PriceType priceType;
+
     @Builder
     public Place(Long regionId, PlaceType placeType, String googleId, String name, String address,
                  Double x, Double y, WeatherType recommendWeatherType,
-                 TripThemeType recommendTripThemeType, SeasonType recommendSeasonType) {
+                 TripThemeType recommendTripThemeType, SeasonType recommendSeasonType, PriceType priceType) {
         this.regionId = regionId;
         this.placeType = placeType;
         this.googleId = googleId;
@@ -76,5 +81,6 @@ public class Place extends BaseEntity {
         this.recommendWeatherType = recommendWeatherType;
         this.recommendTripThemeType = recommendTripThemeType;
         this.recommendSeasonType = recommendSeasonType;
+        this.priceType = priceType;
     }
 }

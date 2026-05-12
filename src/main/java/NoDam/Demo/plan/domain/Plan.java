@@ -15,6 +15,8 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -35,18 +37,18 @@ public abstract class Plan extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "trip_id", nullable = false)
-    private Trip trip;
+    @ManyToOne()
+    @JoinColumn(name = "date_plan_id", nullable = false)
+    private DatePlan datePlan;
 
     @Column(nullable = false)
-    private LocalDateTime startTime;
+    private LocalTime startTime;
 
     @Column(nullable = false)
-    private LocalDateTime endTime;
+    private LocalTime endTime;
 
-    protected Plan(Trip trip, LocalDateTime startTime, LocalDateTime endTime) {
-        this.trip = trip;
+    protected Plan(DatePlan datePlan, LocalTime startTime, LocalTime endTime) {
+        this.datePlan = datePlan;
         this.startTime = startTime;
         this.endTime = endTime;
     }

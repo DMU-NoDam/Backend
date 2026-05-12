@@ -6,6 +6,8 @@ import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -31,7 +33,7 @@ public class TransportPlan extends Plan {
     private String googleId; // 구글 길찾기 api 발급 id
 
     @Builder
-    public TransportPlan(Trip trip, LocalDateTime startTime, LocalDateTime endTime,
+    public TransportPlan(DatePlan trip, LocalTime startTime, LocalTime endTime,
                          Integer takeTime, Long toPlaceId, Long fromPlaceId, String googleId) {
         super(trip, startTime, endTime);
         this.takeTime = takeTime;

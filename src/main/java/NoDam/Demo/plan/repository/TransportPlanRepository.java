@@ -7,5 +7,4 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface TransportPlanRepository extends JpaRepository<TransportPlan, Long> {
 
-    List<TransportPlan> findAllByTrip(Trip trip);
 }
