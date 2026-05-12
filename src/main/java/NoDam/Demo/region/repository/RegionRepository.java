@@ -9,6 +9,8 @@ public interface RegionRepository extends JpaRepository<Region, Long> {
 
     Optional<Region> findByCode(String code);
 
+    Optional<Region> findFirstByName(String name);
+
     List<Region> findAllByCodeIn(List<String> codes);
 
     List<Region> findAllByNameIn(List<String> names);
