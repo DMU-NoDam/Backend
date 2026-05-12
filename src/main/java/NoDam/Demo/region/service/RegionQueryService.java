@@ -44,4 +44,9 @@ public class RegionQueryService {
         return regionRepository.findAll();
     }
 
+    public Region findById(Long id) {
+        return regionRepository.findById(id)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
+    }
+
 }

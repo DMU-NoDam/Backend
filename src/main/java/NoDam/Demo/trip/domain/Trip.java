@@ -68,8 +68,8 @@ public class Trip extends BaseEntity {
     @Column(nullable = false)
     private Boolean isPlanning = false;
 
-    @OneToMany(mappedBy = "trip")
-    private List<TripDate> tripDates;
+    @OneToMany(mappedBy = "trip", targetEntity = DatePlan.class)
+    private List<DatePlan> datePlans;
 
     @Builder
     public Trip(String name, Long userId, String uuid, int personCount,
@@ -88,6 +88,10 @@ public class Trip extends BaseEntity {
 
     public void updateFixed(boolean isFixed) {
         this.isFixed = isFixed;
+    }
+
+    public void updateTheme(TripThemeType themeType) {
+        this.tripThemeType = themeType;
     }
 
 }

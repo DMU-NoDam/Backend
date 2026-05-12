@@ -1,18 +1,20 @@
 package NoDam.Demo.trip.service;
 
+import NoDam.Demo.common.type.TripThemeType;
 import NoDam.Demo.place.domain.Place;
 import NoDam.Demo.plan.service.AutoCreatePlanService;
 import NoDam.Demo.plan.service.PlanCreateService;
 import NoDam.Demo.region.domain.Region;
 import NoDam.Demo.region.service.RegionQueryService;
+import NoDam.Demo.plan.domain.DatePlan;
 import NoDam.Demo.trip.domain.Trip;
-import NoDam.Demo.trip.domain.TripDate;
 import NoDam.Demo.trip.dto.request.TripCreateFacadeRequestDto;
 import NoDam.Demo.trip.dto.request.TripCreateDto;
 
 import java.util.List;
 import java.util.Optional;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -24,36 +26,18 @@ public class TripFacadeService {
     private final TripFixedService tripFixedService;
     private final TripSelectService tripSelectService;
 
-    private final PlanCreateService planCreateService;
-    private final AutoCreatePlanService autoCreatePlanService;
-
-    private final RegionQueryService regionQueryService;
-
-    public Trip createTrip(Long userId, TripCreateFacadeRequestDto request) {
-        TripCreateDto dto = request.getTrip();
-        List<Region> regions = regionQueryService.findRegionsByCode(request.getRegion());
-        List<Place> userSelectedPlaces = List.of(); // todo : find place // placeSelectService.(request.getSelectedPlace());
-        // List<Place> hotelPlaces = placeSelectService.(request.getHotel());
-        // List<Flight>
-
-        // create trip
-        Trip trip = tripCreateService.createTrip(userId, dto);
-
-        // 필수 plan 생성 (공항, 숙소)
-            // todo : 공항 plan 생성
-            // todo : 숙소 plan 생성
-
-        // create trip dates
-        List<TripDate> tripDates = tripCreateService.createTripDates(trip, regions, userSelectedPlaces);
-
-        // auto generate plans
-        autoCreatePlanService.autoGenerateAllPlan(trip, tripDates);
-
-        return trip;
+    // trip domain 생성 까지만 (ai생성은 다른 api 분리, transaction 때문!)
+    // transactional (사용 금지!)
+    public Trip createTrip(Long userId, TripCreateDto request) {
+        return tripCreateService.createTrip(userId, request);
     }
 
     public List<Trip> getTripList(Long userId) {
         return tripSelectService.getTripList(userId);
+    }
+
+    public Trip getTrip(Long userId, Long tripId) {
+        return tripSelectService.findById(tripId, userId);
     }
 
     public Optional<Trip> getTodayTrip(Long userId) {
@@ -63,6 +47,11 @@ public class TripFacadeService {
     public Trip updateTripFixed(Long userId, Long tripId, boolean isFixed) {
         Trip trip = tripSelectService.findById(tripId, userId);
         return tripFixedService.updateTripFixed(userId, trip, isFixed);
+    }
+
+    public Trip updateTripTheme(Long userId, Long tripId, TripThemeType themeType) {
+        Trip trip = tripSelectService.findById(tripId, userId);
+        return tripFixedService.updateTripTheme(trip, themeType);
     }
 
 }
