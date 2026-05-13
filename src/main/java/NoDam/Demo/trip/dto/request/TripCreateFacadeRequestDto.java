@@ -25,7 +25,14 @@ public class TripCreateFacadeRequestDto {
     private List<String> hotel;
 
     // flight 관련
-    private Object departFlight; // todo
-    private Object arriveFlight; // todo
+    private FlightInfo departFlight;
+    private FlightInfo arriveFlight;
+
+    public static class FlightInfo {
+
+        // todo : convert enum 필요함 (airport code -> region code)
+        private String airport; // airport code
+        private String time; // yyyy-mm-dd
+    }
 
 }
