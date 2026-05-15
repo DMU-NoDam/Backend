@@ -13,6 +13,8 @@ public enum ErrorCode {
 
     ALREADY_PROCESSING(HttpStatus.ACCEPTED, "already processing"),
 
+    API_FAIL(HttpStatus.CONFLICT, "api fail"),
+
     ;
 
     public HttpStatus status;

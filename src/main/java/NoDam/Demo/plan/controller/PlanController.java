@@ -4,6 +4,7 @@ import NoDam.Demo.common.SuccessResponse;
 import NoDam.Demo.common.type.TripThemeType;
 import NoDam.Demo.plan.domain.DatePlan;
 import NoDam.Demo.plan.domain.Plan;
+import NoDam.Demo.plan.dto.response.PlanInfo;
 import NoDam.Demo.plan.service.PlanFacadeService;
 import NoDam.Demo.user.domain.User;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +28,7 @@ public class PlanController {
     private final PlanFacadeService planFacadeService;
 
     @GetMapping("/api/{tripId}")
-    public ResponseEntity<SuccessResponse<Map<TripThemeType, List<Plan>>>> selectPlans(
+    public ResponseEntity<SuccessResponse<Map<TripThemeType, List<PlanInfo>>>> selectPlans(
             @PathVariable Long tripId,
             @AuthenticationPrincipal User user
     ) {
@@ -36,13 +37,14 @@ public class PlanController {
         Map<TripThemeType, List<DatePlan>> datePlanGroupByTheme = planList.stream()
                 .collect(Collectors.groupingBy(DatePlan::getTripThemeType));
 
-        Map<TripThemeType, List<Plan>> response = datePlanGroupByTheme.entrySet().stream()
+        Map<TripThemeType, List<PlanInfo>> response = datePlanGroupByTheme.entrySet().stream()
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
                         entry -> entry.getValue().stream()
                                 .flatMap(dp -> dp.getPlans().stream())
                                 .sorted(Comparator.comparing((Plan p) -> p.getDatePlan().getDate())
                                         .thenComparing(Plan::getStartTime))
+                                .map(PlanInfo::of)
                                 .collect(Collectors.toList())
                 ));
 

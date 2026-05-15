@@ -6,5 +6,5 @@ import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface TransportPlanRepository extends JpaRepository<TransportPlan, Long> {
-
+    List<TransportPlan> findByDatePlanId(Long datePlanId);
 }

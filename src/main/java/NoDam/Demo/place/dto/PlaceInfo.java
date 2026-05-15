@@ -23,12 +23,12 @@ public class PlaceInfo {
     private String googleId;
     private String name;
     private String address;
-    private Double x;
-    private Double y;
+    private PriceType priceType;
+    private SeasonType recommendSeasonType;
     private WeatherType recommendWeatherType;
     private TripThemeType recommendTripThemeType;
-    private SeasonType recommendSeasonType;
-    private PriceType priceType;
+    private Double lon; // x
+    private Double lat; // y
 
     public static PlaceInfo of(Place place) {
         return PlaceInfo.builder()
@@ -38,8 +38,8 @@ public class PlaceInfo {
                 .googleId(place.getGoogleId())
                 .name(place.getName())
                 .address(place.getAddress())
-                .x(place.getX())
-                .y(place.getY())
+                .lon(place.getLon())
+                .lat(place.getLat())
                 .recommendWeatherType(place.getRecommendWeatherType())
                 .recommendTripThemeType(place.getRecommendTripThemeType())
                 .recommendSeasonType(place.getRecommendSeasonType())
@@ -54,8 +54,8 @@ public class PlaceInfo {
                 .googleId(googleId)
                 .name(name)
                 .address(address)
-                .x(x)
-                .y(y)
+                .lon(lon)
+                .lat(lat)
                 .recommendWeatherType(recommendWeatherType)
                 .recommendTripThemeType(recommendTripThemeType)
                 .recommendSeasonType(recommendSeasonType)

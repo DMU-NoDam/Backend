@@ -6,4 +6,5 @@ import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface PlacePlanRepository extends JpaRepository<PlacePlan, Long> {
+    List<PlacePlan> findByDatePlanId(Long datePlanId);
 }

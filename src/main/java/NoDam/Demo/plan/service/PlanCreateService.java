@@ -4,10 +4,12 @@ import NoDam.Demo.common.excetion.CustomException;
 import NoDam.Demo.common.excetion.ErrorCode;
 import NoDam.Demo.plan.domain.DatePlan;
 import NoDam.Demo.plan.domain.PlacePlan;
+import NoDam.Demo.plan.domain.TransportPlan;
 import NoDam.Demo.plan.dto.request.DatePlanRequestDto;
 import NoDam.Demo.plan.dto.request.PlacePlanRequestDto;
 import NoDam.Demo.plan.repository.DatePlanRepository;
 import NoDam.Demo.plan.repository.PlanRepository;
+import NoDam.Demo.plan.repository.TransportPlanRepository;
 import NoDam.Demo.trip.domain.Trip;
 import NoDam.Demo.trip.repository.TripStatusRepository;
 import lombok.RequiredArgsConstructor;
@@ -22,11 +24,12 @@ public class PlanCreateService {
 
     private final PlanRepository planRepository;
     private final DatePlanRepository datePlanRepository;
+    private final TransportPlanRepository transportPlanRepository;
     private final TripStatusRepository tripStatusRepository;
 
     private final TransactionTemplate transactionTemplate;
 
-    public void updateTripStatus(
+    public Trip updateTripStatus(
             Trip trip,
             Boolean status
     ) {
@@ -36,6 +39,9 @@ public class PlanCreateService {
 
         if(affected != 1)
             throw new CustomException(ErrorCode.ALREADY_PROCESSING);
+
+        trip.updatePlanning(status);
+        return trip;
     }
 
     // date plans 를 생성하는 함수
@@ -48,7 +54,7 @@ public class PlanCreateService {
                     return DatePlan.builder()
                             .date(dto.getDate())
                             .trip(trip)
-                            .regionId(dto.getRegionId())
+                            .regionId(dto.getRegion().getId())
                             .tripThemeType(dto.getThemeType())
                             .googleIds(List.of()) // todo
                             .build();
@@ -74,6 +80,10 @@ public class PlanCreateService {
 
         planRepository.saveAll(entities);
         return datePlanRepository.findById(datePlan.getId()).get();
+    }
+
+    public List<TransportPlan> createTransportPlans(List<TransportPlan> transportPlans) {
+        return transportPlanRepository.saveAll(transportPlans);
     }
 
 }

@@ -90,6 +90,10 @@ public class Trip extends BaseEntity {
         this.isFixed = isFixed;
     }
 
+    public void updatePlanning(boolean isPlanning) {
+        this.isPlanning = isPlanning;
+    }
+
     public void updateTheme(TripThemeType themeType) {
         this.tripThemeType = themeType;
     }
