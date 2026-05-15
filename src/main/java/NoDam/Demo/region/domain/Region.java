@@ -29,7 +29,7 @@ public class Region {
     @Column(nullable = false)
     private String name; // region 이름
 
-    @Column(nullable = false, length = 5)
+    @Column(nullable = false, length = 15)
     private String code; // front를 위한 지역코드
 
     @Column
