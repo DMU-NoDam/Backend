@@ -23,12 +23,20 @@ public class PlanSelectService {
         return datePlanRepository.findAllDatePlanWithPlans(trip.getId());
     }
 
+    public List<DatePlan> findAllDatePlanWithTransport(Trip trip) {
+        return datePlanRepository.findAllDatePlanWithPlansWithTransport(trip.getId());
+    }
+
     public List<PlacePlan> findPlacePlansByDatePlan(DatePlan datePlan) {
         return placePlanRepository.findByDatePlanId(datePlan.getId());
     }
 
+    public List<PlacePlan> findPlacePlansByDatePlanWithTransport(DatePlan datePlan) {
+        return placePlanRepository.findByDatePlanIdWithTransport(datePlan.getId());
+    }
+
     public boolean hasTransportPlan(DatePlan datePlan) {
-        return !transportPlanRepository.findByDatePlanId(datePlan.getId()).isEmpty();
+        return !transportPlanRepository.findByFromPlacePlan_DatePlanId(datePlan.getId()).isEmpty();
     }
 
 }

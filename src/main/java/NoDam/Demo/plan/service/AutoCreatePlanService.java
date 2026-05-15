@@ -1,7 +1,5 @@
 package NoDam.Demo.plan.service;
 
-import NoDam.Demo.common.excetion.CustomException;
-import NoDam.Demo.common.excetion.ErrorCode;
 import NoDam.Demo.common.type.*;
 import NoDam.Demo.common.util.DateUtil;
 import NoDam.Demo.place.domain.Place;
@@ -32,6 +30,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -102,92 +101,6 @@ public class AutoCreatePlanService {
         return CompletableFuture.completedFuture(createdPlans);
     }
 
-    @Async
-    public CompletableFuture<Void> autoGenerateAllThemeTransportPlans(Trip trip, List<DatePlan> datePlans) {
-        for (DatePlan datePlan : datePlans) {
-            if (planSelectService.hasTransportPlan(datePlan)) continue;
-
-            trip = planCreateService.updateTripStatus(trip, true);
-
-            List<PlacePlan> placePlans = planSelectService.findPlacePlansByDatePlan(datePlan)
-                    .stream()
-                    .sorted(Comparator.comparing(Plan::getStartTime))
-                    .toList();
-
-            List<TransportPlan> transportPlans = new ArrayList<>();
-            for (int i = 0; i < placePlans.size() - 1; i++) {
-                PlacePlan current = placePlans.get(i);
-                PlacePlan next = placePlans.get(i + 1);
-
-                Place fromPlace = placeSelectService.findById(current.getPlaceId());
-                Place toPlace = placeSelectService.findById(next.getPlaceId());
-
-
-                RouteInfo routeInfo = googleApiService.computeRoutes(
-                        fromPlace.getLat(), fromPlace.getLon(), toPlace.getLat(), toPlace.getLon()
-                );
-                if (routeInfo == null) continue;
-
-                transportPlans.add(TransportPlan.builder()
-                        .datePlan(datePlan)
-                        .beforePlanEndTime(current.getEndTime())
-                        .toPlaceId(fromPlace.getId())
-                        .fromPlaceId(toPlace.getId())
-                        .routeInfo(routeInfo)
-                        .build());
-
-            }
-
-            planCreateService.createTransportPlans(transportPlans);
-            planCreateService.updateTripStatus(trip, false);
-        }
-
-        return CompletableFuture.completedFuture(null);
-    }
-
-    @Async
-    // 동시성: 같은 DatePlan에 동시 호출 시 중복 TransportPlan 생성 가능
-    public CompletableFuture<List<TransportPlan>> createAllTransportPlan(Trip trip, DatePlan datePlan) {
-        if (planSelectService.hasTransportPlan(datePlan))
-            throw new CustomException(ErrorCode.CONFLICT);
-
-        trip = planCreateService.updateTripStatus(trip, true);
-
-        List<PlacePlan> placePlans = planSelectService.findPlacePlansByDatePlan(datePlan)
-                .stream()
-                .sorted(Comparator.comparing(Plan::getStartTime))
-                .toList();
-
-        List<TransportPlan> transportPlans = new ArrayList<>();
-        for (int i = 0; i < placePlans.size() - 1; i++) {
-            PlacePlan current = placePlans.get(i);
-            PlacePlan next = placePlans.get(i + 1);
-
-            Place fromPlace = placeSelectService.findById(current.getPlaceId());
-            Place toPlace = placeSelectService.findById(next.getPlaceId());
-
-
-            RouteInfo routeInfo = googleApiService.computeRoutes(
-                    fromPlace.getLat(), fromPlace.getLon(), toPlace.getLat(), toPlace.getLon()
-            );
-            if (routeInfo == null) continue;
-
-            transportPlans.add(TransportPlan.builder()
-                    .datePlan(datePlan)
-                    .beforePlanEndTime(current.getEndTime())
-                    .toPlaceId(fromPlace.getId())
-                    .fromPlaceId(toPlace.getId())
-                    .routeInfo(routeInfo)
-                    .build());
-
-        }
-
-        List<TransportPlan> result = planCreateService.createTransportPlans(transportPlans);
-        planCreateService.updateTripStatus(trip, false);
-
-        return CompletableFuture.completedFuture(result);
-    }
-
     private List<DatePlanRequestDto> recommendDatePlan(
             Trip trip,
             TripThemeType themeType,
@@ -199,10 +112,10 @@ public class AutoCreatePlanService {
 
         for(int i = 0; i < dates.size(); i++) {
             // todo : region 배정 일정 로직 추가
-                // region 별 중심을 기점으로 {공항 - regions, ... - 공항} 이동 거리 시간등을 교차 확인하고 ai에게 region 배치를 시킴 (region은 최대 2개임으로 경우의 수는 1~2임)
-                //  사용자가 가고 싶은 장소가 많은 region에 더 중심을 둬야함 !!
-                // 가고 싶은 장소를 region별로 나눈다 (region별 걸릴 시간을 어느 정도 계산한다), region을 공항을 고려하여 배정한다
-                // 비행기 정보가 없으면, region에 가장 가까운 공항을 검색하여 선정한다 (공항을 미리 선정한다?)
+            // region 별 중심을 기점으로 {공항 - regions, ... - 공항} 이동 거리 시간등을 교차 확인하고 ai에게 region 배치를 시킴 (region은 최대 2개임으로 경우의 수는 1~2임)
+            //  사용자가 가고 싶은 장소가 많은 region에 더 중심을 둬야함 !!
+            // 가고 싶은 장소를 region별로 나눈다 (region별 걸릴 시간을 어느 정도 계산한다), region을 공항을 고려하여 배정한다
+            // 비행기 정보가 없으면, region에 가장 가까운 공항을 검색하여 선정한다 (공항을 미리 선정한다?)
             datePlanCreateDtos.add(new DatePlanRequestDto(dates.get(i), necessaryRegions.get(0), themeType, List.of()));
         }
 
@@ -258,11 +171,71 @@ public class AutoCreatePlanService {
             int count
     ) {
         return placeSelectService.recommendPlaces(
-            placeType, region, priceType, seasonType, themeType, nowWeather, count
-        )
+                        placeType, region, priceType, seasonType, themeType, nowWeather, count
+                )
                 .stream()
                 .map(PlaceInfo::of)
                 .toList();
+    }
+
+    @Async
+    public CompletableFuture<List<TransportPlan>> autoGenerateAllThemeTransportPlans(Trip trip, List<DatePlan> datePlans) {
+        List<TransportPlan> allCreated = new ArrayList<>();
+
+        for (DatePlan datePlan : datePlans) {
+            trip = planCreateService.updateTripStatus(trip, true);
+            allCreated.addAll(generateTransportPlans(datePlan));
+            planCreateService.updateTripStatus(trip, false);
+        }
+
+        return CompletableFuture.completedFuture(allCreated);
+    }
+
+    @Async
+    // 동시성: 같은 PlacePlan 쌍에 동시 호출 시 중복 TransportPlan 생성 가능
+    public CompletableFuture<List<TransportPlan>> createAllTransportPlan(Trip trip, DatePlan datePlan) {
+        trip = planCreateService.updateTripStatus(trip, true);
+        List<TransportPlan> result = generateTransportPlans(datePlan);
+        planCreateService.updateTripStatus(trip, false);
+
+        return CompletableFuture.completedFuture(result);
+    }
+
+    private List<TransportPlan> generateTransportPlans(DatePlan targetDate) {
+        // PlacePlan + departureTransport/arrivalTransport fetch join으로 조회
+        List<PlacePlan> placePlans = planSelectService.findPlacePlansByDatePlanWithTransport(targetDate)
+                .stream()
+                .sorted(Comparator.comparing(Plan::getStartTime))
+                .toList();
+
+        List<Long> placeIds = placePlans.stream().map(PlacePlan::getPlaceId).distinct().toList();
+        Map<Long, Place> placeMap = placeSelectService.findAllById(placeIds).stream()
+                .collect(Collectors.toMap(Place::getId, p -> p));
+
+        List<TransportPlan> transportPlans = new ArrayList<>();
+        for (int i = 0; i < placePlans.size() - 1; i++) {
+            PlacePlan current = placePlans.get(i);
+            PlacePlan next = placePlans.get(i + 1);
+
+            // 이미 transport plan이 있는 쌍은 건너뜀
+            if (current.getDepartureTransport() != null) continue;
+
+            Place fromPlace = placeMap.get(current.getPlaceId());
+            Place toPlace = placeMap.get(next.getPlaceId());
+
+            RouteInfo routeInfo = googleApiService.computeRoutes(
+                    fromPlace.getLat(), fromPlace.getLon(), toPlace.getLat(), toPlace.getLon()
+            );
+            if (routeInfo == null) continue;
+
+            transportPlans.add(TransportPlan.builder()
+                    .fromPlacePlan(current)
+                    .toPlacePlan(next)
+                    .routeInfo(routeInfo)
+                    .build());
+        }
+
+        return planCreateService.createTransportPlans(transportPlans);
     }
 
 }

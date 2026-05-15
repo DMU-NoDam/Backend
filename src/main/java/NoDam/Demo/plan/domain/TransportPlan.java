@@ -6,6 +6,9 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
@@ -22,32 +25,33 @@ import lombok.NoArgsConstructor;
 @Getter
 public class TransportPlan extends Plan {
 
-    @Column(nullable = false)
-    private Long toPlaceId; // 출발지 place id (cross-module: place 참조)
+    @ManyToOne
+    @JoinColumn(name = "from_place_plan_id", nullable = false)
+    private PlacePlan fromPlacePlan;
 
-    @Column(nullable = false)
-    private Long fromPlaceId; // 도착지 place id (cross-module: place 참조)
+    @ManyToOne
+    @JoinColumn(name = "to_place_plan_id", nullable = false)
+    private PlacePlan toPlacePlan;
 
     @Column(nullable = false)
     private Integer totalDistanceMeters;
 
     @Column(nullable = false)
-    private Integer totalDurationSeconds;
+    private Integer takeTime; // 초 단위 (Google API 반환값), endTime은 시간 단위 올림 처리
 
     @Convert(converter = RouteInfoConverter.class)
-    @Column(nullable = true, columnDefinition = "JSON")
+    @Column(nullable = false, columnDefinition = "JSON")
     private RouteInfo routeInfo;
 
     @Builder
-    public TransportPlan(DatePlan datePlan, LocalTime beforePlanEndTime,
-                         Long toPlaceId, Long fromPlaceId, RouteInfo routeInfo) {
-        super(datePlan, beforePlanEndTime, calcEndTime(beforePlanEndTime, routeInfo));
-        this.toPlaceId = toPlaceId;
-        this.fromPlaceId = fromPlaceId;
+    public TransportPlan(PlacePlan fromPlacePlan, PlacePlan toPlacePlan, RouteInfo routeInfo) {
+        super(fromPlacePlan.getEndTime(), calcEndTime(fromPlacePlan.getEndTime(), routeInfo));
+        this.fromPlacePlan = fromPlacePlan;
+        this.toPlacePlan = toPlacePlan;
         this.routeInfo = routeInfo;
         if (routeInfo != null) {
             this.totalDistanceMeters = routeInfo.getTotalDistanceMeters();
-            this.totalDurationSeconds = routeInfo.getTotalDurationSeconds();
+            this.takeTime = routeInfo.getTotalDurationSeconds();
         }
     }
 

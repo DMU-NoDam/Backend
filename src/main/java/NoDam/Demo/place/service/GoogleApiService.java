@@ -44,7 +44,13 @@ public class GoogleApiService {
                 .get()
                 .uri(GOOGLE_SEARCH_BY_ID_URI + "/" + googleId + "?fields=" + PLACE_FIELD_MASK + "&key=" + GOOGLE_API_KEY)
                 .retrieve()
-                .onStatus(HttpStatusCode::is4xxClientError, clientResponse -> Mono.error(new CustomException(ErrorCode.API_FAIL)))
+                .onStatus(HttpStatusCode::is4xxClientError, clientResponse ->
+                        clientResponse.bodyToMono(String.class)
+                                .flatMap(errorBody -> {
+                                    logger.error("Google API 4xx Error: Status={}, Body={}", clientResponse.statusCode(), errorBody);
+                                    return Mono.error(new CustomException(ErrorCode.API_FAIL));
+                                })
+                )
                 .bodyToMono(GooglePlaceResponseDto.class)
                 .block();
 
@@ -68,7 +74,13 @@ public class GoogleApiService {
                 .header("X-Goog-FieldMask", ROUTE_FIELD_MASK)
                 .bodyValue(requestBody)
                 .retrieve()
-                .onStatus(HttpStatusCode::is4xxClientError, clientResponse -> Mono.error(new CustomException(ErrorCode.API_FAIL)))
+                .onStatus(HttpStatusCode::is4xxClientError, clientResponse ->
+                        clientResponse.bodyToMono(String.class)
+                                .flatMap(errorBody -> {
+                                    logger.error("Google API 4xx Error: Status={}, Body={}", clientResponse.statusCode(), errorBody);
+                                    return Mono.error(new CustomException(ErrorCode.API_FAIL));
+                                })
+                )
                 .bodyToMono(GoogleRouteResponseDto.class)
                 .block();
 

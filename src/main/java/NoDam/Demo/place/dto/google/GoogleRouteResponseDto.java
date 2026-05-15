@@ -5,6 +5,7 @@ import NoDam.Demo.plan.dto.response.RouteInfo;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -12,12 +13,14 @@ import java.util.stream.Collectors;
 @Getter
 @Setter
 @JsonIgnoreProperties(ignoreUnknown = true)
+@ToString
 public class GoogleRouteResponseDto {
 
     private List<Route> routes;
 
     @Getter
     @Setter
+    @ToString
     public static class Route {
         private Integer distanceMeters;
         private String staticDuration;
@@ -27,6 +30,7 @@ public class GoogleRouteResponseDto {
 
     @Getter
     @Setter
+    @ToString
     public static class Leg {
         private Integer distanceMeters;
         private String staticDuration;
@@ -38,6 +42,7 @@ public class GoogleRouteResponseDto {
 
     @Getter
     @Setter
+    @ToString
     public static class Step {
         private Integer distanceMeters;
         private String staticDuration;
@@ -50,6 +55,7 @@ public class GoogleRouteResponseDto {
 
     @Getter
     @Setter
+    @ToString
     public static class TransitDetails {
         private StopDetails stopDetails;
         private TransitLine transitLine;
@@ -58,6 +64,7 @@ public class GoogleRouteResponseDto {
 
     @Getter
     @Setter
+    @ToString
     public static class StopDetails {
         private StopInfo arrivalStop;
         private String arrivalTime;
@@ -67,6 +74,7 @@ public class GoogleRouteResponseDto {
 
     @Getter
     @Setter
+    @ToString
     public static class StopInfo {
         private String name;
         private LocationPoint location;
@@ -74,6 +82,7 @@ public class GoogleRouteResponseDto {
 
     @Getter
     @Setter
+    @ToString
     public static class TransitLine {
         private String name;
         private String nameShort;
@@ -82,24 +91,28 @@ public class GoogleRouteResponseDto {
 
     @Getter
     @Setter
+    @ToString
     public static class Vehicle {
         private String type;
     }
 
     @Getter
     @Setter
+    @ToString
     public static class Polyline {
         private String encodedPolyline;
     }
 
     @Getter
     @Setter
+    @ToString
     public static class LocationPoint {
         private LatLng latLng;
     }
 
     @Getter
     @Setter
+    @ToString
     public static class LatLng {
         private Double latitude;
         private Double longitude;

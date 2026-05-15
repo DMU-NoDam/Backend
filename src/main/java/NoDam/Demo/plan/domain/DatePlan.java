@@ -40,7 +40,7 @@ public class DatePlan {
     private String googleIds;
 
     @OneToMany(mappedBy = "datePlan")
-    private List<Plan> plans = new ArrayList<>();
+    private List<PlacePlan> placePlans = new ArrayList<>();
 
     @Builder
     public DatePlan(LocalDate date, Trip trip, Long regionId, List<String> googleIds, TripThemeType tripThemeType) {

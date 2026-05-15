@@ -19,7 +19,7 @@ public class PlanFacadeService {
     public List<DatePlan> getPlans(Long tripId, Long userId) {
         Trip trip = tripSelectService.findById(tripId, userId);
 
-        return planSelectService.findAllDatePlan(trip);
+        return planSelectService.findAllDatePlanWithTransport(trip);
     }
 
 }
