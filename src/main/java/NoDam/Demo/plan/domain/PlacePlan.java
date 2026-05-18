@@ -1,14 +1,12 @@
 package NoDam.Demo.plan.domain;
 
-import NoDam.Demo.common.type.PlaceType;
-import NoDam.Demo.trip.domain.Trip;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 
 import lombok.AccessLevel;
@@ -23,13 +21,23 @@ import lombok.NoArgsConstructor;
 @Getter
 public class PlacePlan extends Plan {
 
+    @ManyToOne
+    @JoinColumn(name = "date_plan_id", nullable = false)
+    private DatePlan datePlan;
+
     @Column(nullable = false)
-    private Long placeId; //제 cross-module: place 참조
+    private Long placeId; // cross-module: place 참조
+
+    @OneToOne(mappedBy = "fromPlacePlan")
+    private TransportPlan departureTransport;
+
+    @OneToOne(mappedBy = "toPlacePlan")
+    private TransportPlan arrivalTransport;
 
     @Builder
-    public PlacePlan(DatePlan datePlan, LocalTime startTime, LocalTime endTime,
-                     Long placeId) {
-        super(datePlan, startTime, endTime);
+    public PlacePlan(DatePlan datePlan, LocalTime startTime, LocalTime endTime, Long placeId) {
+        super(startTime, endTime);
+        this.datePlan = datePlan;
         this.placeId = placeId;
     }
 }

@@ -1,8 +1,6 @@
 package NoDam.Demo.common.util;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 
 public class ListUtil {
@@ -21,6 +19,12 @@ public class ListUtil {
         return requestList
                 .stream()
                 .map(map::get)
+                .toList();
+    }
+
+    public static <T> List<T> distinct(List<T> canDuplicate) {
+        return canDuplicate.stream()
+                .distinct()
                 .toList();
     }
 

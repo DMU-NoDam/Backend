@@ -4,11 +4,9 @@ import NoDam.Demo.common.domain.BaseEntity;
 import NoDam.Demo.common.type.PriceType;
 import NoDam.Demo.common.type.ScheduleType;
 import NoDam.Demo.common.type.TripThemeType;
-import NoDam.Demo.plan.domain.DatePlan;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
-import java.util.List;
 
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -68,9 +66,6 @@ public class Trip extends BaseEntity {
     @Column(nullable = false)
     private Boolean isPlanning = false;
 
-    @OneToMany(mappedBy = "trip", targetEntity = DatePlan.class)
-    private List<DatePlan> datePlans;
-
     @Builder
     public Trip(String name, Long userId, String uuid, int personCount,
                 ScheduleType scheduleType, PriceType priceType,
@@ -88,6 +83,10 @@ public class Trip extends BaseEntity {
 
     public void updateFixed(boolean isFixed) {
         this.isFixed = isFixed;
+    }
+
+    public void updatePlanning(boolean isPlanning) {
+        this.isPlanning = isPlanning;
     }
 
     public void updateTheme(TripThemeType themeType) {

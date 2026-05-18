@@ -1,20 +1,15 @@
 package NoDam.Demo.plan.domain;
 
 import NoDam.Demo.common.domain.BaseEntity;
-import NoDam.Demo.trip.domain.Trip;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorColumn;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 
 import lombok.AccessLevel;
@@ -37,18 +32,13 @@ public abstract class Plan extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne()
-    @JoinColumn(name = "date_plan_id", nullable = false)
-    private DatePlan datePlan;
-
     @Column(nullable = false)
     private LocalTime startTime;
 
     @Column(nullable = false)
     private LocalTime endTime;
 
-    protected Plan(DatePlan datePlan, LocalTime startTime, LocalTime endTime) {
-        this.datePlan = datePlan;
+    protected Plan(LocalTime startTime, LocalTime endTime) {
         this.startTime = startTime;
         this.endTime = endTime;
     }

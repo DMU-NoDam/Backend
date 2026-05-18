@@ -1,0 +1,17 @@
+package NoDam.Demo.place.domain;
+
+import jakarta.persistence.Embeddable;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Embeddable
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class Coordinate {
+    private Double lat;
+    private Double lng;
+}

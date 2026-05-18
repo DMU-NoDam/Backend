@@ -1,12 +1,15 @@
 package NoDam.Demo.plan.dto.request;
 
 import NoDam.Demo.common.type.TripThemeType;
+import NoDam.Demo.place.domain.Place;
+import NoDam.Demo.region.domain.Region;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -15,8 +18,8 @@ import java.time.LocalDate;
 public class DatePlanRequestDto {
 
     private LocalDate date; // yyyy-mm-dd
-    private Long regionId;
-    private TripThemeType themeType;
-    private String googleIds; // todo : 정규화?
+    private Region region; // not null
+    private TripThemeType themeType; // not null
+    private List<Place> necessaryPlaces; // can null
 
 }
