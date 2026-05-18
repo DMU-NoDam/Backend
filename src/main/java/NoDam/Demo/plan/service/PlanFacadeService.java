@@ -1,7 +1,6 @@
 package NoDam.Demo.plan.service;
 
 import NoDam.Demo.plan.domain.DatePlan;
-import NoDam.Demo.plan.domain.Plan;
 import NoDam.Demo.trip.domain.Trip;
 import NoDam.Demo.trip.service.TripSelectService;
 import lombok.RequiredArgsConstructor;

@@ -1,5 +1,7 @@
 package NoDam.Demo.plan.service;
 
+import NoDam.Demo.common.excetion.CustomException;
+import NoDam.Demo.common.excetion.ErrorCode;
 import NoDam.Demo.plan.domain.DatePlan;
 import NoDam.Demo.plan.domain.PlacePlan;
 import NoDam.Demo.plan.repository.DatePlanRepository;
@@ -33,6 +35,11 @@ public class PlanSelectService {
 
     public List<PlacePlan> findPlacePlansByDatePlanWithTransport(DatePlan datePlan) {
         return placePlanRepository.findByDatePlanIdWithTransport(datePlan.getId());
+    }
+
+    public PlacePlan findPlacePlanWithDatePlanAndTransport(Long placePlanId) {
+        return placePlanRepository.findByIdWithDatePlanAndTransport(placePlanId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
     }
 
     public boolean hasTransportPlan(DatePlan datePlan) {

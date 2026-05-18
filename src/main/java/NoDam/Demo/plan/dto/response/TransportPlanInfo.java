@@ -35,4 +35,12 @@ public class TransportPlanInfo {
                 .routeInfo(transport.getRouteInfo() != null ? transport.getRouteInfo().toResponse() : null)
                 .build();
     }
+
+    public static TransportPlanInfo of(RouteInfo route) {
+        return TransportPlanInfo.builder()
+                .takeTime(route.getTotalDurationSeconds())
+                .totalDistanceMeters(route.getTotalDistanceMeters())
+                .routeInfo(route.toResponse())
+                .build();
+    }
 }

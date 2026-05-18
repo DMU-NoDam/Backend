@@ -26,7 +26,8 @@ public interface PlaceRepository extends JpaRepository<Place, Long> {
             "AND (:priceType IS NULL OR p.priceType = :priceType or p.priceType is null) " +
             "AND (:season IS NULL OR p.recommendSeasonType = :season or p.recommendSeasonType is null) " +
             "AND (:theme IS NULL OR p.recommendTripThemeType = :theme or p.recommendTripThemeType is null) " +
-            "AND (:weather IS NULL OR p.recommendWeatherType = :weather or p.recommendWeatherType is null)")
+            "AND (:weather IS NULL OR p.recommendWeatherType = :weather or p.recommendWeatherType is null) " +
+            "AND (:#{#excludeIds.isEmpty()} = true OR p.id NOT IN :excludeIds)")
     List<Place> findPlacesByFilters(
             @Param("placeType") PlaceType placeType,
             @Param("regionId") Long regionId,
@@ -34,6 +35,7 @@ public interface PlaceRepository extends JpaRepository<Place, Long> {
             @Param("season") SeasonType season,
             @Param("theme") TripThemeType theme,
             @Param("weather") WeatherType weather,
+            @Param("excludeIds") List<Long> excludeIds,
             Pageable pageable
     );
 

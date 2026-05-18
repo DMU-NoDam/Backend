@@ -118,6 +118,12 @@ public class GoogleRouteResponseDto {
         private Double longitude;
     }
 
+    public RouteInfo toRouteSummary() {
+        if (routes == null || routes.isEmpty()) return null;
+        Route route = routes.get(0);
+        return new RouteInfo(route.getDistanceMeters(), parseDurationSeconds(route.getStaticDuration()), List.of());
+    }
+
     public RouteInfo toRouteInfo() {
         if (routes == null || routes.isEmpty()) return null;
         Leg leg = routes.get(0).getLegs().get(0);

@@ -138,22 +138,21 @@ public class AutoCreatePlanService {
         // 장소 type 별 장소 10개 씩 주면서
         Map<PlaceType, List<PlaceInfo>> logicRecommendPlaceList = new HashMap<>();
         for(PlaceType placeType : PlaceType.values())
-            logicRecommendPlaceList.put(placeType, recommendPlaces(placeType, priceType, region, seasonType, themeType, nowWeather, 10));
+            logicRecommendPlaceList.put(placeType, filterCandidates(placeType, region, priceType, seasonType, themeType, nowWeather));
 
-        // ai 에서 생성함
-        List<PlacePlanRequestDto> placePlanRequestDtos = recommendWithAi(scheduleType, logicRecommendPlaceList);
-
-        return placePlanRequestDtos;
+        return buildDayScheduleWithAi(scheduleType, logicRecommendPlaceList);
     }
 
-    private List<PlacePlanRequestDto> recommendWithAi(
+    // 2차: AI로 하루 일정 구성 (placeId + startTime + endTime)
+    private List<PlacePlanRequestDto> buildDayScheduleWithAi(
             ScheduleType scheduleType,
-            Map<PlaceType, List<PlaceInfo>> logicRecommendPlaceList
+            Map<PlaceType, List<PlaceInfo>> candidates
     ) {
+        // todo : ai 연동 (현재는 단순 placeholder)
         // 밥
-        PlaceInfo bab = logicRecommendPlaceList.get(PlaceType.RESTAURANT).get(0);
+        PlaceInfo bab = candidates.get(PlaceType.RESTAURANT).get(0);
         // 숙소
-        PlaceInfo tnr = logicRecommendPlaceList.get(PlaceType.HOTEL).get(0);
+        PlaceInfo tnr = candidates.get(PlaceType.HOTEL).get(0);
 
         return List.of(
                 new PlacePlanRequestDto(LocalTime.of(12,30), LocalTime.of(13,30), bab.getId()),
@@ -161,21 +160,17 @@ public class AutoCreatePlanService {
         );
     }
 
-    private List<PlaceInfo> recommendPlaces(
+    // 1차: PlaceType별 DB 필터링
+    private List<PlaceInfo> filterCandidates(
             PlaceType placeType,
-            PriceType priceType,
             Region region,
+            PriceType priceType,
             SeasonType seasonType,
             TripThemeType themeType,
-            WeatherType nowWeather,
-            int count
+            WeatherType weather
     ) {
-        return placeSelectService.recommendPlaces(
-                        placeType, region, priceType, seasonType, themeType, nowWeather, count
-                )
-                .stream()
-                .map(PlaceInfo::of)
-                .toList();
+        return placeSelectService.recommendPlaces(placeType, region, priceType, seasonType, themeType, weather, List.of(), 10)
+                .stream().map(PlaceInfo::of).toList();
     }
 
     @Async

@@ -44,7 +44,7 @@ public class PlaceSelectService {
         SeasonType recommendSeason, // can null
         TripThemeType recommendTripTheme, // can null
         WeatherType recommendWeatherType, // can null
-
+        List<Long> excludeIds, // 제외할 place id 목록
         int count
     ) {
         return placeRepository.findPlacesByFilters(
@@ -54,6 +54,7 @@ public class PlaceSelectService {
                 recommendSeason,
                 recommendTripTheme,
                 recommendWeatherType,
+                excludeIds == null ? List.of() : excludeIds,
                 PageRequest.of(0, count)
         );
     }
