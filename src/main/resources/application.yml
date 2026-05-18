@@ -4,6 +4,10 @@ server_domain:
 front_domain:
   http://localhost:5173
 
+server:
+  servlet:
+    context-path: /back
+
 spring:
   application:
     name: Demo
