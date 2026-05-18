@@ -53,7 +53,7 @@ public class PlanCreateService {
                 .map(dto -> {
                     return DatePlan.builder()
                             .date(dto.getDate())
-                            .trip(trip)
+                            .tripId(trip.getId())
                             .regionId(dto.getRegion().getId())
                             .tripThemeType(dto.getThemeType())
                             .googleIds(List.of()) // todo

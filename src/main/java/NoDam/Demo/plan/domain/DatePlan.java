@@ -1,7 +1,6 @@
 package NoDam.Demo.plan.domain;
 
 import NoDam.Demo.common.type.TripThemeType;
-import NoDam.Demo.trip.domain.Trip;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
@@ -25,9 +24,8 @@ public class DatePlan {
     @Column(nullable = false)
     private LocalDate date;
 
-    @ManyToOne()
-    @JoinColumn(name = "trip_id", nullable = false)
-    private Trip trip;
+    @Column(name = "trip_id", nullable = false)
+    private Long tripId;
 
     @Column(nullable = false)
     private Long regionId; // cross-module: region 참조
@@ -43,9 +41,9 @@ public class DatePlan {
     private List<PlacePlan> placePlans = new ArrayList<>();
 
     @Builder
-    public DatePlan(LocalDate date, Trip trip, Long regionId, List<String> googleIds, TripThemeType tripThemeType) {
+    public DatePlan(LocalDate date, Long tripId, Long regionId, List<String> googleIds, TripThemeType tripThemeType) {
         this.date = date;
-        this.trip = trip;
+        this.tripId = tripId;
         this.regionId = regionId;
         this.googleIds = googleIds != null ? String.join(",", googleIds) : "";
         this.tripThemeType = tripThemeType;

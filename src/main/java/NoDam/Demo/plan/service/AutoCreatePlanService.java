@@ -53,7 +53,7 @@ public class AutoCreatePlanService {
         List<DatePlan> tripDates = planSelectService.findAllDatePlan(trip);
 
         if(tripDates == null || !tripDates.isEmpty())
-            return CompletableFuture.completedFuture(trip.getDatePlans()); // 멱등성 처리
+            return CompletableFuture.completedFuture(tripDates); // 멱등성 처리
 
         // start create Date plans
         List<Region> necessaryRegions = regionQueryService.findRegionsByCode(necessaryRegionCodes);
