@@ -1,12 +1,17 @@
 package NoDam.Demo.plan.domain;
 
-import NoDam.Demo.trip.domain.Trip;
+import NoDam.Demo.common.converter.RouteInfoConverter;
+import NoDam.Demo.plan.dto.response.RouteInfo;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.temporal.ChronoUnit;
 
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -20,25 +25,42 @@ import lombok.NoArgsConstructor;
 @Getter
 public class TransportPlan extends Plan {
 
-    @Column(nullable = true)
-    private Integer takeTime; // 소요 시간 (분)
+    @ManyToOne
+    @JoinColumn(name = "from_place_plan_id", nullable = false)
+    private PlacePlan fromPlacePlan;
 
-    @Column(nullable = true)
-    private Long toPlaceId; // 출발지 place id (cross-module: place 참조)
+    @ManyToOne
+    @JoinColumn(name = "to_place_plan_id", nullable = false)
+    private PlacePlan toPlacePlan;
 
-    @Column(nullable = true)
-    private Long fromPlaceId; // 도착지 place id (cross-module: place 참조)
+    @Column(nullable = false)
+    private Integer totalDistanceMeters;
 
-    @Column(nullable = true)
-    private String googleId; // 구글 길찾기 api 발급 id
+    @Column(nullable = false)
+    private Integer takeTime; // 초 단위 (Google API 반환값), endTime은 시간 단위 올림 처리
+
+    @Convert(converter = RouteInfoConverter.class)
+    @Column(nullable = false, columnDefinition = "JSON")
+    private RouteInfo routeInfo;
 
     @Builder
-    public TransportPlan(DatePlan trip, LocalTime startTime, LocalTime endTime,
-                         Integer takeTime, Long toPlaceId, Long fromPlaceId, String googleId) {
-        super(trip, startTime, endTime);
-        this.takeTime = takeTime;
-        this.toPlaceId = toPlaceId;
-        this.fromPlaceId = fromPlaceId;
-        this.googleId = googleId;
+    public TransportPlan(PlacePlan fromPlacePlan, PlacePlan toPlacePlan, RouteInfo routeInfo) {
+        super(fromPlacePlan.getEndTime(), calcEndTime(fromPlacePlan.getEndTime(), routeInfo));
+        this.fromPlacePlan = fromPlacePlan;
+        this.toPlacePlan = toPlacePlan;
+        this.routeInfo = routeInfo;
+        if (routeInfo != null) {
+            this.totalDistanceMeters = routeInfo.getTotalDistanceMeters();
+            this.takeTime = routeInfo.getTotalDurationSeconds();
+        }
     }
+
+    // 소요 시간 더한 뒤 1시간 단위 올림
+    private static LocalTime calcEndTime(LocalTime start, RouteInfo routeInfo) {
+        if (routeInfo == null || routeInfo.getTotalDurationSeconds() == null) return start;
+        LocalTime end = start.plusSeconds(routeInfo.getTotalDurationSeconds());
+        if (end.getMinute() == 0 && end.getSecond() == 0) return end;
+        return end.truncatedTo(ChronoUnit.HOURS).plusHours(1);
+    }
+
 }

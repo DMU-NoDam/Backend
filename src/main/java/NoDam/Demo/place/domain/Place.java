@@ -46,10 +46,10 @@ public class Place extends BaseEntity {
     private String address;
 
     @Column(nullable = false)
-    private Double x; // 경도
+    private Double lon; // x
 
     @Column(nullable = false)
-    private Double y; // 위도
+    private Double lat; // y
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = true, length = 15)
@@ -69,15 +69,15 @@ public class Place extends BaseEntity {
 
     @Builder
     public Place(Long regionId, PlaceType placeType, String googleId, String name, String address,
-                 Double x, Double y, WeatherType recommendWeatherType,
+                 Double lon, Double lat, WeatherType recommendWeatherType,
                  TripThemeType recommendTripThemeType, SeasonType recommendSeasonType, PriceType priceType) {
         this.regionId = regionId;
         this.placeType = placeType;
         this.googleId = googleId;
         this.name = name;
         this.address = address;
-        this.x = x;
-        this.y = y;
+        this.lon = lon;
+        this.lat = lat;
         this.recommendWeatherType = recommendWeatherType;
         this.recommendTripThemeType = recommendTripThemeType;
         this.recommendSeasonType = recommendSeasonType;

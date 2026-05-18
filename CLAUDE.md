@@ -42,32 +42,18 @@ Service에서 외부 api 호출 시 Log 찍기
 
 ## 팀 컨벤션
 
-### Class.md 파일 관리
-class.java 파일 옆에 {className}_class.md를 작성한다
-(단, test 코드는 작성하지 않는다)
-
-# Class 책임
-- {class 책임 요소, 간단히 작성}
-# 함수
-- {public 함수 시그니처}
-- - {추가 설명, 사용자 요청시에만 작성}
-# todo
-- {todo}
-- - {간단 설명}
-
 ### Transaction
 최대한 짧게 호출
 오래 걸리는 작업, 외부 api 호출은 Transaction내부 호출 금지
 평상시 transactional 어노테이션 사용, 필요시 Spring TransactionTemplate 사용 권장
+class에 transactional 어노테이션 사용을 금지한다
 
 ### 동시성
 select and write 의 동시성 발생 가능성을 확인하고
 발생 가능시 service 함수위에 주석으로 알림
 
 ### uri 방식
-/{module}/{접근 권한자}/uri ...
-
-module : module 정리 참고
+/{model}/{접근 권한자}/uri ...
 접근 권한자 : public, api, admin
 
 ### common package를 사용한다
@@ -78,7 +64,7 @@ Controller에서 반환할 때 SuccessResponse를 통해 반환하며, 제네릭
 - util
 필요한 경우 사용한다
 
-## module 정리
+## model 정리
 
 ### Common
 
@@ -115,16 +101,30 @@ SuccessResponse
 - 좌표
 - 추천
 
-### Trip / Plan
-여행 정보 / 일정 정보들
+### Trip
+여행 정보
 
-Plan 
- - place_plan : 장소 방문 plan
- - transport_plan : 이동 plan
+entity
+- Trip
+- UserFixedTrip (fix 여부 저자 table)
+
+### Plan
+일정 정보들
+
+entity
+- Plan
+- DatePlan
+- - 하루의 plan 정보를 담고 있음
+- PlacePlan
+- - 장소 일정을 저장함
+- TransportPlan
+- - 이동 일정을 저장함
 
 책임 기능
-- 여행 정보 저장
 - 일정 정보
+
+### Region
+지역 정보를 담당함
 
 ## 필수 지시
 
@@ -136,9 +136,9 @@ git diff, git status 모두 사용 금지
 gradle은 사용자가 집접 실행함
 compile error 발생해도 문제 없음
 
-### CLAUD.md 수정 금지
+### CLAUDE.md 수정 금지
 CLAUD.md 파일 수정금지, 수정사항이 있다면 사용자에게 알려줄 것!
-사용자가 직접 claud.md파일 수정을 요청할 때만 수정 가능
+사용자가 직접 claude.md파일 수정을 요청할 때만 수정 가능
 
 ### 정확한 요구가 있는 경우 바로 수정
 사용자의 정확한 요구가 있는 경우 다른 코드들을 확인하지 않고 바로 요구사항을 수행한다
