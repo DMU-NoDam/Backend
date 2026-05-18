@@ -47,6 +47,10 @@ public class RouteInfo {
         private Integer stopCount;
     }
 
+    public static RouteInfo empty() {
+        return new RouteInfo(null, null, List.of());
+    }
+
     public RouteInfoResponse toResponse() {
         List<RouteInfoResponse.RouteStepResponse> stepResponses = steps.stream()
                 .map(step -> new RouteInfoResponse.RouteStepResponse(

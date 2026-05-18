@@ -14,8 +14,10 @@ import NoDam.Demo.trip.domain.Trip;
 import NoDam.Demo.trip.repository.TripStatusRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import java.time.LocalTime;
 import java.util.List;
 
 @Service
@@ -84,6 +86,17 @@ public class PlanCreateService {
 
     public List<TransportPlan> createTransportPlans(List<TransportPlan> transportPlans) {
         return transportPlanRepository.saveAll(transportPlans);
+    }
+
+    @Transactional
+    public PlacePlan createPlacePlan(DatePlan datePlan, Long placeId, LocalTime startTime, LocalTime endTime) {
+        PlacePlan entity = PlacePlan.builder()
+                .datePlan(datePlan)
+                .startTime(startTime)
+                .endTime(endTime)
+                .placeId(placeId)
+                .build();
+        return planRepository.save(entity);
     }
 
 }

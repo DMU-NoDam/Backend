@@ -2,8 +2,8 @@ package NoDam.Demo.place.controller;
 
 import NoDam.Demo.common.SuccessResponse;
 import NoDam.Demo.common.type.WeatherType;
-import NoDam.Demo.place.dto.PlaceInfo;
 import NoDam.Demo.place.dto.RecommendPlaceRequestDto;
+import NoDam.Demo.place.dto.RecommendedPlaceInfo;
 import NoDam.Demo.place.service.PlaceFacadeService;
 import NoDam.Demo.user.domain.User;
 import NoDam.Demo.weather.dto.OpenMeteoResponseDto;
@@ -27,13 +27,13 @@ public class PlaceController {
     private final OpenMeteoService openMeteoService;
 
     @PostMapping("/api/recommend")
-    public ResponseEntity<SuccessResponse<List<PlaceInfo>>> recommendPlace(
+    public ResponseEntity<SuccessResponse<List<RecommendedPlaceInfo>>> recommendPlace(
             @RequestBody RecommendPlaceRequestDto dto,
             @AuthenticationPrincipal User user
     ) {
         WeatherType weather = resolveWeather(dto.getUserLat(), dto.getUserLon());
-        List<PlaceInfo> result = placeFacadeService.recommendPlace(dto, user.getId(), weather);
-        return ResponseEntity.ok(new SuccessResponse<List<PlaceInfo>>("success", result));
+        List<RecommendedPlaceInfo> result = placeFacadeService.recommendPlace(dto, user.getId(), weather);
+        return ResponseEntity.ok(new SuccessResponse<List<RecommendedPlaceInfo>>("success", result));
     }
 
     private WeatherType resolveWeather(Double lat, Double lon) {

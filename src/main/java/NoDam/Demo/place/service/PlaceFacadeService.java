@@ -2,13 +2,17 @@ package NoDam.Demo.place.service;
 
 import NoDam.Demo.common.type.*;
 import NoDam.Demo.common.util.ListUtil;
+import NoDam.Demo.common.util.TimeUtil;
 import NoDam.Demo.place.domain.Place;
 import NoDam.Demo.place.dto.PlaceInfo;
 import NoDam.Demo.place.dto.PlaceRequestDto;
 import NoDam.Demo.place.dto.RecommendPlaceRequestDto;
+import NoDam.Demo.place.dto.RecommendedPlaceInfo;
 import NoDam.Demo.place.dto.google.GooglePlaceInfo;
 import NoDam.Demo.plan.domain.DatePlan;
 import NoDam.Demo.plan.domain.PlacePlan;
+import NoDam.Demo.plan.dto.ai.AiRecommendPlaceRequestDto;
+import NoDam.Demo.plan.dto.ai.AiRecommendPlaceResponseDto;
 import NoDam.Demo.plan.dto.response.RouteInfo;
 import NoDam.Demo.plan.service.PlanSelectService;
 import NoDam.Demo.region.domain.Region;
@@ -20,9 +24,12 @@ import org.springframework.data.util.Pair;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 @Service
@@ -81,7 +88,7 @@ public class PlaceFacadeService {
         return placeQueryService.saveAll(requestDtos);
     }
 
-    public List<PlaceInfo> recommendPlace(RecommendPlaceRequestDto dto, Long userId, WeatherType weather) {
+    public List<RecommendedPlaceInfo> recommendPlace(RecommendPlaceRequestDto dto, Long userId, WeatherType weather) {
         PlacePlan targetPlan = planSelectService.findPlacePlanWithDatePlanAndTransport(dto.getPlacePlanId());
         DatePlan datePlan = targetPlan.getDatePlan();
         Trip trip = tripSelectService.findById(datePlan.getTripId(), userId);
@@ -105,11 +112,12 @@ public class PlaceFacadeService {
                 weather,
                 trip.getScheduleType(),
                 excludeIds,
-                dto.getUserLat(), dto.getUserLon()
+                dto.getUserLat(), dto.getUserLon(),
+                targetPlan.getStartTime(), targetPlan.getEndTime()
         );
     }
 
-    private List<PlaceInfo> recommend(
+    private List<RecommendedPlaceInfo> recommend(
             PlaceType placeType,
             Region region,
             PriceType priceType,
@@ -119,7 +127,9 @@ public class PlaceFacadeService {
             ScheduleType scheduleType,
             List<Long> excludeIds,
             Double userLat,
-            Double userLon
+            Double userLon,
+            LocalTime startTime,
+            LocalTime endTime
     ) {
         // 1차 필터: 조건 맞는 장소 10개
         List<PlaceInfo> candidates = placeSelectService
@@ -128,28 +138,59 @@ public class PlaceFacadeService {
                 .map(PlaceInfo::of)
                 .toList();
 
-        // transport 계산 + 못가는 장소 제거
+        // transport 계산 (null이면 RouteInfo.empty로 포함)
         List<Pair<PlaceInfo, RouteInfo>> reachable = new ArrayList<>();
         for (PlaceInfo place : candidates) {
             RouteInfo route = googleApiService.computeRouteSummary(userLat, userLon, place.getLat(), place.getLon());
-            if (route != null) {
-                reachable.add(Pair.of(place, route));
-            }
+            reachable.add(Pair.of(place, route != null ? route : RouteInfo.empty()));
         }
 
         // 2차 AI: 상위 5개 선정
-        return selectTopFiveWithAi(reachable, scheduleType, themeType);
+        return selectTopFiveWithAi(reachable, scheduleType, themeType, startTime, endTime);
     }
 
-    private List<PlaceInfo> selectTopFiveWithAi(
+    private List<RecommendedPlaceInfo> selectTopFiveWithAi(
             List<Pair<PlaceInfo, RouteInfo>> candidates,
             ScheduleType scheduleType,
-            TripThemeType themeType
+            TripThemeType themeType,
+            LocalTime oldStartTime,
+            LocalTime oldEndTime
     ) {
-        // todo : ai 연동 (현재는 단순 상위 5개)
-        return candidates.stream()
-                .limit(5)
-                .map(Pair::getFirst)
+        AiRecommendPlaceRequestDto aiRequest = AiRecommendPlaceRequestDto.builder()
+                .scheduleType(scheduleType)
+                .themeType(themeType)
+                .previousPlace(null) // todo
+                .nextPlace(null)     // todo
+                .candidates(candidates.stream()
+                        .map(pair -> AiRecommendPlaceRequestDto.PlaceCandidate.of(pair.getFirst(), pair.getSecond()))
+                        .toList())
+                .build();
+
+        // todo : ai 연동
+        AiRecommendPlaceResponseDto aiResponse = null;
+
+        if (aiResponse == null || aiResponse.getSelectedPlaces() == null || aiResponse.getSelectedPlaces().isEmpty()) {
+            return candidates.stream()
+                    .limit(5)
+                    .map(pair -> RecommendedPlaceInfo.of(pair.getFirst(), pair.getSecond(), oldStartTime, oldEndTime))
+                    .toList();
+        }
+
+        Map<Long, Pair<PlaceInfo, RouteInfo>> candidateMap = candidates.stream()
+                .collect(Collectors.toMap(pair -> pair.getFirst().getId(), pair -> pair));
+
+        return aiResponse.getSelectedPlaces().stream()
+                .map(selected -> {
+                    Pair<PlaceInfo, RouteInfo> pair = candidateMap.get(selected.getPlaceId());
+                    LocalTime startTime = TimeUtil.toLocalTime(selected.getStartTime());
+                    LocalTime endTime = TimeUtil.toLocalTime(selected.getEndTime());
+                    return RecommendedPlaceInfo.of(
+                            pair.getFirst(),
+                            pair.getSecond(),
+                            startTime != null ? startTime : oldStartTime,
+                            endTime != null ? endTime : oldEndTime
+                    );
+                })
                 .toList();
     }
 
