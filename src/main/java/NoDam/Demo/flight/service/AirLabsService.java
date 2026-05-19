@@ -2,7 +2,6 @@ package NoDam.Demo.flight.service;
 
 import NoDam.Demo.common.excetion.CustomException; // 추가
 import NoDam.Demo.common.excetion.ErrorCode; // 추가
-import NoDam.Demo.common.util.DateUtil; // 추가 : 날짜 yyyy-MM-dd 변환
 import NoDam.Demo.flight.config.AirLabsProperties;
 import NoDam.Demo.flight.dto.AirLabsResponseDto;
 import NoDam.Demo.flight.dto.FlightInfoResponseDto;
@@ -10,6 +9,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j; // 추가
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+
+import java.time.LocalDate;
+import java.time.LocalTime;
 
 @Slf4j // 추가 : logger 사용
 @Service
@@ -19,24 +21,21 @@ public class AirLabsService {
     private final WebClient.Builder webClientBuilder;
     private final AirLabsProperties properties;
 
-    // 사용자가 선택한 여행 시작일 ~ 종료일 범위 안에서 운항하는 항공편을 찾아 반환
-    // - startDate, endDate 형식 : "yyyy-MM-dd"
-    // - 범위 내 매칭되는 가장 빠른 운항편 1건 반환
+    // 편명 + 여행 날짜로 운항 여부 확인 후 출발/도착 정보 반환
+    // - /routes API : dep_time/arr_time 은 "HH:mm" 형식, days 로 운항 요일 확인
     public FlightInfoResponseDto getFlightInfo(String flightIata, String date) {
         // 정제 : 대문자 변환 및 공백 제거
         String cleanFlightIata = (flightIata != null) ? flightIata.toUpperCase().trim() : "";
 
         // 추가 : logger 사용
-        log.info("AirLabs flight lookup request cleanFlightIata={}, startDate={}, endDate={}",
-                cleanFlightIata, date);
+        log.info("AirLabs flight lookup request cleanFlightIata={}, date={}", cleanFlightIata, date);
 
-        // 수정 : API 응답을 String으로 먼저 받아 로그를 찍은 뒤 파싱 (디버깅 강화)
         String rawResponse = webClientBuilder.build()
                 .get()
                 .uri(uriBuilder -> uriBuilder
                         .scheme("https")
                         .host("airlabs.co")
-                        .path("/api/v9/schedules")
+                        .path("/api/v9/routes")
                         .queryParam("flight_iata", cleanFlightIata)
                         .queryParam("api_key", properties.getApiKey())
                         .build())
@@ -46,11 +45,9 @@ public class AirLabsService {
 
         log.info("AirLabs Raw Response for {}: {}", cleanFlightIata, rawResponse);
 
-        // JSON 파싱 (ObjectMapper 또는 직접 변환)
         AirLabsResponseDto response;
         try {
             com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
-            // 알 수 없는 필드가 있어도 에러를 내지 않도록 설정 (DTO 어노테이션과 함께 2중 방어)
             mapper.configure(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
             response = mapper.readValue(rawResponse, AirLabsResponseDto.class);
         } catch (Exception e) {
@@ -67,48 +64,42 @@ public class AirLabsService {
         }
 
         if (response.getResponse().isEmpty()) {
-            log.warn("Empty schedule list from AirLabs for flightIata={}", cleanFlightIata);
+            log.warn("Empty route list from AirLabs for flightIata={}", cleanFlightIata);
             throw new CustomException(ErrorCode.NOT_FOUND);
         }
 
-        // 수정 : 여행 날짜 범위(startDate ~ endDate) 안에서 운항하는 항공편 중 가장 빠른 1건 선택
-        //        - dep_time 은 "yyyy-MM-dd HH:mm" 형식이라 앞 10자리(날짜)만 잘라 비교
+        // date의 요일을 "mon", "tue" ... 형식으로 변환
+        LocalDate localDate = LocalDate.parse(date);
+        String dayOfWeek = localDate.getDayOfWeek().name().substring(0, 3).toLowerCase();
+
         AirLabsResponseDto.FlightData data = response.getResponse().stream()
-                .filter(f -> f.getDep_time() != null && f.getDep_time().length() >= 10)
-                .filter(f -> {
-                    String depDate = f.getDep_time().substring(0, 10); // "yyyy-MM-dd"
-                    return depDate.equals(date);
-                })
-                .min(java.util.Comparator.comparing(AirLabsResponseDto.FlightData::getDep_time))
+                .filter(f -> f.getDays() != null && f.getDays().contains(dayOfWeek))
+                .findFirst()
                 .orElseThrow(() -> {
-                    log.warn("Flight not found in trip date range. flightIata={}, startDate={}, endDate={}",
-                            flightIata, date);
+                    log.warn("Flight not operating on {}. flightIata={}", dayOfWeek, flightIata);
                     return new CustomException(ErrorCode.NOT_FOUND);
                 });
 
-        // 추가 : 시간 데이터 검증
         if (data.getDep_time() == null || data.getArr_time() == null) {
-
-            // 추가 : logger 사용
             log.warn("Flight time is missing. flightIata={}", flightIata);
-
             throw new CustomException(ErrorCode.BAD_REQUEST);
         }
 
-        // 추가 : dep_time, arr_time 의 날짜 부분만 yyyy-MM-dd 형식으로 변환 (DateUtil 사용)
-        String depDate = DateUtil.fromLocalDate(
-                DateUtil.toLocalDate(data.getDep_time().substring(0, 10))
-        );
-        String arrDate = DateUtil.fromLocalDate(
-                DateUtil.toLocalDate(data.getArr_time().substring(0, 10))
-        );
+        // dep_time, arr_time 이 "HH:mm" 형식 → 날짜와 합쳐 "yyyy-MM-dd HH:mm" 형성
+        // arr_time < dep_time 이면 다음날 도착
+        LocalTime depLocalTime = LocalTime.parse(data.getDep_time());
+        LocalTime arrLocalTime = LocalTime.parse(data.getArr_time());
+        String arrDate = arrLocalTime.isBefore(depLocalTime)
+                ? localDate.plusDays(1).toString()
+                : date;
 
         return FlightInfoResponseDto.builder()
                 .flightIata(data.getFlight_iata())
                 .departureAirport(data.getDep_iata())
                 .arrivalAirport(data.getArr_iata())
-                .departureTime(depDate)   // 임시 : yyyy-MM-dd 형식
-                .arrivalTime(arrDate)     // 임시 : yyyy-MM-dd 형식
+                .departureTime(date + " " + data.getDep_time())
+                .arrivalTime(arrDate + " " + data.getArr_time())
+                .duration(data.getDuration())
                 .build();
     }
 }

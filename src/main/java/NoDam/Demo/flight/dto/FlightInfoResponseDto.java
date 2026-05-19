@@ -12,6 +12,7 @@ public class FlightInfoResponseDto {
     private String flightIata;
     private String departureAirport;
     private String arrivalAirport;
-    private String departureTime;
-    private String arrivalTime;
+    private String departureTime;  // "yyyy-MM-dd HH:mm" 형식
+    private String arrivalTime;    // "yyyy-MM-dd HH:mm" 형식
+    private Integer duration;      // 비행 시간 (분)
 }
