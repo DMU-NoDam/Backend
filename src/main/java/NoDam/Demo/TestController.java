@@ -7,6 +7,8 @@ import NoDam.Demo.user.domain.User;
 import NoDam.Demo.user.domain.UserRole;
 import NoDam.Demo.user.repository.UserRepository;
 import NoDam.Demo.user.service.JWTService;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.Map;
 import lombok.Getter;
@@ -52,6 +54,14 @@ public class TestController {
     }
 
     @PostMapping("/test/user")
+    @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            content = @Content(mediaType = "application/json", examples = @ExampleObject(value = """
+                    {
+                      "role": "USER",
+                      "id": null
+                    }
+                    """))
+    )
     public ResponseEntity<SuccessResponse<Map<String, Object>>> createOrIssueTestUserToken(@RequestBody TestUserRequest request) {
         User user;
 

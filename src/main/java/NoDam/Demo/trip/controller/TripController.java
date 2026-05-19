@@ -10,6 +10,8 @@ import NoDam.Demo.trip.dto.response.TripInfoDto;
 import NoDam.Demo.trip.service.TripFacadeService;
 import NoDam.Demo.user.domain.User;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -42,6 +44,26 @@ public class TripController {
 
     @PostMapping("/api")
     @Operation(summary = "trip domain 생성")
+    @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            content = @Content(mediaType = "application/json", examples = @ExampleObject(value = """
+                    {
+                      "trip": {
+                        "name": "도쿄 여행",
+                        "uuid": "abc123",
+                        "personCount": 2,
+                        "scheduleType": "LOOSE",
+                        "priceType": "CHEEP",
+                        "startDate": "2025-01-01",
+                        "endDate": "2025-01-02"
+                      },
+                      "region": ["jp-tokyo"],
+                      "selectedPlace": [],
+                      "hotel": [],
+                      "departFlight": {},
+                      "arriveFlight": {}
+                    }
+                    """))
+    )
     public ResponseEntity<SuccessResponse<TripInfoDto>> createTrip(
             @AuthenticationPrincipal User user,
             @RequestBody @Valid TripCreateFacadeRequestDto request
