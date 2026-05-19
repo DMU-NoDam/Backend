@@ -4,6 +4,7 @@ import NoDam.Demo.common.type.TripThemeType;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.AccessLevel;
@@ -37,15 +38,28 @@ public class DatePlan {
     @Column(name = "google_id_list", nullable = true)
     private String googleIds;
 
+    @Column(nullable = true)
+    private Long hotelPlaceId; // 해당 날짜 숙소 place id
+
+    @Column(nullable = true)
+    private Long airportPlaceId; // 해당 날짜 공항 place id (첫날 = 목적지 도착 공항, 마지막날 = 목적지 출발 공항)
+
+    @Column(nullable = true)
+    private LocalTime airportTime; // 첫날 = 한국 출발 시간 ceiling, 마지막날 = 목적지 출발 시간 ceiling
+
     @OneToMany(mappedBy = "datePlan")
     private List<PlacePlan> placePlans = new ArrayList<>();
 
     @Builder
-    public DatePlan(LocalDate date, Long tripId, Long regionId, List<String> googleIds, TripThemeType tripThemeType) {
+    public DatePlan(LocalDate date, Long tripId, Long regionId, List<String> googleIds, TripThemeType tripThemeType,
+                    Long hotelPlaceId, Long airportPlaceId, LocalTime airportTime) {
         this.date = date;
         this.tripId = tripId;
         this.regionId = regionId;
         this.googleIds = googleIds != null ? String.join(",", googleIds) : "";
         this.tripThemeType = tripThemeType;
+        this.hotelPlaceId = hotelPlaceId;
+        this.airportPlaceId = airportPlaceId;
+        this.airportTime = airportTime;
     }
 }

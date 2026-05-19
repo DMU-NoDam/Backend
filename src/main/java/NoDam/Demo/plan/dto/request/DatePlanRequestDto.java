@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 
 @NoArgsConstructor
@@ -21,5 +22,8 @@ public class DatePlanRequestDto {
     private Region region; // not null
     private TripThemeType themeType; // not null
     private List<Place> necessaryPlaces; // can null
+    private Long hotelPlaceId; // nullable
+    private Long airportPlaceId; // nullable
+    private LocalTime airportTime; // nullable
 
 }

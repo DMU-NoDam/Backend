@@ -43,6 +43,17 @@ public class PlaceFacadeService {
     private final PlanSelectService planSelectService;
     private final TripSelectService tripSelectService;
 
+    public Place findByGoogleId(String googleId) {
+        if(googleId == null || googleId.isEmpty())
+            throw new RuntimeException("PlaceFacadeService.findByGoogleId :: parameter googleId can not be null");
+
+        Place place = placeSelectService.findByGoogleId(googleId).orElseGet(
+                ()->{return saveNewPlaces(List.of(googleId)).get(0);}
+        );
+
+        return place;
+    }
+
     @Async
     public CompletableFuture<List<Place>> findAllByGoogleId(List<String> googleIds) {
         if(googleIds == null || googleIds.isEmpty())

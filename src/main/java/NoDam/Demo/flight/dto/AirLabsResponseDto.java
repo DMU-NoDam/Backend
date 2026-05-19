@@ -18,8 +18,10 @@ public class AirLabsResponseDto {
         private String flight_iata;
         private String dep_iata;
         private String arr_iata;
-        private String dep_time;
-        private String arr_time;
+        private String dep_time;   // "HH:mm" 형식
+        private String arr_time;   // "HH:mm" 형식
+        private Integer duration;  // 비행 시간 (분)
+        private java.util.List<String> days; // 운항 요일 ["mon", "tue", ...]
     }
 
     @Getter

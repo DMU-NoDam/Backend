@@ -59,6 +59,9 @@ public class PlanCreateService {
                             .regionId(dto.getRegion().getId())
                             .tripThemeType(dto.getThemeType())
                             .googleIds(List.of()) // todo
+                            .hotelPlaceId(dto.getHotelPlaceId())
+                            .airportPlaceId(dto.getAirportPlaceId())
+                            .airportTime(dto.getAirportTime())
                             .build();
                 })
                 .toList();
