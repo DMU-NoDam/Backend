@@ -12,19 +12,18 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class AiRecommendPlaceResponseDto implements AiExample {
+public class AiRegionAssignResponseDto implements AiExample {
 
-    private List<SelectedPlace> selectedPlaces;
+    private List<DateRegionMapping> assignments;
 
     @Override
     public String toJsonStr() {
         return """
                 {
-                  "selectedPlaces": [
+                  "assignments": [
                     {
-                      "placeId": 1,
-                      "startTime": "09:00",
-                      "endTime": "10:30"
+                      "date": "2024-01-15",
+                      "regionId": 1
                     }
                   ]
                 }
@@ -35,10 +34,9 @@ public class AiRecommendPlaceResponseDto implements AiExample {
     @Setter
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class SelectedPlace {
-
-        private Long placeId;
-        private String startTime; // HH:mm
-        private String endTime;   // HH:mm
+    public static class DateRegionMapping {
+        private String date;     // yyyy-MM-dd
+        private Long regionId;
     }
+
 }

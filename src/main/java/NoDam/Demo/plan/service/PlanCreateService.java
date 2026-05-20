@@ -52,18 +52,18 @@ public class PlanCreateService {
             List<DatePlanRequestDto> datePlans
     ) {
         List<DatePlan> entities = datePlans.stream()
-                .map(dto -> {
-                    return DatePlan.builder()
-                            .date(dto.getDate())
-                            .tripId(trip.getId())
-                            .regionId(dto.getRegion().getId())
-                            .tripThemeType(dto.getThemeType())
-                            .googleIds(List.of()) // todo
-                            .hotelPlaceId(dto.getHotelPlaceId())
-                            .airportPlaceId(dto.getAirportPlaceId())
-                            .airportTime(dto.getAirportTime())
-                            .build();
-                })
+                .map(dto -> DatePlan.builder()
+                        .date(dto.getDate())
+                        .tripId(trip.getId())
+                        .regionId(dto.getRegion().getId())
+                        .tripThemeType(dto.getThemeType())
+                        .googleIds(dto.getNecessaryPlaces() != null
+                                ? dto.getNecessaryPlaces().stream().map(p -> p.getGoogleId()).toList()
+                                : List.of())
+                        .hotelPlaceId(dto.getHotelPlaceId())
+                        .airportPlaceId(dto.getAirportPlaceId())
+                        .airportTime(dto.getAirportTime())
+                        .build())
                 .toList();
 
         return datePlanRepository.saveAll(entities);
@@ -100,6 +100,12 @@ public class PlanCreateService {
                 .placeId(placeId)
                 .build();
         return planRepository.save(entity);
+    }
+
+    @Transactional
+    public void updateHotelPlacePlanId(PlacePlan placePlan, Long placeId) {
+        placePlan.updatePlaceId(placeId);
+        planRepository.save(placePlan);
     }
 
 }

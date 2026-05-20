@@ -1,8 +1,11 @@
 package NoDam.Demo.plan.domain;
 
+import NoDam.Demo.common.type.PlaceType;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
@@ -25,7 +28,7 @@ public class PlacePlan extends Plan {
     @JoinColumn(name = "date_plan_id", nullable = false)
     private DatePlan datePlan;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private Long placeId; // cross-module: place 참조
 
     @OneToOne(mappedBy = "fromPlacePlan")
@@ -33,6 +36,10 @@ public class PlacePlan extends Plan {
 
     @OneToOne(mappedBy = "toPlacePlan")
     private TransportPlan arrivalTransport;
+
+    public void updatePlaceId(Long placeId) {
+        this.placeId = placeId;
+    }
 
     @Builder
     public PlacePlan(DatePlan datePlan, LocalTime startTime, LocalTime endTime, Long placeId) {

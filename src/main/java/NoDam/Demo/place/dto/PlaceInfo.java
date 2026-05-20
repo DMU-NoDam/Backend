@@ -24,9 +24,6 @@ public class PlaceInfo {
     private String name;
     private String address;
     private PriceType priceType;
-    private SeasonType recommendSeasonType;
-    private WeatherType recommendWeatherType;
-    private TripThemeType recommendTripThemeType;
     private Double lon; // x
     private Double lat; // y
 
@@ -40,9 +37,6 @@ public class PlaceInfo {
                 .address(place.getAddress())
                 .lon(place.getLon())
                 .lat(place.getLat())
-                .recommendWeatherType(place.getRecommendWeatherType())
-                .recommendTripThemeType(place.getRecommendTripThemeType())
-                .recommendSeasonType(place.getRecommendSeasonType())
                 .priceType(place.getPriceType())
                 .build();
     }
@@ -56,9 +50,6 @@ public class PlaceInfo {
                 .address(address)
                 .lon(lon)
                 .lat(lat)
-                .recommendWeatherType(recommendWeatherType)
-                .recommendTripThemeType(recommendTripThemeType)
-                .recommendSeasonType(recommendSeasonType)
                 .priceType(priceType)
                 .build();
     }
