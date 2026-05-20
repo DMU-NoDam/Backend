@@ -20,8 +20,23 @@
 
 ### facade layered Architecture
 
-domain service, facade service 분리
-다른 module간의 간섭이 없는 domain제외 controller에서 일반 service 호출 금지, facade service에서 repository class 직접 참조 금지
+domain service, facade service 분리 (단, 다른 domain간의 간섭이 없거나 매우 간단한 domain제외)
+- 정의
+domain에 여러 entity를 가질 수 있으며, 같은 domain에 소속된 entity는 로직에서 서로 섞여도 무관하다
+domain service : Repository를 통해 domain의 로직을 처리한다
+facade service : 여러 domain이 관련된 기능들을 domain service들을 사용하여 처리한다
+repositroy를 가지지 않아도 domain 규칙을 가지면 domain service 분리 가능
+
+ai service와 같이 외부 service를 위한 class는 repository class와 동일하게 취급한다(output port)
+- 목적
+domain service는 다른 domain에 섞이지 않게 하기 위함
+facade service는 가급적 흐름만을 책임지기 위함
+- 규칙
+controller에서 domain service 호출 금지
+facade service에서 repository class 직접 참조 금지
+domain service에서 다른 domain의 repository 호출 금지
+
+단, 모든 규칙은 새로 코드를 작성할 때만 적용한다 (이미 작성된 코드가 기준을 만족하지 못해도 사용자가 요청하기 전까지 수정하지 않는다) 
 
 ### Auth
 jwt 사용
@@ -158,3 +173,7 @@ State your assumptions explicitly. If uncertain, ask.
 If multiple interpretations exist, present them - don't pick silently.
 If a simpler approach exists, say so. Push back when warranted.
 If something is unclear, stop. Name what's confusing. Ask.
+
+### 2. 존댓말 사용
+존댓말 사용할 것
+장난치지 말 것
