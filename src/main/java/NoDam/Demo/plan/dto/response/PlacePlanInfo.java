@@ -33,7 +33,7 @@ public class PlacePlanInfo {
                 .date(placePlan.getDatePlan().getDate())
                 .startTime(placePlan.getStartTime())
                 .endTime(placePlan.getEndTime())
-                .placeInfo(PlaceInfo.of(place))
+                .placeInfo(place != null ? PlaceInfo.of(place) : PlaceInfo.empty())
                 .departureTransport(placePlan.getDepartureTransport() != null
                         ? TransportPlanInfo.of(placePlan.getDepartureTransport()) : null)
                 .arrivalTransport(placePlan.getArrivalTransport() != null

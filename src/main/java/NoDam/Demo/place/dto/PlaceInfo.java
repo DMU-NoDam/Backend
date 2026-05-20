@@ -41,6 +41,12 @@ public class PlaceInfo {
                 .build();
     }
 
+    public static PlaceInfo empty() {
+        return PlaceInfo.builder()
+                .name("empty place")
+                .build();
+    }
+
     public Place toPlace() {
         return Place.builder()
                 .regionId(regionId)

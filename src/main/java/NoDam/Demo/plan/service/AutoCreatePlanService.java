@@ -30,6 +30,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.*;
+import java.util.function.Supplier;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -99,18 +100,39 @@ public class AutoCreatePlanService {
         return CompletableFuture.completedFuture(createdDatePlans);
     }
 
+    private <T> T runWithPlanningLock(Trip trip, Supplier<T> task) {
+        planCreateService.updateTripStatus(trip, true);
+        try {
+            T result = task.get();
+            planCreateService.updateTripStatus(trip, false);
+            return result;
+        } catch (Exception e) {
+            logger.error("planningLock 처리 중 에러 tripId={}", trip.getId(), e);
+            planCreateService.forceUpdateTripStatus(trip, false);
+            throw e;
+        }
+    }
+
     @Async
     public CompletableFuture<List<DatePlan>> autoGenerateAllPlans(Trip trip) {
+        return runWithPlanningLock(trip, () -> {
         List<DatePlan> createdDatePlans = new ArrayList<>();
-
-        planCreateService.updateTripStatus(trip, true);
-
         List<Place> previousDaysPlaces = new ArrayList<>();
 
         for (DatePlan datePlan : planSelectService.findAllDatePlan(trip)) {
+            PlanStatus status = datePlan.getPlanStatus();
+
+            // AI 일정까지 완료된 날짜: previousDaysPlaces만 누적하고 skip
+            if (status.isAfterOrEqual(PlanStatus.AI_PLANNED)) {
+                previousDaysPlaces.addAll(getAiPlacesFromExistingPlans(datePlan));
+                continue;
+            }
+
             // 1. 공항 + 호텔 필수 PlacePlan 삽입
-            planCreateService.createPlans(datePlan, buildNecessaryPlans(trip, datePlan));
-            List<PlacePlanInfo> fixedPlans = toPlacePlanInfos(planSelectService.findPlacePlansByDatePlan(datePlan));
+            if (status.isBefore(PlanStatus.FIXED_PLANNED)) {
+                planCreateService.createPlans(datePlan, buildNecessaryPlans(trip, datePlan));
+                planCreateService.updateDatePlanStatus(datePlan, PlanStatus.FIXED_PLANNED);
+            }
 
             // 2. 후보 장소 조회 (HOTEL, AIRPORT 제외)
             Region region = regionQueryService.findById(datePlan.getRegionId());
@@ -120,12 +142,15 @@ public class AutoCreatePlanService {
             List<PlaceInfo> necessaryPlaces = getNecessaryPlaces(datePlan);
 
             // 4. AI 일정 생성 (step 3+4 통합)
+            List<PlacePlanInfo> fixedPlans = toPlacePlanInfos(planSelectService.findPlacePlansByDatePlan(datePlan));
             List<PlacePlanRequestDto> plans = dayScheduleService.buildSchedule(
                     trip.getScheduleType(), datePlan.getTripThemeType(),
                     necessaryPlaces, fixedPlans, candidates, previousDaysPlaces);
-            previousDaysPlaces.addAll(validatePlaces(plans));
+            List<Place> validatedPlaces = validatePlaces(plans);
 
             createdDatePlans.add(planCreateService.createPlans(datePlan, plans));
+            planCreateService.updateDatePlanStatus(datePlan, PlanStatus.AI_PLANNED);
+            previousDaysPlaces.addAll(validatedPlaces);
 
             // 5. hotel placeholder에 추천 호텔 배정
             if (datePlan.getHotelPlaceId() == null) {
@@ -136,10 +161,26 @@ public class AutoCreatePlanService {
                                     .ifPresent(h -> planCreateService.updateHotelPlacePlanId(placeholder, h.getId()));
                         });
             }
+            planCreateService.updateDatePlanStatus(datePlan, PlanStatus.HOTEL_ASSIGNED);
         }
 
-        planCreateService.updateTripStatus(trip, false);
         return CompletableFuture.completedFuture(createdDatePlans);
+        });
+    }
+
+    // AI_PLANNED 이상인 날짜의 기존 PlacePlan에서 고정 장소(공항·호텔) 제외한 AI 선정 장소 반환
+    private List<Place> getAiPlacesFromExistingPlans(DatePlan datePlan) {
+        Set<Long> fixedIds = new HashSet<>();
+        if (datePlan.getAirportPlaceId() != null) fixedIds.add(datePlan.getAirportPlaceId());
+        if (datePlan.getHotelPlaceId() != null) fixedIds.add(datePlan.getHotelPlaceId());
+
+        List<Long> aiPlaceIds = planSelectService.findPlacePlansByDatePlan(datePlan).stream()
+                .map(PlacePlan::getPlaceId)
+                .filter(id -> id != null && !fixedIds.contains(id))
+                .distinct()
+                .toList();
+
+        return placeSelectService.findAllById(aiPlaceIds);
     }
 
     private List<Place> validatePlaces(List<PlacePlanRequestDto> aiResponse) {
@@ -157,22 +198,21 @@ public class AutoCreatePlanService {
     @Async
     // 일별 모든 장소 재 생성 (한번에 모두 생성)
     public CompletableFuture<DatePlan> autoGeneratePlans(Trip trip, DatePlan targetDate) {
-        trip = planCreateService.updateTripStatus(trip, true);
+        return runWithPlanningLock(trip, () -> {
+            Region region = regionQueryService.findById(targetDate.getRegionId());
+            Map<PlaceType, List<PlaceInfo>> candidates = buildCandidates(trip, targetDate, region);
+            List<PlaceInfo> necessaryPlaces = getNecessaryPlaces(targetDate);
+            List<PlacePlanInfo> fixedPlans = toPlacePlanInfos(planSelectService.findPlacePlansByDatePlan(targetDate));
 
-        Region region = regionQueryService.findById(targetDate.getRegionId());
-        Map<PlaceType, List<PlaceInfo>> candidates = buildCandidates(trip, targetDate, region);
-        List<PlaceInfo> necessaryPlaces = getNecessaryPlaces(targetDate);
-        List<PlacePlanInfo> fixedPlans = toPlacePlanInfos(planSelectService.findPlacePlansByDatePlan(targetDate));
+            List<PlacePlanRequestDto> plans = dayScheduleService.buildSchedule(
+                    trip.getScheduleType(), targetDate.getTripThemeType(),
+                    necessaryPlaces, fixedPlans, candidates, List.of());
+            validatePlaces(plans);
 
-        List<PlacePlanRequestDto> plans = dayScheduleService.buildSchedule(
-                trip.getScheduleType(), targetDate.getTripThemeType(),
-                necessaryPlaces, fixedPlans, candidates, List.of());
-        validatePlaces(plans);
-
-        DatePlan created = planCreateService.createPlans(targetDate, plans);
-
-        trip = planCreateService.updateTripStatus(trip, false);
-        return CompletableFuture.completedFuture(created);
+            DatePlan created = planCreateService.createPlans(targetDate, plans);
+            planCreateService.updateDatePlanStatus(targetDate, PlanStatus.AI_PLANNED);
+            return CompletableFuture.completedFuture(created);
+        });
     }
 
     // 공항(첫날/마지막날), 호텔(매일) 필수 PlacePlan 생성
@@ -276,25 +316,26 @@ public class AutoCreatePlanService {
 
     @Async
     public CompletableFuture<List<TransportPlan>> autoGenerateAllThemeTransportPlans(Trip trip, List<DatePlan> datePlans) {
-        List<TransportPlan> allCreated = new ArrayList<>();
+        return runWithPlanningLock(trip, () -> {
+            List<TransportPlan> allCreated = new ArrayList<>();
 
-        for (DatePlan datePlan : datePlans) {
-            trip = planCreateService.updateTripStatus(trip, true);
-            allCreated.addAll(generateTransportPlans(datePlan));
-            planCreateService.updateTripStatus(trip, false);
-        }
+            for (DatePlan datePlan : datePlans) {
+                if (datePlan.getPlanStatus().isAfterOrEqual(PlanStatus.TRANSPORT_PLANNED)) continue;
+                allCreated.addAll(generateTransportPlans(datePlan));
+                planCreateService.updateDatePlanStatus(datePlan, PlanStatus.TRANSPORT_PLANNED);
+            }
 
-        return CompletableFuture.completedFuture(allCreated);
+            return CompletableFuture.completedFuture(allCreated);
+        });
     }
 
     @Async
     // 동시성: 같은 PlacePlan 쌍에 동시 호출 시 중복 TransportPlan 생성 가능
     public CompletableFuture<List<TransportPlan>> createAllTransportPlan(Trip trip, DatePlan datePlan) {
-        trip = planCreateService.updateTripStatus(trip, true);
-        List<TransportPlan> result = generateTransportPlans(datePlan);
-        planCreateService.updateTripStatus(trip, false);
-
-        return CompletableFuture.completedFuture(result);
+        return runWithPlanningLock(trip, () -> {
+            List<TransportPlan> transportPlans = generateTransportPlans(datePlan);
+            return CompletableFuture.completedFuture(transportPlans);
+        });
     }
 
     private List<TransportPlan> generateTransportPlans(DatePlan targetDate) {

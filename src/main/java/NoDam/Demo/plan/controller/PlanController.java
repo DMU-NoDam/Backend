@@ -4,6 +4,7 @@ import NoDam.Demo.common.SuccessResponse;
 import NoDam.Demo.common.type.TripThemeType;
 import NoDam.Demo.plan.dto.request.ChangePlacePlanRequestDto;
 import NoDam.Demo.plan.dto.response.PlacePlanInfo;
+import NoDam.Demo.plan.dto.response.PlanStatusResponse;
 import NoDam.Demo.plan.service.PlanFacadeService;
 import NoDam.Demo.user.domain.User;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,15 @@ import java.util.Map;
 public class PlanController {
 
     private final PlanFacadeService planFacadeService;
+
+    @GetMapping("/api/{tripId}/status")
+    public ResponseEntity<SuccessResponse<PlanStatusResponse>> getPlanStatus(
+            @PathVariable Long tripId,
+            @AuthenticationPrincipal User user
+    ) {
+        PlanStatusResponse response = planFacadeService.getPlanStatus(tripId, user.getId());
+        return ResponseEntity.ok(new SuccessResponse<PlanStatusResponse>("success", response));
+    }
 
     @GetMapping("/api/{tripId}")
     public ResponseEntity<SuccessResponse<Map<TripThemeType, List<PlacePlanInfo>>>> selectPlans(

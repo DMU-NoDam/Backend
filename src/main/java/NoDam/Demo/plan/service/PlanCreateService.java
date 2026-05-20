@@ -2,6 +2,7 @@ package NoDam.Demo.plan.service;
 
 import NoDam.Demo.common.excetion.CustomException;
 import NoDam.Demo.common.excetion.ErrorCode;
+import NoDam.Demo.common.type.PlanStatus;
 import NoDam.Demo.plan.domain.DatePlan;
 import NoDam.Demo.plan.domain.PlacePlan;
 import NoDam.Demo.plan.domain.TransportPlan;
@@ -100,6 +101,20 @@ public class PlanCreateService {
                 .placeId(placeId)
                 .build();
         return planRepository.save(entity);
+    }
+
+    public void forceUpdateTripStatus(Trip trip, Boolean status) {
+        transactionTemplate.execute(s -> {
+            tripStatusRepository.tryUpdateTripStatusForce(trip.getId(), status);
+            return null;
+        });
+        trip.updatePlanning(status);
+    }
+
+    @Transactional
+    public void updateDatePlanStatus(DatePlan datePlan, PlanStatus status) {
+        datePlan.updatePlanStatus(status);
+        datePlanRepository.save(datePlan);
     }
 
     @Transactional

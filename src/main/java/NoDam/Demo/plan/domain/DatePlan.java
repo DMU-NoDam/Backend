@@ -1,5 +1,6 @@
 package NoDam.Demo.plan.domain;
 
+import NoDam.Demo.common.type.PlanStatus;
 import NoDam.Demo.common.type.TripThemeType;
 import jakarta.persistence.*;
 
@@ -47,6 +48,10 @@ public class DatePlan {
     @Column(nullable = true)
     private LocalTime airportTime; // 첫날 = 한국 출발 시간 ceiling, 마지막날 = 목적지 출발 시간 ceiling
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private PlanStatus planStatus;
+
     @OneToMany(mappedBy = "datePlan")
     private List<PlacePlan> placePlans = new ArrayList<>();
 
@@ -61,5 +66,10 @@ public class DatePlan {
         this.hotelPlaceId = hotelPlaceId;
         this.airportPlaceId = airportPlaceId;
         this.airportTime = airportTime;
+        this.planStatus = PlanStatus.CREATED;
+    }
+
+    public void updatePlanStatus(PlanStatus planStatus) {
+        this.planStatus = planStatus;
     }
 }
