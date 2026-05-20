@@ -27,3 +27,7 @@ Body: json
   "role": "USER"
 }
 ```
+
+## 필수 규칙
+db, env 를 읽지 말것
+api가 실패했다면 test를 중단하고 사용자에게 알릴 것
