@@ -34,13 +34,13 @@ public enum Prompt {
             """),
 
     /**
-     * args[0] : AiDayScheduleRequestDto (JSON)
+     * args[0] : AiBuildDayScheduleDto (JSON)
      * - scheduleType       : LOOSE | NORMAL | TIGHT
      * - themeType          : FOOD | HEALING | LANDMARK | ACTIVITY
-     * - necessaryPlaces    : List<PlaceInfo> — 반드시 포함해야 할 장소
-     * - fixedPlans         : List<PlacePlanInfo> — 고정된 시간대 (공항, 호텔) startTime, endTime 포함
-     * - previousDaysPlaces : List<PlaceInfo> — 이전 날짜에 이미 선정된 장소 목록
-     * - candidates         : Map<PlaceType, List<PlaceInfo>> (RESTAURANT | CAFE | SIGHT | SHOP)
+     * - necessaryPlaces    : List<PlaceItem> (id, placeType, name, lon, lat) — 반드시 포함해야 할 장소
+     * - fixedPlans         : List<FixedPlanItem> (startTime, endTime, place) — 고정된 시간대 (공항, 호텔)
+     * - previousDaysPlaces : List<PlaceItem> — 이전 날짜에 이미 선정된 장소 목록
+     * - candidates         : Map<PlaceType, List<PlaceItem>> (RESTAURANT | CAFE | SIGHT | SHOP)
      * args[1] : responseFormat (AiService가 자동 생성)
      */
     BUILD_DAY_SCHEDULE("""

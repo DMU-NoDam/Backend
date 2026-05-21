@@ -101,6 +101,11 @@ public class AiService {
     }
 
     public <T> T call(Prompt prompt, Class<T> responseType, Object... args) {
+        if ("mock".equals(provider)) {
+            logger.info("AiService.call :: mock mode prompt={}", prompt);
+            return deserialize(generateResponseFormat(responseType), responseType);
+        }
+
         String[] serializedArgs = Arrays.stream(args)
                 .map(this::serialize)
                 .toArray(String[]::new);

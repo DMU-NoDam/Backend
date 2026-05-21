@@ -1,5 +1,6 @@
 package NoDam.Demo.plan.service;
 
+import NoDam.Demo.ai.AiBuildDayScheduleDto;
 import NoDam.Demo.ai.AiService;
 import NoDam.Demo.ai.Prompt;
 import NoDam.Demo.common.type.PlaceType;
@@ -8,7 +9,6 @@ import NoDam.Demo.common.type.TripThemeType;
 import NoDam.Demo.common.util.TimeUtil;
 import NoDam.Demo.place.domain.Place;
 import NoDam.Demo.place.dto.PlaceInfo;
-import NoDam.Demo.plan.dto.ai.AiDayScheduleRequestDto;
 import NoDam.Demo.plan.dto.response.PlacePlanInfo;
 import NoDam.Demo.plan.dto.ai.AiRecommendPlaceResponseDto;
 import NoDam.Demo.plan.dto.request.PlacePlanRequestDto;
@@ -21,6 +21,7 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -39,13 +40,17 @@ public class DayScheduleService {
             Map<PlaceType, List<PlaceInfo>> candidates,
             List<Place> previousDaysPlaces
     ) {
-        AiDayScheduleRequestDto request = AiDayScheduleRequestDto.builder()
+        AiBuildDayScheduleDto request = AiBuildDayScheduleDto.builder()
                 .scheduleType(scheduleType)
                 .themeType(themeType)
-                .necessaryPlaces(necessaryPlaces)
-                .fixedPlans(fixedPlans)
-                .previousDaysPlaces(previousDaysPlaces.stream().map(PlaceInfo::of).toList())
-                .candidates(candidates)
+                .necessaryPlaces(necessaryPlaces.stream().map(AiBuildDayScheduleDto.PlaceItem::of).toList())
+                .fixedPlans(fixedPlans.stream().map(AiBuildDayScheduleDto.FixedPlanItem::of).toList())
+                .previousDaysPlaces(previousDaysPlaces.stream().map(AiBuildDayScheduleDto.PlaceItem::of).toList())
+                .candidates(candidates.entrySet().stream()
+                        .collect(Collectors.toMap(
+                                Map.Entry::getKey,
+                                e -> e.getValue().stream().map(AiBuildDayScheduleDto.PlaceItem::of).toList()
+                        )))
                 .build();
 
         AiRecommendPlaceResponseDto response = aiService.call(
