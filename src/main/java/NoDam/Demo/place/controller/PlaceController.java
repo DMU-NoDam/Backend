@@ -31,22 +31,7 @@ public class PlaceController {
             @RequestBody RecommendPlaceRequestDto dto,
             @AuthenticationPrincipal User user
     ) {
-        WeatherType weather = resolveWeather(dto.getUserLat(), dto.getUserLon());
-        List<RecommendedPlaceInfo> result = placeFacadeService.recommendPlace(dto, user.getId(), weather);
+        List<RecommendedPlaceInfo> result = placeFacadeService.recommendPlace(dto, user.getId(), WeatherType.SUNNY);
         return ResponseEntity.ok(new SuccessResponse<List<RecommendedPlaceInfo>>("success", result));
-    }
-
-    private WeatherType resolveWeather(Double lat, Double lon) {
-        try {
-            OpenMeteoResponseDto response = openMeteoService.getForecast(lat, lon);
-            if (response == null || response.getDaily() == null || response.getDaily().getWeatherCode().isEmpty())
-                return WeatherType.SUNNY;
-            int code = response.getDaily().getWeatherCode().get(0);
-            if ((code >= 71 && code <= 77) || code == 85 || code == 86) return WeatherType.SNOWY;
-            if (code >= 50) return WeatherType.RAINY;
-            return WeatherType.SUNNY;
-        } catch (Exception e) {
-            return WeatherType.SUNNY;
-        }
     }
 }
