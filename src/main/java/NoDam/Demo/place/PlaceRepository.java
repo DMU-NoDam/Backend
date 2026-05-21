@@ -20,6 +20,9 @@ public interface PlaceRepository extends JpaRepository<Place, Long> {
     @Query("select p from Place p where p.googleId in :googleIds")
     List<Place> findAllByGoogleId(@Param("googleIds") List<String> googleIds);
 
+    @Query("SELECT p FROM Place p WHERE p.placeType = :placeType AND p.regionId = :regionId")
+    List<Place> findByPlaceTypeAndRegionId(@Param("placeType") PlaceType placeType, @Param("regionId") Long regionId, Pageable pageable);
+
     @Query("SELECT p FROM Place p " +
             "WHERE p.placeType = :placeType " +
             "AND p.regionId = :regionId " +

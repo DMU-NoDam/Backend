@@ -1,5 +1,7 @@
 package NoDam.Demo.place.service;
 
+import NoDam.Demo.ai.AiService;
+import NoDam.Demo.ai.Prompt;
 import NoDam.Demo.common.type.*;
 import NoDam.Demo.common.util.ListUtil;
 import NoDam.Demo.common.util.TimeUtil;
@@ -26,6 +28,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -42,6 +45,7 @@ public class PlaceFacadeService {
     private final RegionQueryService regionQueryService;
     private final PlanSelectService planSelectService;
     private final TripSelectService tripSelectService;
+    private final AiService aiService;
 
     public Place findByGoogleId(String googleId) {
         if(googleId == null || googleId.isEmpty())
@@ -110,10 +114,24 @@ public class PlaceFacadeService {
 
         Region region = regionQueryService.findById(datePlan.getRegionId());
 
-        List<Long> excludeIds = planSelectService.findPlacePlansByDatePlan(datePlan)
+        List<PlacePlan> allPlans = planSelectService.findPlacePlansByDatePlan(datePlan)
                 .stream()
-                .map(PlacePlan::getPlaceId)
+                .sorted(Comparator.comparing(PlacePlan::getStartTime))
                 .toList();
+
+        List<Long> excludeIds = allPlans.stream().map(PlacePlan::getPlaceId).toList();
+
+        int targetIndex = IntStream.range(0, allPlans.size())
+                .filter(i -> allPlans.get(i).getId().equals(targetPlan.getId()))
+                .findFirst()
+                .orElse(-1);
+
+        PlaceInfo previousPlace = targetIndex > 0
+                ? PlaceInfo.of(placeSelectService.findById(allPlans.get(targetIndex - 1).getPlaceId()))
+                : null;
+        PlaceInfo nextPlace = targetIndex < allPlans.size() - 1
+                ? PlaceInfo.of(placeSelectService.findById(allPlans.get(targetIndex + 1).getPlaceId()))
+                : null;
 
         return recommend(
                 placeType, region,
@@ -124,7 +142,8 @@ public class PlaceFacadeService {
                 trip.getScheduleType(),
                 excludeIds,
                 dto.getUserLat(), dto.getUserLon(),
-                targetPlan.getStartTime(), targetPlan.getEndTime()
+                targetPlan.getStartTime(), targetPlan.getEndTime(),
+                previousPlace, nextPlace
         );
     }
 
@@ -140,7 +159,9 @@ public class PlaceFacadeService {
             Double userLat,
             Double userLon,
             LocalTime startTime,
-            LocalTime endTime
+            LocalTime endTime,
+            PlaceInfo previousPlace,
+            PlaceInfo nextPlace
     ) {
         // 1차 필터: 조건 맞는 장소 10개
         List<PlaceInfo> candidates = placeSelectService
@@ -157,7 +178,7 @@ public class PlaceFacadeService {
         }
 
         // 2차 AI: 상위 5개 선정
-        return selectTopFiveWithAi(reachable, scheduleType, themeType, startTime, endTime);
+        return selectTopFiveWithAi(reachable, scheduleType, themeType, startTime, endTime, previousPlace, nextPlace);
     }
 
     private List<RecommendedPlaceInfo> selectTopFiveWithAi(
@@ -165,20 +186,25 @@ public class PlaceFacadeService {
             ScheduleType scheduleType,
             TripThemeType themeType,
             LocalTime oldStartTime,
-            LocalTime oldEndTime
+            LocalTime oldEndTime,
+            PlaceInfo previousPlace,
+            PlaceInfo nextPlace
     ) {
         AiRecommendPlaceRequestDto aiRequest = AiRecommendPlaceRequestDto.builder()
                 .scheduleType(scheduleType)
                 .themeType(themeType)
-                .previousPlace(null) // todo
-                .nextPlace(null)     // todo
+                .previousPlace(previousPlace)
+                .nextPlace(nextPlace)
                 .candidates(candidates.stream()
                         .map(pair -> AiRecommendPlaceRequestDto.PlaceCandidate.of(pair.getFirst(), pair.getSecond()))
                         .toList())
                 .build();
 
-        // todo : ai 연동
-        AiRecommendPlaceResponseDto aiResponse = null;
+        AiRecommendPlaceResponseDto aiResponse = aiService.call(
+                Prompt.RECOMMEND_PLACE,
+                AiRecommendPlaceResponseDto.class,
+                aiRequest
+        );
 
         if (aiResponse == null || aiResponse.getSelectedPlaces() == null || aiResponse.getSelectedPlaces().isEmpty()) {
             return candidates.stream()

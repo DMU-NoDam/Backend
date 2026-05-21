@@ -9,10 +9,9 @@ public class TimeUtil {
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
 
     public static LocalTime toLocalTime(String timeString) {
-        if (timeString == null || timeString.isBlank()) {
-            return null;
-        }
-        return LocalTime.parse(timeString, FORMATTER);
+        if (timeString == null || timeString.isBlank()) return null;
+        // HH:mm:ss, HH:mm 둘 다 처리
+        return LocalTime.parse(timeString, DateTimeFormatter.ISO_LOCAL_TIME).truncatedTo(ChronoUnit.MINUTES);
     }
 
     public static String fromLocalTime(LocalTime time) {

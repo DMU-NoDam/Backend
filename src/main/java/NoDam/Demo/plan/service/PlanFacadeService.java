@@ -1,11 +1,14 @@
 package NoDam.Demo.plan.service;
 
+import NoDam.Demo.common.type.PlanStatus;
 import NoDam.Demo.common.type.TripThemeType;
 import NoDam.Demo.place.domain.Place;
 import NoDam.Demo.place.service.PlaceSelectService;
 import NoDam.Demo.plan.domain.DatePlan;
 import NoDam.Demo.plan.domain.PlacePlan;
+import NoDam.Demo.plan.domain.Plan;
 import NoDam.Demo.plan.dto.response.PlacePlanInfo;
+import NoDam.Demo.plan.dto.response.PlanStatusResponse;
 import NoDam.Demo.trip.domain.Trip;
 import NoDam.Demo.trip.service.TripSelectService;
 import lombok.RequiredArgsConstructor;
@@ -46,10 +49,20 @@ public class PlanFacadeService {
                         Map.Entry::getKey,
                         entry -> entry.getValue().stream()
                                 .flatMap(dp -> dp.getPlacePlans().stream())
-                                .sorted(Comparator.comparing(pp -> pp.getDatePlan().getDate()))
+                                .sorted(Comparator.comparing((PlacePlan pp) -> pp.getStartTime()))
                                 .map(pp -> PlacePlanInfo.of(pp, placeMap.get(pp.getPlaceId())))
                                 .collect(Collectors.toList())
                 ));
+    }
+
+    public PlanStatusResponse getPlanStatus(Long tripId, Long userId) {
+        Trip trip = tripSelectService.findById(tripId, userId);
+        List<DatePlan> datePlans = planSelectService.findAllDatePlan(trip);
+
+        boolean allCompleted = !datePlans.isEmpty() &&
+                datePlans.stream().allMatch(dp -> dp.getPlanStatus().isAfterOrEqual(PlanStatus.TRANSPORT_PLANNED));
+
+        return new PlanStatusResponse(allCompleted, trip.getIsPlanning());
     }
 
     public void deletePlacePlan(Long placePlanId, Long userId) {

@@ -18,4 +18,11 @@ public interface TripStatusRepository extends JpaRepository<Trip, Long> {
             @Param("updateStatus") Boolean updateStatus
     );
 
+    @Modifying
+    @Query("UPDATE Trip t SET t.isPlanning = :updateStatus WHERE t.id = :id")
+    void tryUpdateTripStatusForce(
+            @Param("id") Long id,
+            @Param("updateStatus") Boolean updateStatus
+    );
+
 }

@@ -2,6 +2,7 @@ package NoDam.Demo.plan.service;
 
 import NoDam.Demo.common.excetion.CustomException;
 import NoDam.Demo.common.excetion.ErrorCode;
+import NoDam.Demo.common.type.PlanStatus;
 import NoDam.Demo.plan.domain.DatePlan;
 import NoDam.Demo.plan.domain.PlacePlan;
 import NoDam.Demo.plan.domain.TransportPlan;
@@ -52,18 +53,18 @@ public class PlanCreateService {
             List<DatePlanRequestDto> datePlans
     ) {
         List<DatePlan> entities = datePlans.stream()
-                .map(dto -> {
-                    return DatePlan.builder()
-                            .date(dto.getDate())
-                            .tripId(trip.getId())
-                            .regionId(dto.getRegion().getId())
-                            .tripThemeType(dto.getThemeType())
-                            .googleIds(List.of()) // todo
-                            .hotelPlaceId(dto.getHotelPlaceId())
-                            .airportPlaceId(dto.getAirportPlaceId())
-                            .airportTime(dto.getAirportTime())
-                            .build();
-                })
+                .map(dto -> DatePlan.builder()
+                        .date(dto.getDate())
+                        .tripId(trip.getId())
+                        .regionId(dto.getRegion().getId())
+                        .tripThemeType(dto.getThemeType())
+                        .googleIds(dto.getNecessaryPlaces() != null
+                                ? dto.getNecessaryPlaces().stream().map(p -> p.getGoogleId()).toList()
+                                : List.of())
+                        .hotelPlaceId(dto.getHotelPlaceId())
+                        .airportPlaceId(dto.getAirportPlaceId())
+                        .airportTime(dto.getAirportTime())
+                        .build())
                 .toList();
 
         return datePlanRepository.saveAll(entities);
@@ -100,6 +101,26 @@ public class PlanCreateService {
                 .placeId(placeId)
                 .build();
         return planRepository.save(entity);
+    }
+
+    public void forceUpdateTripStatus(Trip trip, Boolean status) {
+        transactionTemplate.execute(s -> {
+            tripStatusRepository.tryUpdateTripStatusForce(trip.getId(), status);
+            return null;
+        });
+        trip.updatePlanning(status);
+    }
+
+    @Transactional
+    public void updateDatePlanStatus(DatePlan datePlan, PlanStatus status) {
+        datePlan.updatePlanStatus(status);
+        datePlanRepository.save(datePlan);
+    }
+
+    @Transactional
+    public void updateHotelPlacePlanId(PlacePlan placePlan, Long placeId) {
+        placePlan.updatePlaceId(placeId);
+        planRepository.save(placePlan);
     }
 
 }

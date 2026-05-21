@@ -1,0 +1,129 @@
+package NoDam.Demo.plan.service;
+
+import NoDam.Demo.ai.AiService;
+import NoDam.Demo.ai.Prompt;
+import NoDam.Demo.place.domain.Place;
+import NoDam.Demo.plan.dto.ai.AiRegionAssignRequestDto;
+import NoDam.Demo.plan.dto.ai.AiRegionAssignResponseDto;
+import NoDam.Demo.region.domain.Region;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDate;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+public class RegionAssignService {
+
+    private final AiService aiService;
+
+    public Map<LocalDate, Region> assign(
+            List<LocalDate> dates,
+            List<Region> regions,
+            List<Place> necessaryPlaces,
+            Place airport,
+            Place hotel
+    ) {
+        if (regions.size() == 1) {
+            return dates.stream().collect(Collectors.toMap(d -> d, d -> regions.get(0),
+                    (a, b) -> a, LinkedHashMap::new));
+        }
+
+        AiRegionAssignRequestDto request = buildRequest(dates, regions, necessaryPlaces, airport, hotel);
+        AiRegionAssignResponseDto response = aiService.call(Prompt.ASSIGN_REGION, AiRegionAssignResponseDto.class, request);
+
+        if (response != null && response.getAssignments() != null && !response.getAssignments().isEmpty()) {
+            Map<LocalDate, Region> result = parseResponse(response, regions, dates);
+            if (result.size() == dates.size()) return result;
+        }
+
+        return fallback(dates, regions, necessaryPlaces);
+    }
+
+    private Map<LocalDate, Region> parseResponse(AiRegionAssignResponseDto response, List<Region> regions, List<LocalDate> dates) {
+        Map<Long, Region> regionMap = regions.stream().collect(Collectors.toMap(Region::getId, r -> r));
+        Map<LocalDate, Region> result = new LinkedHashMap<>();
+
+        for (AiRegionAssignResponseDto.DateRegionMapping mapping : response.getAssignments()) {
+            try {
+                LocalDate date = LocalDate.parse(mapping.getDate());
+                Region region = regionMap.get(mapping.getRegionId());
+                if (date != null && region != null) result.put(date, region);
+            } catch (Exception ignored) {}
+        }
+
+        return result;
+    }
+
+    // fallback: 필수 장소 수 비율로 날짜 배분, region[0] 앞 날짜 / region[1] 뒷 날짜
+    private Map<LocalDate, Region> fallback(List<LocalDate> dates, List<Region> regions, List<Place> necessaryPlaces) {
+        Map<LocalDate, Region> result = new LinkedHashMap<>();
+        int totalDays = dates.size();
+
+        long region0Count = necessaryPlaces.stream()
+                .filter(p -> p.getRegionId().equals(regions.get(0).getId()))
+                .count();
+        long totalPlaces = necessaryPlaces.size();
+
+        int region0Days;
+        if (totalPlaces == 0) {
+            region0Days = Math.max(1, totalDays / 2);
+        } else {
+            region0Days = (int) Math.round((double) region0Count / totalPlaces * totalDays);
+            region0Days = Math.max(1, Math.min(region0Days, totalDays - 1));
+        }
+
+        for (int i = 0; i < totalDays; i++) {
+            result.put(dates.get(i), i < region0Days ? regions.get(0) : regions.get(1));
+        }
+
+        return result;
+    }
+
+    private AiRegionAssignRequestDto buildRequest(
+            List<LocalDate> dates, List<Region> regions, List<Place> necessaryPlaces,
+            Place airport, Place hotel
+    ) {
+        Map<Long, Long> placeCountByRegion = necessaryPlaces.stream()
+                .collect(Collectors.groupingBy(Place::getRegionId, Collectors.counting()));
+
+        List<AiRegionAssignRequestDto.RegionInfo> regionInfos = regions.stream()
+                .map(r -> AiRegionAssignRequestDto.RegionInfo.builder()
+                        .regionId(r.getId())
+                        .name(r.getName())
+                        .lat(r.getLat())
+                        .lon(r.getLon())
+                        .placeCount(placeCountByRegion.getOrDefault(r.getId(), 0L).intValue())
+                        .build())
+                .toList();
+
+        List<AiRegionAssignRequestDto.PlaceCoordinate> placeCoords = necessaryPlaces.stream()
+                .map(p -> AiRegionAssignRequestDto.PlaceCoordinate.builder()
+                        .placeId(p.getId()).name(p.getName()).lat(p.getLat()).lon(p.getLon())
+                        .build())
+                .toList();
+
+        AiRegionAssignRequestDto.PlaceCoordinate airportCoord = airport == null ? null :
+                AiRegionAssignRequestDto.PlaceCoordinate.builder()
+                        .placeId(airport.getId()).name(airport.getName())
+                        .lat(airport.getLat()).lon(airport.getLon()).build();
+
+        AiRegionAssignRequestDto.PlaceCoordinate hotelCoord = hotel == null ? null :
+                AiRegionAssignRequestDto.PlaceCoordinate.builder()
+                        .placeId(hotel.getId()).name(hotel.getName())
+                        .lat(hotel.getLat()).lon(hotel.getLon()).build();
+
+        return AiRegionAssignRequestDto.builder()
+                .dates(dates.stream().map(LocalDate::toString).toList())
+                .regions(regionInfos)
+                .necessaryPlaces(placeCoords)
+                .airport(airportCoord)
+                .hotel(hotelCoord)
+                .build();
+    }
+
+}
