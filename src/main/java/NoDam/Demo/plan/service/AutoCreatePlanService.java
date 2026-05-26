@@ -189,8 +189,8 @@ public class AutoCreatePlanService {
                 .toList();
         List<Place> validPlaces = ListUtil.sortByRequestOrder(placeIds, placeSelectService.findAllById(placeIds), (p)->p.getId());
 
-        if(validPlaces.contains(null))
-            throw new CustomException(ErrorCode.API_FAIL);
+        // can contains null :: hotel 미정일때 place id null이고 해당 값을 llm이 반환하면서 null을 포함한다
+        validPlaces = validPlaces.stream().filter(p->Objects.nonNull(p)).toList();
 
         return validPlaces;
     }

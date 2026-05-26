@@ -30,7 +30,7 @@ spring:
 
 token:
   SECRET_KEY: ${SECRET_KEY}
-  ACCESS_EXPIRATION_SECOND: 3600000 # 1시간
+  ACCESS_EXPIRATION_SECOND: 922337203685477580 # 3600000 # 1시간
   REFRESH_EXPIRATION_SECOND: 922337203685477580 # test 환경 무한대
 
 oauth:
@@ -56,9 +56,9 @@ oauth:
 external:
   ai:
     provider: mock   # cli | gemini | mock
-    connect-timeout-seconds: 5
-    read-timeout-seconds: 60
-    response-timeout-seconds: 600
+    connect-timeout-seconds: 99999 # 5
+    read-timeout-seconds: 99999 # 60
+    response-timeout-seconds: 9999999 # 60
     max-connections: 50
     cli:
       base-url: http://localhost:8116
