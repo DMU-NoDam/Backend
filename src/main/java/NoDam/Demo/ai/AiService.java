@@ -2,10 +2,12 @@ package NoDam.Demo.ai;
 
 import NoDam.Demo.common.excetion.CustomException;
 import NoDam.Demo.common.excetion.ErrorCode;
-import NoDam.Demo.ai.translate.TranslateRequestDto;
-import NoDam.Demo.ai.translate.TranslateResponseDto;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.netty.channel.ChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import org.slf4j.Logger;
@@ -22,6 +24,9 @@ import reactor.netty.http.client.HttpClient;
 import reactor.netty.resources.ConnectionProvider;
 import reactor.util.retry.Retry;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
@@ -36,12 +41,6 @@ public class AiService {
     private final WebClient geminiClient;
     private final String geminiModel;
     private final String geminiApiKey;
-
-    @Value("${external.translate.base-url}")
-    private String translateBaseUrl;
-
-    @Value("${external.translate.mock}")
-    private boolean translateMock;
 
     private final Logger logger = LoggerFactory.getLogger(AiService.class);
 
@@ -101,46 +100,12 @@ public class AiService {
                 .build();
     }
 
-    public List<String> translate(List<String> texts, String sourceLang, String targetLang) {
-        if (texts == null || texts.isEmpty())
-            throw new RuntimeException("translate texts is null or empty");
-        if (translateMock)
-            return texts;
-
-        String body;
-        try {
-            body = WebClient.create()
-                    .post()
-                    .uri(translateBaseUrl)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .bodyValue(new TranslateRequestDto(texts, sourceLang, targetLang))
-                    .retrieve()
-                    .onStatus(status -> !status.is2xxSuccessful(), clientResponse ->
-                            clientResponse.bodyToMono(String.class)
-                                    .flatMap(errorBody -> {
-                                        logger.error("Translate API Error: Status={}, Body={}", clientResponse.statusCode(), errorBody);
-                                        return Mono.error(new CustomException(ErrorCode.API_FAIL));
-                                    })
-                    )
-                    .bodyToMono(String.class)
-                    .block();
-        } catch (CustomException e) {
-            throw e;
-        } catch (Exception e) {
-            logger.error("Translate API connection failed: {}", e.getMessage());
-            throw new CustomException(ErrorCode.API_FAIL);
-        }
-
-        try {
-            TranslateResponseDto response = objectMapper.readValue(body, TranslateResponseDto.class);
-            return response.getTranslatedText();
-        } catch (Exception e) {
-            logger.error("Translate API response parse failed: body={}", body);
-            throw new CustomException(ErrorCode.API_FAIL);
-        }
-    }
-
     public <T> T call(Prompt prompt, Class<T> responseType, Object... args) {
+        if ("mock".equals(provider)) {
+            logger.info("AiService.call :: mock mode prompt={}", prompt);
+            return deserialize(generateResponseFormat(responseType), responseType);
+        }
+
         String[] serializedArgs = Arrays.stream(args)
                 .map(this::serialize)
                 .toArray(String[]::new);
@@ -157,16 +122,7 @@ public class AiService {
 
     private String callLlm(String prompt) {
         logger.info("AiService.callLlm :: provider={} prompt={}", provider, prompt);
-        switch (provider) {
-            case "gemini":
-                return callGemini(prompt);
-            case "cli":
-                return callCli(prompt);
-            case "mock":
-                return null;
-        }
-
-        throw new RuntimeException("strange provider input" + provider);
+        return "gemini".equals(provider) ? callGemini(prompt) : callCli(prompt);
     }
 
     private String callCli(String prompt) {

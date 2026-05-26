@@ -4,7 +4,6 @@ import NoDam.Demo.common.type.TripThemeType;
 import NoDam.Demo.common.util.TimeUtil;
 import NoDam.Demo.place.domain.Place;
 import NoDam.Demo.place.service.PlaceSelectService;
-import NoDam.Demo.plan.service.PlanSelectService;
 import NoDam.Demo.trip.domain.Trip;
 import NoDam.Demo.trip.dto.request.TripCreateDto;
 import NoDam.Demo.trip.dto.request.TripCreateFacadeRequestDto;
@@ -12,10 +11,8 @@ import NoDam.Demo.trip.dto.request.TripCreateFacadeRequestDto.FlightInfo;
 
 import java.time.LocalTime;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
-import NoDam.Demo.trip.dto.response.TripInfoDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -27,7 +24,6 @@ public class TripFacadeService {
     private final TripFixedService tripFixedService;
     private final TripSelectService tripSelectService;
     private final PlaceSelectService placeSelectService;
-    private final PlanSelectService planSelectService;
 
     // trip domain 생성 까지만 (ai생성은 다른 api 분리, transaction 때문!)
     // transactional (사용 금지!)
@@ -56,30 +52,16 @@ public class TripFacadeService {
         return new FlightHotelInfo(destinationAirport, firstDayAirportTime, lastDayAirportTime);
     }
 
-    public List<TripInfoDto> getTripList(Long userId) {
-        List<Trip> trips = tripSelectService.getTripList(userId);
-        Map<Trip, Boolean> tripStatus = planSelectService.getTripStatus(trips);
-
-        return trips
-                .stream()
-                .map(t->TripInfoDto.from(t, tripStatus.get(t)))
-                .toList();
+    public List<Trip> getTripList(Long userId) {
+        return tripSelectService.getTripList(userId);
     }
 
-    public TripInfoDto getTrip(Long userId, Long tripId) {
-        Trip trip = tripSelectService.findById(tripId, userId);
-        boolean status = planSelectService.getTripStatus(trip);
-
-        return TripInfoDto.from(trip, status);
+    public Trip getTrip(Long userId, Long tripId) {
+        return tripSelectService.findById(tripId, userId);
     }
 
-    public Optional<TripInfoDto> getTodayTrip(Long userId) {
-        Optional<Trip> tripOpt = tripFixedService.getTodayTrip(userId);
-
-        if(tripOpt.isEmpty())
-            return Optional.empty();
-
-        return Optional.of(TripInfoDto.from(tripOpt.get(), planSelectService.getTripStatus(tripOpt.get())));
+    public Optional<Trip> getTodayTrip(Long userId) {
+        return tripFixedService.getTodayTrip(userId);
     }
 
     public Trip updateTripFixed(Long userId, Long tripId, boolean isFixed) {

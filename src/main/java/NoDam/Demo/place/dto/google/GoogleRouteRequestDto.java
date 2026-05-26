@@ -5,12 +5,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-
 @Getter
 @Setter
 @NoArgsConstructor
@@ -20,7 +14,6 @@ public class GoogleRouteRequestDto {
     private LocationInput destination;
     private String travelMode;
     private String languageCode;
-    private String departureTime;
 
     @Getter
     @Setter
@@ -47,14 +40,12 @@ public class GoogleRouteRequestDto {
         private Double longitude;
     }
 
-    public static GoogleRouteRequestDto transit(Double originLat, Double originLng, Double destinationLat, Double destinationLng, LocalTime startTime) {
+    public static GoogleRouteRequestDto transit(Double originLat, Double originLng, Double destinationLat, Double destinationLng) {
         GoogleRouteRequestDto dto = new GoogleRouteRequestDto();
         dto.setOrigin(new LocationInput(new LocationWrapper(new LatLng(originLat, originLng))));
         dto.setDestination(new LocationInput(new LocationWrapper(new LatLng(destinationLat, destinationLng))));
         dto.setTravelMode("TRANSIT");
         dto.setLanguageCode("ko");
-        ZonedDateTime departure = ZonedDateTime.of(LocalDate.now(), startTime, ZoneId.of("Asia/Tokyo"));
-        dto.setDepartureTime(departure.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
         return dto;
     }
 }

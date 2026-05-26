@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.Map;
 
 @Getter
 @Builder
@@ -23,8 +24,8 @@ public class PlacePlanInfo {
     private LocalTime endTime;
     private PlaceInfo placeInfo;
 
-    private TransportPlanInfo fromTransport;
-    // private TransportPlanInfo arrivalTransport;
+    private TransportPlanInfo departureTransport;
+    private TransportPlanInfo arrivalTransport;
 
     public static PlacePlanInfo of(PlacePlan placePlan, Place place) {
         return PlacePlanInfo.builder()
@@ -33,10 +34,10 @@ public class PlacePlanInfo {
                 .startTime(placePlan.getStartTime())
                 .endTime(placePlan.getEndTime())
                 .placeInfo(place != null ? PlaceInfo.of(place) : PlaceInfo.empty())
-                .fromTransport(placePlan.getFromTransport() != null
-                        ? TransportPlanInfo.of(placePlan.getFromTransport()) : null)
-//                .arrivalTransport(placePlan.getArrivalTransport() != null
-//                        ? TransportPlanInfo.summary(placePlan.getArrivalTransport()) : null)
+                .departureTransport(placePlan.getDepartureTransport() != null
+                        ? TransportPlanInfo.of(placePlan.getDepartureTransport()) : null)
+                .arrivalTransport(placePlan.getArrivalTransport() != null
+                        ? TransportPlanInfo.of(placePlan.getArrivalTransport()) : null)
                 .build();
     }
 }
