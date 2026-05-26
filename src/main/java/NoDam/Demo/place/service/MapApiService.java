@@ -53,6 +53,9 @@ public class MapApiService {
     private final Logger logger = LoggerFactory.getLogger("map api service :: ");
 
     public RouteInfo computeRoutesNavitimeFromCoord(Double startLat, Double startLon, Place end, LocalTime startTime) {
+        if(startLat == null || startLon == null)
+            return RouteInfo.empty();
+
         RouteInfo routes = callNavitime(startLat, startLon, end, startTime);
         translateRouteNames(routes, "ja", "ko");
         return routes;

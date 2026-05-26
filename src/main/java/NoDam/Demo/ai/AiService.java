@@ -157,7 +157,16 @@ public class AiService {
 
     private String callLlm(String prompt) {
         logger.info("AiService.callLlm :: provider={} prompt={}", provider, prompt);
-        return "gemini".equals(provider) ? callGemini(prompt) : callCli(prompt);
+        switch (provider) {
+            case "gemini":
+                return callGemini(prompt);
+            case "cli":
+                return callCli(prompt);
+            case "mock":
+                return null;
+        }
+
+        throw new RuntimeException("strange provider input" + provider);
     }
 
     private String callCli(String prompt) {
