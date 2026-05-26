@@ -5,6 +5,7 @@ import NoDam.Demo.common.excetion.ErrorCode;
 import NoDam.Demo.common.type.PlaceType;
 import NoDam.Demo.plan.domain.DatePlan;
 import NoDam.Demo.plan.domain.PlacePlan;
+import NoDam.Demo.plan.domain.TransportPlan;
 import NoDam.Demo.plan.repository.DatePlanRepository;
 import NoDam.Demo.plan.repository.PlacePlanRepository;
 import NoDam.Demo.plan.repository.TransportPlanRepository;
@@ -54,6 +55,11 @@ public class PlanSelectService {
 
     public boolean hasTransportPlan(DatePlan datePlan) {
         return !transportPlanRepository.findByFromPlacePlan_DatePlanId(datePlan.getId()).isEmpty();
+    }
+
+    public TransportPlan findTransportPlanById(Long transportPlanId) {
+        return transportPlanRepository.findByIdWithDatePlan(transportPlanId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
     }
 
 }

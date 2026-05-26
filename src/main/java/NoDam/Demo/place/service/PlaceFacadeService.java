@@ -42,6 +42,7 @@ public class PlaceFacadeService {
     private final PlaceSelectService placeSelectService;
     private final PlaceQueryService placeQueryService;
     private final GoogleApiService googleApiService;
+    private final MapApiService mapApiService;
     private final RegionQueryService regionQueryService;
     private final PlanSelectService planSelectService;
     private final TripSelectService tripSelectService;
@@ -164,17 +165,14 @@ public class PlaceFacadeService {
             PlaceInfo nextPlace
     ) {
         // 1차 필터: 조건 맞는 장소 10개
-        List<PlaceInfo> candidates = placeSelectService
-                .recommendPlaces(placeType, region, priceType, seasonType, themeType, weather, excludeIds, 10)
-                .stream()
-                .map(PlaceInfo::of)
-                .toList();
+        List<Place> candidates = placeSelectService
+                .recommendPlaces(placeType, region, priceType, seasonType, themeType, weather, excludeIds, 10);
 
         // transport 계산 (null이면 RouteInfo.empty로 포함)
         List<Pair<PlaceInfo, RouteInfo>> reachable = new ArrayList<>();
-        for (PlaceInfo place : candidates) {
-            RouteInfo route = googleApiService.computeRouteSummary(userLat, userLon, place.getLat(), place.getLon());
-            reachable.add(Pair.of(place, route != null ? route : RouteInfo.empty()));
+        for (Place place : candidates) {
+            RouteInfo route = mapApiService.computeRoutesNavitimeFromCoord(userLat, userLon, place, startTime);
+            reachable.add(Pair.of(PlaceInfo.of(place), route != null ? route : RouteInfo.empty()));
         }
 
         // 2차 AI: 상위 5개 선정

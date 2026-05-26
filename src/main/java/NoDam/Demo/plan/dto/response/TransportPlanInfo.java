@@ -21,7 +21,9 @@ public class TransportPlanInfo {
     private Integer totalDistanceMeters;
     private Long fromPlacePlanId;
     private Long toPlacePlanId;
-    private RouteInfoResponse routeInfo;
+
+    private Long transportPlanId;
+    private RouteInfo routeInfo;
 
     public static TransportPlanInfo of(TransportPlan transport) {
         return TransportPlanInfo.builder()
@@ -32,7 +34,22 @@ public class TransportPlanInfo {
                 .totalDistanceMeters(transport.getTotalDistanceMeters())
                 .fromPlacePlanId(transport.getFromPlacePlan().getId())
                 .toPlacePlanId(transport.getToPlacePlan().getId())
-                .routeInfo(transport.getRouteInfo() != null ? transport.getRouteInfo().toResponse() : null)
+                .transportPlanId(transport.getId())
+                .routeInfo(transport.getRouteInfo())
+                .build();
+    }
+
+    public static TransportPlanInfo summary(TransportPlan transport) {
+        return TransportPlanInfo.builder()
+                .id(transport.getId())
+                .startTime(transport.getStartTime())
+                .endTime(transport.getEndTime())
+                .takeTime(transport.getTakeTime())
+                .totalDistanceMeters(transport.getTotalDistanceMeters())
+                .fromPlacePlanId(transport.getFromPlacePlan().getId())
+                .toPlacePlanId(transport.getToPlacePlan().getId())
+                .transportPlanId(transport.getId())
+                // .route()
                 .build();
     }
 
@@ -40,7 +57,7 @@ public class TransportPlanInfo {
         return TransportPlanInfo.builder()
                 .takeTime(route.getTotalDurationSeconds())
                 .totalDistanceMeters(route.getTotalDistanceMeters())
-                .routeInfo(route.toResponse())
+                .routeInfo(route)
                 .build();
     }
 }

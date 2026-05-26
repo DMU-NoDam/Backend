@@ -5,6 +5,7 @@ import NoDam.Demo.common.type.TripThemeType;
 import NoDam.Demo.plan.dto.request.ChangePlacePlanRequestDto;
 import NoDam.Demo.plan.dto.response.PlacePlanInfo;
 import NoDam.Demo.plan.dto.response.PlanStatusResponse;
+import NoDam.Demo.plan.dto.response.TransportPlanInfo;
 import NoDam.Demo.plan.service.PlanFacadeService;
 import NoDam.Demo.user.domain.User;
 import lombok.RequiredArgsConstructor;
@@ -44,6 +45,14 @@ public class PlanController {
     ) {
         Map<TripThemeType, List<PlacePlanInfo>> response = planFacadeService.getPlans(tripId, user.getId());
         return ResponseEntity.ok(new SuccessResponse<>("success", response));
+    }
+
+    @GetMapping("/api/transport-plan/{transportPlanId}")
+    public ResponseEntity<SuccessResponse<TransportPlanInfo>> getTransportPlanDetail(
+            @PathVariable Long transportPlanId
+    ) {
+        TransportPlanInfo response = planFacadeService.getTransportPlanDetail(transportPlanId);
+        return ResponseEntity.ok(new SuccessResponse<TransportPlanInfo>("success", response));
     }
 
     @DeleteMapping("/api/place-plan/{placePlanId}")

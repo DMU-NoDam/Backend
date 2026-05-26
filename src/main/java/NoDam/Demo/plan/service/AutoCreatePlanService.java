@@ -8,7 +8,7 @@ import NoDam.Demo.common.util.ListUtil;
 import NoDam.Demo.place.domain.Place;
 import NoDam.Demo.place.dto.PlaceInfo;
 import NoDam.Demo.place.service.AirportSelectService;
-import NoDam.Demo.place.service.GoogleApiService;
+import NoDam.Demo.place.service.MapApiService;
 import NoDam.Demo.place.service.HotelRecommendService;
 import NoDam.Demo.place.service.PlaceSelectService;
 import NoDam.Demo.plan.domain.DatePlan;
@@ -42,7 +42,7 @@ public class AutoCreatePlanService {
     private final PlanSelectService planSelectService;
     private final PlaceSelectService placeSelectService;
     private final RegionQueryService regionQueryService;
-    private final GoogleApiService googleApiService;
+    private final MapApiService mapApiService;
     private final RegionAssignService regionAssignService;
     private final AirportSelectService airportSelectService;
     private final NecessaryPlaceDistributeService necessaryPlaceDistributeService;
@@ -128,9 +128,9 @@ public class AutoCreatePlanService {
                 continue;
             }
 
-            // 1. 공항 + 호텔 필수 PlacePlan 삽입
+            // 1. 공항, 호텔 생성 (공항 무조건 생성, 호텔 : 사용자 input이 있을 때만 생성, 없을 때는 place id null로 생성)
             if (status.isBefore(PlanStatus.FIXED_PLANNED)) {
-                planCreateService.createPlans(datePlan, buildNecessaryPlans(trip, datePlan));
+                planCreateService.createPlans(datePlan, buildFixedPlans(trip, datePlan));
                 planCreateService.updateDatePlanStatus(datePlan, PlanStatus.FIXED_PLANNED);
             }
 
@@ -216,20 +216,16 @@ public class AutoCreatePlanService {
     }
 
     // 공항(첫날/마지막날), 호텔(매일) 필수 PlacePlan 생성
-    private List<PlacePlanRequestDto> buildNecessaryPlans(Trip trip, DatePlan datePlan) {
+    private List<PlacePlanRequestDto> buildFixedPlans(Trip trip, DatePlan datePlan) {
         List<PlacePlanRequestDto> plans = new ArrayList<>();
 
-        // 첫날: 도착 공항 (자정 ~ 공항 시간)
-        if (datePlan.getAirportPlaceId() != null && datePlan.getAirportTime() != null
-                && trip.getStartDate().equals(datePlan.getDate())) {
+        // 첫날: 도착 공항 (자정 ~ 공항 도착 시간)
+        if (trip.getStartDate().equals(datePlan.getDate()))
             plans.add(new PlacePlanRequestDto(LocalTime.MIDNIGHT, datePlan.getAirportTime(), datePlan.getAirportPlaceId()));
-        }
 
-        // 마지막날: 출발 공항 (공항 시간 ~ 23:59)
-        if (datePlan.getAirportPlaceId() != null && datePlan.getAirportTime() != null
-                && trip.getEndDate().equals(datePlan.getDate())) {
+        // 마지막날: 출발 공항 (공항 출발 시간 ~ 23:59)
+        if (trip.getEndDate().equals(datePlan.getDate()))
             plans.add(new PlacePlanRequestDto(datePlan.getAirportTime(), LocalTime.of(23, 59), datePlan.getAirportPlaceId()));
-        }
 
         // 매일: 호텔 (not null → 실제 호텔, null → placeholder)
         plans.add(new PlacePlanRequestDto(LocalTime.of(20, 0), LocalTime.of(23, 50), datePlan.getHotelPlaceId()));
@@ -304,8 +300,10 @@ public class AutoCreatePlanService {
             List<Place> necessaryPlaces = necessaryPlacesByDate.getOrDefault(date, List.of());
 
             LocalTime airportTime = null;
-            if (date.equals(trip.getStartDate())) airportTime = firstDayAirportTime;
-            else if (date.equals(trip.getEndDate())) airportTime = lastDayAirportTime;
+            if (date.equals(trip.getStartDate()))
+                airportTime = firstDayAirportTime != null ? firstDayAirportTime : LocalTime.of(10, 0);
+            else if (date.equals(trip.getEndDate()))
+                airportTime = lastDayAirportTime != null ? lastDayAirportTime : LocalTime.of(18, 0);
 
             Long dateAirportPlaceId = airportTime != null ? airportPlaceId : null;
 
@@ -360,8 +358,7 @@ public class AutoCreatePlanService {
             Place toPlace = placeMap.get(next.getPlaceId());
             if (fromPlace == null || toPlace == null) continue;
 
-            RouteInfo routeInfo = googleApiService.computeRoutes(
-                    fromPlace.getLat(), fromPlace.getLon(), toPlace.getLat(), toPlace.getLon());
+            RouteInfo routeInfo = mapApiService.computeRoutesNavitimeFromPlace(fromPlace, toPlace, current.getEndTime());
             if (routeInfo == null) continue;
 
             transportPlans.add(TransportPlan.builder()

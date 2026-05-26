@@ -24,7 +24,7 @@ public class PlacePlanInfo {
     private LocalTime endTime;
     private PlaceInfo placeInfo;
 
-    private TransportPlanInfo departureTransport;
+    // private TransportPlanInfo departureTransport;
     private TransportPlanInfo arrivalTransport;
 
     public static PlacePlanInfo of(PlacePlan placePlan, Place place) {
@@ -34,10 +34,10 @@ public class PlacePlanInfo {
                 .startTime(placePlan.getStartTime())
                 .endTime(placePlan.getEndTime())
                 .placeInfo(place != null ? PlaceInfo.of(place) : PlaceInfo.empty())
-                .departureTransport(placePlan.getDepartureTransport() != null
-                        ? TransportPlanInfo.of(placePlan.getDepartureTransport()) : null)
+//                .departureTransport(placePlan.getDepartureTransport() != null
+//                        ? TransportPlanInfo.of(placePlan.getDepartureTransport()) : null)
                 .arrivalTransport(placePlan.getArrivalTransport() != null
-                        ? TransportPlanInfo.of(placePlan.getArrivalTransport()) : null)
+                        ? TransportPlanInfo.summary(placePlan.getArrivalTransport()) : null)
                 .build();
     }
 }
