@@ -84,14 +84,14 @@ public class TripController {
                 .thenCompose((datePlans) -> autoCreatePlanService.autoGenerateAllThemeTransportPlans(trip, datePlans))
                 .exceptionally((throwable) -> { logger.error("plan auto create fail"); throwable.printStackTrace(); return null; }); // nothing to do!
 
-        return ResponseEntity.ok().body(new SuccessResponse<>("success", TripInfoDto.from(trip)));
+        return ResponseEntity.ok().body(new SuccessResponse<>("success", TripInfoDto.from(trip, false)));
     }
 
     @GetMapping("/api")
     @Operation(summary = "여행 리스트 조회")
     public ResponseEntity<SuccessResponse<List<TripInfoDto>>> getTripList(@AuthenticationPrincipal User user) {
-        List<Trip> trips = tripFacadeService.getTripList(user.getId());
-        return ResponseEntity.ok().body(new SuccessResponse<>("success", TripInfoDto.from(trips)));
+        List<TripInfoDto> trips = tripFacadeService.getTripList(user.getId());
+        return ResponseEntity.ok().body(new SuccessResponse<>("success", trips));
     }
 
     @GetMapping("/api/{tripId}")
@@ -100,37 +100,36 @@ public class TripController {
             @AuthenticationPrincipal User user,
             @PathVariable Long tripId
     ) {
-        Trip trip = tripFacadeService.getTrip(user.getId(), tripId);
-        return ResponseEntity.ok().body(new SuccessResponse<>("success", TripInfoDto.from(trip)));
+        TripInfoDto trip = tripFacadeService.getTrip(user.getId(), tripId);
+        return ResponseEntity.ok().body(new SuccessResponse<>("success", trip));
     }
 
     @GetMapping("/api/today")
     @Operation(summary = "오늘의 고정된 여행 조회")
     public ResponseEntity<SuccessResponse<TripInfoDto>> getTodayTrip(@AuthenticationPrincipal User user) {
-        Optional<Trip> trip = tripFacadeService.getTodayTrip(user.getId());
-        TripInfoDto response = (trip.isPresent()) ? TripInfoDto.from(trip.get()) : null;
-        return ResponseEntity.ok().body(new SuccessResponse<>("success", response));
+        Optional<TripInfoDto> trip = tripFacadeService.getTodayTrip(user.getId());
+        return ResponseEntity.ok().body(new SuccessResponse<>("success", trip.orElse(null)));
     }
 
     @PatchMapping("/api/{tripId}/fixed")
     @Operation(summary = "여행 고정 여부 수정")
-    public ResponseEntity<SuccessResponse<TripInfoDto>> updateTripFixed(
+    public ResponseEntity<SuccessResponse<Void>> updateTripFixed(
             @AuthenticationPrincipal User user,
             @PathVariable Long tripId,
             @RequestBody boolean isFixed
     ) {
         Trip trip = tripFacadeService.updateTripFixed(user.getId(), tripId, isFixed);
-        return ResponseEntity.ok().body(new SuccessResponse<>("success", TripInfoDto.from(trip)));
+        return ResponseEntity.ok().body(new SuccessResponse<>("success", null));
     }
 
     @PatchMapping("/api/{tripId}/theme")
     @Operation(summary = "여행 테마 수정")
-    public ResponseEntity<SuccessResponse<TripInfoDto>> updateTripTheme(
+    public ResponseEntity<SuccessResponse<Void>> updateTripTheme(
             @AuthenticationPrincipal User user,
             @PathVariable Long tripId,
             @RequestBody TripThemeType theme
     ) {
         Trip trip = tripFacadeService.updateTripTheme(user.getId(), tripId, theme);
-        return ResponseEntity.ok().body(new SuccessResponse<>("success", TripInfoDto.from(trip)));
+        return ResponseEntity.ok().body(new SuccessResponse("success", null));
     }
 }
