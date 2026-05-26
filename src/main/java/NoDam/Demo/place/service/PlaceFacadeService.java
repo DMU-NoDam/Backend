@@ -48,6 +48,8 @@ public class PlaceFacadeService {
     private final TripSelectService tripSelectService;
     private final AiService aiService;
 
+    private final boolean isMockAi;
+
     public Place findByGoogleId(String googleId) {
         if(googleId == null || googleId.isEmpty())
             throw new RuntimeException("PlaceFacadeService.findByGoogleId :: parameter googleId can not be null");
@@ -188,6 +190,12 @@ public class PlaceFacadeService {
             PlaceInfo previousPlace,
             PlaceInfo nextPlace
     ) {
+        if(isMockAi)
+            return candidates.stream()
+                    .limit(5)
+                    .map(pair -> RecommendedPlaceInfo.of(pair.getFirst(), pair.getSecond(), oldStartTime, oldEndTime))
+                    .toList();
+
         AiRecommendPlaceRequestDto aiRequest = AiRecommendPlaceRequestDto.builder()
                 .scheduleType(scheduleType)
                 .themeType(themeType)

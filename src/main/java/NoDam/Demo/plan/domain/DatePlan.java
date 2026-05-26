@@ -33,7 +33,7 @@ public class DatePlan {
     private Long regionId; // cross-module: region 참조
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = true, length = 15)
+    @Column(nullable = false, length = 15)
     private TripThemeType tripThemeType;
 
     @Column(name = "google_id_list", nullable = true)

@@ -351,7 +351,7 @@ public class AutoCreatePlanService {
             PlacePlan current = placePlans.get(i);
             PlacePlan next = placePlans.get(i + 1);
 
-            if (current.getDepartureTransport() != null) continue;
+            if (current.getFromTransport() != null) continue;
             if (current.getPlaceId() == null || next.getPlaceId() == null) continue;
 
             Place fromPlace = placeMap.get(current.getPlaceId());

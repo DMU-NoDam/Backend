@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 public class RegionAssignService {
 
     private final AiService aiService;
+    private final boolean isMockAi;
 
     public Map<LocalDate, Region> assign(
             List<LocalDate> dates,
@@ -33,15 +34,14 @@ public class RegionAssignService {
                     (a, b) -> a, LinkedHashMap::new));
         }
 
+        if(isMockAi)
+            return mockAssign(dates, regions, necessaryPlaces);
+
         AiRegionAssignRequestDto request = buildRequest(dates, regions, necessaryPlaces, airport, hotel);
         AiRegionAssignResponseDto response = aiService.call(Prompt.ASSIGN_REGION, AiRegionAssignResponseDto.class, request);
 
-        if (response != null && response.getAssignments() != null && !response.getAssignments().isEmpty()) {
-            Map<LocalDate, Region> result = parseResponse(response, regions, dates);
-            if (result.size() == dates.size()) return result;
-        }
-
-        return fallback(dates, regions, necessaryPlaces);
+        Map<LocalDate, Region> result = parseResponse(response, regions, dates);
+        return result;
     }
 
     private Map<LocalDate, Region> parseResponse(AiRegionAssignResponseDto response, List<Region> regions, List<LocalDate> dates) {
@@ -59,8 +59,8 @@ public class RegionAssignService {
         return result;
     }
 
-    // fallback: 필수 장소 수 비율로 날짜 배분, region[0] 앞 날짜 / region[1] 뒷 날짜
-    private Map<LocalDate, Region> fallback(List<LocalDate> dates, List<Region> regions, List<Place> necessaryPlaces) {
+    // mock: 필수 장소 수 비율로 날짜 배분, region[0] 앞 날짜 / region[1] 뒷 날짜
+    private Map<LocalDate, Region> mockAssign(List<LocalDate> dates, List<Region> regions, List<Place> necessaryPlaces) {
         Map<LocalDate, Region> result = new LinkedHashMap<>();
         int totalDays = dates.size();
 
