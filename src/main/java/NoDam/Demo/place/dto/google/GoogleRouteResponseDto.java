@@ -124,41 +124,39 @@ public class GoogleRouteResponseDto {
         return new RouteInfo(route.getDistanceMeters(), parseDurationSeconds(route.getStaticDuration()), List.of());
     }
 
+    public enum TravelMode {
+        WALK(RouteInfo.TransportType.WALK),
+        TRANSIT(RouteInfo.TransportType.TRAIN);
+
+        private final RouteInfo.TransportType transportType;
+
+        TravelMode(RouteInfo.TransportType transportType) {
+            this.transportType = transportType;
+        }
+
+        public RouteInfo.TransportType toTransportType() {
+            return transportType;
+        }
+    }
+
     public RouteInfo toRouteInfo() {
         if (routes == null || routes.isEmpty()) return null;
         Leg leg = routes.get(0).getLegs().get(0);
 
         List<RouteInfo.RouteStep> steps = leg.getSteps().stream()
-                .map(step -> {
-                    RouteInfo.TransitInfo transitInfo = null;
-                    if (step.getTransitDetails() != null) {
-                        TransitDetails td = step.getTransitDetails();
-                        transitInfo = new RouteInfo.TransitInfo(
-                                td.getTransitLine().getName(),
-                                td.getTransitLine().getNameShort(),
-                                td.getTransitLine().getVehicle().getType(),
-                                td.getStopDetails().getDepartureStop().getName(),
-                                td.getStopDetails().getArrivalStop().getName(),
-                                td.getStopCount()
-                        );
-                    }
-                    return new RouteInfo.RouteStep(
-                            toCoordinate(step.getStartLocation()),
-                            toCoordinate(step.getEndLocation()),
-                            step.getPolyline().getEncodedPolyline(),
-                            step.getDistanceMeters(),
-                            parseDurationSeconds(step.getStaticDuration()),
-                            step.getTravelMode(),
-                            transitInfo
-                    );
-                })
+                .map(step -> new RouteInfo.RouteStep(
+                        toPoint(step.getStartLocation(), step.getTransitDetails() != null ? step.getTransitDetails().getStopDetails().getDepartureStop().getName() : null),
+                        toPoint(step.getEndLocation(), step.getTransitDetails() != null ? step.getTransitDetails().getStopDetails().getArrivalStop().getName() : null),
+                        TravelMode.valueOf(step.getTravelMode()).toTransportType(),
+                        List.of()
+                ))
                 .collect(Collectors.toList());
 
         return new RouteInfo(leg.getDistanceMeters(), parseDurationSeconds(leg.getStaticDuration()), steps);
     }
 
-    private static Coordinate toCoordinate(LocationPoint point) {
-        return new Coordinate(point.getLatLng().getLatitude(), point.getLatLng().getLongitude());
+    private static RouteInfo.Point toPoint(LocationPoint point, String name) {
+        return new RouteInfo.Point( new Coordinate(point.getLatLng().getLatitude(), point.getLatLng().getLongitude()), name);
     }
 
     private static int parseDurationSeconds(String duration) {

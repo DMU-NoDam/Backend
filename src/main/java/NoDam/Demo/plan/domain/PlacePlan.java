@@ -1,26 +1,22 @@
 package NoDam.Demo.plan.domain;
 
-import NoDam.Demo.common.type.PlaceType;
-import jakarta.persistence.Column;
-import jakarta.persistence.DiscriminatorValue;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+
 import java.time.LocalTime;
 
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.Where;
 
 @Entity
 @Table(name = "place_plan")
 @DiscriminatorValue("PLACE")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@SQLDelete(sql = "UPDATE place_plan SET is_deleted = true WHERE id = ?")
+@Where(clause = "is_deleted = false")
 @Getter
 public class PlacePlan extends Plan {
 
@@ -32,10 +28,10 @@ public class PlacePlan extends Plan {
     private Long placeId; // cross-module: place 참조
 
     @OneToOne(mappedBy = "fromPlacePlan")
-    private TransportPlan departureTransport;
+    private TransportPlan fromTransport;
 
     @OneToOne(mappedBy = "toPlacePlan")
-    private TransportPlan arrivalTransport;
+    private TransportPlan toTransport;
 
     public void updatePlaceId(Long placeId) {
         this.placeId = placeId;
@@ -47,4 +43,7 @@ public class PlacePlan extends Plan {
         this.datePlan = datePlan;
         this.placeId = placeId;
     }
+
+    public void setFromTransportNull() { fromTransport = null; }
+    public void setToTransportNull() { toTransport = null; }
 }
