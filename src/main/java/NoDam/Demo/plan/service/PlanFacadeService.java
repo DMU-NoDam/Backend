@@ -6,15 +6,18 @@ import NoDam.Demo.place.domain.Place;
 import NoDam.Demo.place.service.PlaceSelectService;
 import NoDam.Demo.plan.domain.DatePlan;
 import NoDam.Demo.plan.domain.PlacePlan;
-import NoDam.Demo.plan.domain.Plan;
+import NoDam.Demo.plan.domain.TransportPlan;
 import NoDam.Demo.plan.dto.response.PlacePlanInfo;
 import NoDam.Demo.plan.dto.response.PlanStatusResponse;
+import NoDam.Demo.plan.dto.response.TransportPlanInfo;
 import NoDam.Demo.trip.domain.Trip;
 import NoDam.Demo.trip.service.TripSelectService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -42,17 +45,17 @@ public class PlanFacadeService {
                 allPlacePlans.stream().map(PlacePlan::getPlaceId).toList()
         ).stream().collect(Collectors.toMap(Place::getId, p -> p));
 
-        return datePlans.stream()
-                .collect(Collectors.groupingBy(DatePlan::getTripThemeType))
-                .entrySet().stream()
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        entry -> entry.getValue().stream()
-                                .flatMap(dp -> dp.getPlacePlans().stream())
-                                .sorted(Comparator.comparing((PlacePlan pp) -> pp.getStartTime()))
-                                .map(pp -> PlacePlanInfo.of(pp, placeMap.get(pp.getPlaceId())))
-                                .collect(Collectors.toList())
-                ));
+        Map<TripThemeType, List<PlacePlanInfo>> result = new HashMap<>();
+        for (DatePlan dp : datePlans) {
+            List<PlacePlanInfo> infos = result.computeIfAbsent(dp.getTripThemeType(), k -> new ArrayList<>());
+            for (PlacePlan pp : dp.getPlacePlans()) {
+                infos.add(PlacePlanInfo.of(pp, placeMap.get(pp.getPlaceId())));
+            }
+        }
+        for (List<PlacePlanInfo> infos : result.values()) {
+            infos.sort(Comparator.comparing(PlacePlanInfo::getDate).thenComparing(PlacePlanInfo::getStartTime));
+        }
+        return result;
     }
 
     public PlanStatusResponse getPlanStatus(Long tripId, Long userId) {
@@ -70,6 +73,11 @@ public class PlanFacadeService {
         tripSelectService.findById(placePlan.getDatePlan().getTripId(), userId);
 
         planDeleteService.deletePlacePlanWithTransports(placePlan);
+    }
+
+    public TransportPlanInfo getTransportPlanDetail(Long transportPlanId) {
+        TransportPlan transportPlan = planSelectService.findTransportPlanById(transportPlanId);
+        return TransportPlanInfo.of(transportPlan);
     }
 
     public PlacePlanInfo changePlacePlan(Long oldPlacePlanId, Long newPlaceId, Long userId) {

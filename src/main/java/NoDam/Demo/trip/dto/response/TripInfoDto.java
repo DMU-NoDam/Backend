@@ -5,8 +5,6 @@ import NoDam.Demo.common.type.ScheduleType;
 import NoDam.Demo.common.type.TripThemeType;
 import NoDam.Demo.common.util.DateUtil;
 import NoDam.Demo.trip.domain.Trip;
-import java.util.List;
-import java.util.stream.Collectors;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -22,9 +20,9 @@ public class TripInfoDto {
     private String startDate;
     private String endDate;
     private boolean isFixed;
-    private Boolean isPlanning;
+    private Boolean planCreated;
 
-    public static TripInfoDto from(Trip trip) {
+    public static TripInfoDto from(Trip trip, boolean planStatus) {
         return TripInfoDto.builder()
                 .id(trip.getId())
                 .name(trip.getName())
@@ -35,13 +33,7 @@ public class TripInfoDto {
                 .startDate(DateUtil.fromLocalDate(trip.getStartDate()))
                 .endDate(DateUtil.fromLocalDate(trip.getEndDate()))
                 .isFixed(trip.isFixed())
-                .isPlanning(trip.getIsPlanning())
+                .planCreated(planStatus)
                 .build();
-    }
-
-    public static List<TripInfoDto> from(List<Trip> trips) {
-        return trips.stream()
-                .map(TripInfoDto::from)
-                .collect(Collectors.toList());
     }
 }
