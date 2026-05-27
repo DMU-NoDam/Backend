@@ -117,13 +117,12 @@ public class PlaceFacadeService {
                 : placeSelectService.findById(targetPlan.getPlaceId()).getPlaceType();
 
         Region region = regionQueryService.findById(datePlan.getRegionId());
+        List<Place> placedPlaces = planSelectService.findPlacedPlaces(trip, datePlan.getTripThemeType());
 
         List<PlacePlan> allPlans = planSelectService.findPlacePlansByDatePlan(datePlan)
                 .stream()
                 .sorted(Comparator.comparing(PlacePlan::getStartTime))
                 .toList();
-
-        List<Long> excludeIds = allPlans.stream().map(PlacePlan::getPlaceId).toList();
 
         int targetIndex = IntStream.range(0, allPlans.size())
                 .filter(i -> allPlans.get(i).getId().equals(targetPlan.getId()))
@@ -144,7 +143,7 @@ public class PlaceFacadeService {
                 datePlan.getTripThemeType(),
                 weather,
                 trip.getScheduleType(),
-                excludeIds,
+                placedPlaces,
                 dto.getUserLat(), dto.getUserLon(),
                 targetPlan.getStartTime(), targetPlan.getEndTime(),
                 previousPlace, nextPlace
@@ -159,7 +158,7 @@ public class PlaceFacadeService {
             TripThemeType themeType,
             WeatherType weather,
             ScheduleType scheduleType,
-            List<Long> excludeIds,
+            List<Place> excludePlaces,
             Double userLat,
             Double userLon,
             LocalTime startTime,
@@ -169,7 +168,7 @@ public class PlaceFacadeService {
     ) {
         // 1차 필터: 조건 맞는 장소 10개
         List<RecommendPlaceResult> candidates = placeSelectService
-                .recommendPlaces(placeType, region, priceType, seasonType, themeType, weather, excludeIds, 10);
+                .recommendPlaces(placeType, region, priceType, seasonType, themeType, weather, excludePlaces, 10);
 
         // transport 계산 (null이면 RouteInfo.empty로 포함)
         List<Pair<RecommendPlaceResult, RouteInfo>> reachable = new ArrayList<>();
