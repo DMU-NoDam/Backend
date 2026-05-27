@@ -19,9 +19,9 @@ public class HotelRecommendService {
     private final PlaceSelectService placeSelectService;
 
     // TODO: 외부 API 호출 fallback 구현
-    public Optional<PlaceInfo> recommend(Region region, PriceType priceType, List<Long> excludeIds) {
+    public Optional<PlaceInfo> recommend(Region region, PriceType priceType, List<Place> excludePlaces) {
         List<RecommendPlaceResult> hotels = placeSelectService.recommendPlaces(
-                PlaceType.HOTEL, region, priceType, null, null, null, excludeIds, 1);
+                PlaceType.HOTEL, region, priceType, null, null, null, excludePlaces, 1);
         return hotels.isEmpty() ? Optional.empty() : Optional.of(hotels.get(0).getPlace());
     }
 

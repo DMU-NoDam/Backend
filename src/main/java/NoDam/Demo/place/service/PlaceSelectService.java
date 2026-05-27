@@ -47,9 +47,12 @@ public class PlaceSelectService {
         SeasonType recommendSeason, // can null
         TripThemeType recommendTripTheme, // can null
         WeatherType recommendWeatherType, // can null
-        List<Long> excludeIds, // 제외할 place id 목록
+        List<Place> excludePlaces, // 제외할 place 목록
         int count
     ) {
+        List<Long> excludeIds = excludePlaces == null || excludePlaces.isEmpty()
+                ? List.of(-1L)
+                : excludePlaces.stream().map(Place::getId).toList();
         List<Place> places = placeRepository.findPlacesByFilters(
                 placeType.name(),
                 region.getId(),
@@ -57,7 +60,7 @@ public class PlaceSelectService {
                 recommendSeason      != null ? recommendSeason.name()      : null,
                 recommendTripTheme   != null ? recommendTripTheme.name()   : null,
                 recommendWeatherType != null ? recommendWeatherType.name() : null,
-                excludeIds == null || excludeIds.isEmpty() ? List.of(-1L) : excludeIds,
+                excludeIds,
                 PageRequest.of(0, count)
         );
         return places.stream()
