@@ -7,6 +7,7 @@ import NoDam.Demo.common.util.ListUtil;
 import NoDam.Demo.common.util.TimeUtil;
 import NoDam.Demo.place.domain.Place;
 import NoDam.Demo.place.dto.PlaceInfo;
+import NoDam.Demo.place.dto.RecommendPlaceResult;
 import NoDam.Demo.place.dto.PlaceRequestDto;
 import NoDam.Demo.place.dto.RecommendPlaceRequestDto;
 import NoDam.Demo.place.dto.RecommendedPlaceInfo;
@@ -116,13 +117,12 @@ public class PlaceFacadeService {
                 : placeSelectService.findById(targetPlan.getPlaceId()).getPlaceType();
 
         Region region = regionQueryService.findById(datePlan.getRegionId());
+        List<Place> placedPlaces = planSelectService.findPlacedPlaces(trip, datePlan.getTripThemeType());
 
         List<PlacePlan> allPlans = planSelectService.findPlacePlansByDatePlan(datePlan)
                 .stream()
                 .sorted(Comparator.comparing(PlacePlan::getStartTime))
                 .toList();
-
-        List<Long> excludeIds = allPlans.stream().map(PlacePlan::getPlaceId).toList();
 
         int targetIndex = IntStream.range(0, allPlans.size())
                 .filter(i -> allPlans.get(i).getId().equals(targetPlan.getId()))
@@ -143,7 +143,7 @@ public class PlaceFacadeService {
                 datePlan.getTripThemeType(),
                 weather,
                 trip.getScheduleType(),
-                excludeIds,
+                placedPlaces,
                 dto.getUserLat(), dto.getUserLon(),
                 targetPlan.getStartTime(), targetPlan.getEndTime(),
                 previousPlace, nextPlace
@@ -158,7 +158,7 @@ public class PlaceFacadeService {
             TripThemeType themeType,
             WeatherType weather,
             ScheduleType scheduleType,
-            List<Long> excludeIds,
+            List<Place> excludePlaces,
             Double userLat,
             Double userLon,
             LocalTime startTime,
@@ -167,14 +167,14 @@ public class PlaceFacadeService {
             PlaceInfo nextPlace
     ) {
         // 1차 필터: 조건 맞는 장소 10개
-        List<Place> candidates = placeSelectService
-                .recommendPlaces(placeType, region, priceType, seasonType, themeType, weather, excludeIds, 10);
+        List<RecommendPlaceResult> candidates = placeSelectService
+                .recommendPlaces(placeType, region, priceType, seasonType, themeType, weather, excludePlaces, 10);
 
         // transport 계산 (null이면 RouteInfo.empty로 포함)
-        List<Pair<PlaceInfo, RouteInfo>> reachable = new ArrayList<>();
-        for (Place place : candidates) {
-            RouteInfo route = mapApiService.computeRoutesNavitimeFromCoord(userLat, userLon, place, startTime);
-            reachable.add(Pair.of(PlaceInfo.of(place), route != null ? route : RouteInfo.empty()));
+        List<Pair<RecommendPlaceResult, RouteInfo>> reachable = new ArrayList<>();
+        for (RecommendPlaceResult result : candidates) {
+            RouteInfo route = mapApiService.computeRoutesNavitimeFromCoord(userLat, userLon, result.getPlace(), startTime);
+            reachable.add(Pair.of(result, route != null ? route : RouteInfo.empty()));
         }
 
         // 2차 AI: 상위 5개 선정
@@ -182,7 +182,7 @@ public class PlaceFacadeService {
     }
 
     private List<RecommendedPlaceInfo> selectTopFiveWithAi(
-            List<Pair<PlaceInfo, RouteInfo>> candidates,
+            List<Pair<RecommendPlaceResult, RouteInfo>> candidates,
             ScheduleType scheduleType,
             TripThemeType themeType,
             LocalTime oldStartTime,
@@ -193,7 +193,7 @@ public class PlaceFacadeService {
         if(isMockAi)
             return candidates.stream()
                     .limit(5)
-                    .map(pair -> RecommendedPlaceInfo.of(pair.getFirst(), pair.getSecond(), oldStartTime, oldEndTime))
+                    .map(pair -> RecommendedPlaceInfo.of(pair.getFirst().getPlace(), pair.getSecond(), oldStartTime, oldEndTime))
                     .toList();
 
         AiRecommendPlaceRequestDto aiRequest = AiRecommendPlaceRequestDto.builder()
@@ -212,23 +212,16 @@ public class PlaceFacadeService {
                 aiRequest
         );
 
-        if (aiResponse == null || aiResponse.getSelectedPlaces() == null || aiResponse.getSelectedPlaces().isEmpty()) {
-            return candidates.stream()
-                    .limit(5)
-                    .map(pair -> RecommendedPlaceInfo.of(pair.getFirst(), pair.getSecond(), oldStartTime, oldEndTime))
-                    .toList();
-        }
-
-        Map<Long, Pair<PlaceInfo, RouteInfo>> candidateMap = candidates.stream()
-                .collect(Collectors.toMap(pair -> pair.getFirst().getId(), pair -> pair));
+        Map<Long, Pair<RecommendPlaceResult, RouteInfo>> candidateMap = candidates.stream()
+                .collect(Collectors.toMap(pair -> pair.getFirst().getPlace().getId(), pair -> pair));
 
         return aiResponse.getSelectedPlaces().stream()
                 .map(selected -> {
-                    Pair<PlaceInfo, RouteInfo> pair = candidateMap.get(selected.getPlaceId());
+                    Pair<RecommendPlaceResult, RouteInfo> pair = candidateMap.get(selected.getPlaceId());
                     LocalTime startTime = TimeUtil.toLocalTime(selected.getStartTime());
                     LocalTime endTime = TimeUtil.toLocalTime(selected.getEndTime());
                     return RecommendedPlaceInfo.of(
-                            pair.getFirst(),
+                            pair.getFirst().getPlace(),
                             pair.getSecond(),
                             startTime != null ? startTime : oldStartTime,
                             endTime != null ? endTime : oldEndTime

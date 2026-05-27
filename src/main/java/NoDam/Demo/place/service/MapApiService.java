@@ -3,6 +3,7 @@ package NoDam.Demo.place.service;
 import NoDam.Demo.common.excetion.CustomException;
 import NoDam.Demo.common.excetion.ErrorCode;
 import NoDam.Demo.place.domain.Place;
+import NoDam.Demo.place.dto.PlaceInfo;
 import NoDam.Demo.place.dto.google.GoogleRouteRequestDto;
 import NoDam.Demo.place.dto.google.GoogleRouteResponseDto;
 import NoDam.Demo.place.dto.navitime.NavitimeRouteResponseDto;
@@ -52,25 +53,25 @@ public class MapApiService {
 
     private final Logger logger = LoggerFactory.getLogger("map api service :: ");
 
-    public RouteInfo computeRoutesNavitimeFromCoord(Double startLat, Double startLon, Place end, LocalTime startTime) {
+    public RouteInfo computeRoutesNavitimeFromCoord(Double startLat, Double startLon, PlaceInfo end, LocalTime startTime) {
         if(startLat == null || startLon == null)
             return RouteInfo.empty();
 
-        RouteInfo routes = callNavitime(startLat, startLon, end, startTime);
+        RouteInfo routes = callNavitime(startLat, startLon, end.getLat(), end.getLon(), startTime);
         translateRouteNames(routes, "ja", "ko");
         return routes;
     }
 
     public RouteInfo computeRoutesNavitimeFromPlace(Place start, Place end, LocalTime startTime) {
-        RouteInfo routes = callNavitime(start.getLat(), start.getLon(), end, startTime);
+        RouteInfo routes = callNavitime(start.getLat(), start.getLon(), end.getLat(), end.getLon(), startTime);
         routes.setStartAndEndName(start.getName(), end.getName());
         translateRouteNames(routes, "ja", "ko");
         return routes;
     }
 
-    private RouteInfo callNavitime(Double startLat, Double startLon, Place end, LocalTime startTime) {
+    private RouteInfo callNavitime(Double startLat, Double startLon, Double endtLat, Double endLon, LocalTime startTime) {
         String startCoord = startLat + "," + startLon;
-        String goalCoord = end.getLat() + "," + end.getLon();
+        String goalCoord = endtLat + "," + endLon;
         String startTimeStr = LocalDateTime.of(LocalDate.now(), startTime).format(NAVITIME_START_TIME_FORMATTER);
 
         NavitimeRouteResponseDto response = WebClient.create()

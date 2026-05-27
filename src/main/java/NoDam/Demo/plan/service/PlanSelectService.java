@@ -5,6 +5,7 @@ import NoDam.Demo.common.excetion.ErrorCode;
 import NoDam.Demo.common.type.PlaceType;
 import NoDam.Demo.common.type.PlanStatus;
 import NoDam.Demo.common.type.TripThemeType;
+import NoDam.Demo.place.domain.Place;
 import NoDam.Demo.plan.domain.DatePlan;
 import NoDam.Demo.plan.domain.PlacePlan;
 import NoDam.Demo.plan.domain.TransportPlan;
@@ -49,6 +50,10 @@ public class PlanSelectService {
     public PlacePlan findPlacePlanWithDatePlanAndTransport(Long placePlanId) {
         return placePlanRepository.findByIdWithDatePlanAndTransport(placePlanId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
+    }
+
+    public List<Place> findPlacedPlaces(Trip trip, TripThemeType theme) {
+        return placePlanRepository.findPlacesByTripIdAndTheme(trip.getId(), theme);
     }
 
     // placeType에 해당하는 PlacePlan 중 placeId가 null인 것(placeholder) 반환

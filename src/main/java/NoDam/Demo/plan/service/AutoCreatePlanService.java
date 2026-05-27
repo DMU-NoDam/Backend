@@ -1,12 +1,11 @@
 package NoDam.Demo.plan.service;
 
-import NoDam.Demo.common.excetion.CustomException;
-import NoDam.Demo.common.excetion.ErrorCode;
 import NoDam.Demo.common.type.*;
 import NoDam.Demo.common.util.DateUtil;
 import NoDam.Demo.common.util.ListUtil;
 import NoDam.Demo.place.domain.Place;
 import NoDam.Demo.place.dto.PlaceInfo;
+import NoDam.Demo.place.dto.RecommendPlaceResult;
 import NoDam.Demo.place.service.AirportSelectService;
 import NoDam.Demo.place.service.MapApiService;
 import NoDam.Demo.place.service.HotelRecommendService;
@@ -30,8 +29,8 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.*;
-import java.util.function.Supplier;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 @Service
@@ -117,14 +116,12 @@ public class AutoCreatePlanService {
     public CompletableFuture<List<DatePlan>> autoGenerateAllPlans(Trip trip) {
         return runWithPlanningLock(trip, () -> {
         List<DatePlan> createdDatePlans = new ArrayList<>();
-        List<Place> previousDaysPlaces = new ArrayList<>();
 
         for (DatePlan datePlan : planSelectService.findAllDatePlan(trip)) {
             PlanStatus status = datePlan.getPlanStatus();
 
-            // AI 일정까지 완료된 날짜: previousDaysPlaces만 누적하고 skip
+            // AI 일정까지 완료된 날짜: skip
             if (status.isAfterOrEqual(PlanStatus.AI_PLANNED)) {
-                previousDaysPlaces.addAll(getAiPlacesFromExistingPlans(datePlan));
                 continue;
             }
 
@@ -136,7 +133,8 @@ public class AutoCreatePlanService {
 
             // 2. 후보 장소 조회 (HOTEL, AIRPORT 제외)
             Region region = regionQueryService.findById(datePlan.getRegionId());
-            Map<PlaceType, List<PlaceInfo>> candidates = buildCandidates(trip, datePlan, region);
+            List<Place> excludePlaces = planSelectService.findPlacedPlaces(trip, datePlan.getTripThemeType());
+            Map<PlaceType, List<RecommendPlaceResult>> candidates = buildCandidates(trip, datePlan, region, excludePlaces);
 
             // 3. 날짜에 배정된 필수 장소 조회
             List<PlaceInfo> necessaryPlaces = getNecessaryPlaces(datePlan);
@@ -145,19 +143,17 @@ public class AutoCreatePlanService {
             List<PlacePlanInfo> fixedPlans = toPlacePlanInfos(planSelectService.findPlacePlansByDatePlan(datePlan));
             List<PlacePlanRequestDto> plans = dayScheduleService.buildSchedule(
                     trip.getScheduleType(), datePlan.getTripThemeType(),
-                    necessaryPlaces, fixedPlans, candidates, previousDaysPlaces);
-            List<Place> validatedPlaces = validatePlaces(plans);
+                    necessaryPlaces, fixedPlans, candidates, excludePlaces);
+            validatePlaces(plans);
 
             createdDatePlans.add(planCreateService.createPlans(datePlan, plans));
             planCreateService.updateDatePlanStatus(datePlan, PlanStatus.AI_PLANNED);
-            previousDaysPlaces.addAll(validatedPlaces);
 
             // 5. hotel placeholder에 추천 호텔 배정
             if (datePlan.getHotelPlaceId() == null) {
                 planSelectService.findEmptyPlacePlanByType(datePlan, PlaceType.HOTEL)
                         .ifPresent(placeholder -> {
-                            List<Long> excludeIds = getPlacedPlaceIds(datePlan);
-                            hotelRecommendService.recommend(region, trip.getPriceType(), excludeIds)
+                            hotelRecommendService.recommend(region, trip.getPriceType(), excludePlaces)
                                     .ifPresent(h -> planCreateService.updateHotelPlacePlanId(placeholder, h.getId()));
                         });
             }
@@ -166,21 +162,6 @@ public class AutoCreatePlanService {
 
         return CompletableFuture.completedFuture(createdDatePlans);
         });
-    }
-
-    // AI_PLANNED 이상인 날짜의 기존 PlacePlan에서 고정 장소(공항·호텔) 제외한 AI 선정 장소 반환
-    private List<Place> getAiPlacesFromExistingPlans(DatePlan datePlan) {
-        Set<Long> fixedIds = new HashSet<>();
-        if (datePlan.getAirportPlaceId() != null) fixedIds.add(datePlan.getAirportPlaceId());
-        if (datePlan.getHotelPlaceId() != null) fixedIds.add(datePlan.getHotelPlaceId());
-
-        List<Long> aiPlaceIds = planSelectService.findPlacePlansByDatePlan(datePlan).stream()
-                .map(PlacePlan::getPlaceId)
-                .filter(id -> id != null && !fixedIds.contains(id))
-                .distinct()
-                .toList();
-
-        return placeSelectService.findAllById(aiPlaceIds);
     }
 
     private List<Place> validatePlaces(List<PlacePlanRequestDto> aiResponse) {
@@ -200,13 +181,14 @@ public class AutoCreatePlanService {
     public CompletableFuture<DatePlan> autoGeneratePlans(Trip trip, DatePlan targetDate) {
         return runWithPlanningLock(trip, () -> {
             Region region = regionQueryService.findById(targetDate.getRegionId());
-            Map<PlaceType, List<PlaceInfo>> candidates = buildCandidates(trip, targetDate, region);
+            List<Place> excludePlaces = planSelectService.findPlacedPlaces(trip, targetDate.getTripThemeType());
+            Map<PlaceType, List<RecommendPlaceResult>> candidates = buildCandidates(trip, targetDate, region, excludePlaces);
             List<PlaceInfo> necessaryPlaces = getNecessaryPlaces(targetDate);
             List<PlacePlanInfo> fixedPlans = toPlacePlanInfos(planSelectService.findPlacePlansByDatePlan(targetDate));
 
             List<PlacePlanRequestDto> plans = dayScheduleService.buildSchedule(
                     trip.getScheduleType(), targetDate.getTripThemeType(),
-                    necessaryPlaces, fixedPlans, candidates, List.of());
+                    necessaryPlaces, fixedPlans, candidates, excludePlaces);
             validatePlaces(plans);
 
             DatePlan created = planCreateService.createPlans(targetDate, plans);
@@ -242,14 +224,13 @@ public class AutoCreatePlanService {
     }
 
     // 후보 장소 조회 (HOTEL, AIRPORT는 직접 처리하므로 제외)
-    private Map<PlaceType, List<PlaceInfo>> buildCandidates(Trip trip, DatePlan datePlan, Region region) {
-        Map<PlaceType, List<PlaceInfo>> candidates = new HashMap<>();
+    private Map<PlaceType, List<RecommendPlaceResult>> buildCandidates(Trip trip, DatePlan datePlan, Region region, List<Place> excludePlaces) {
+        Map<PlaceType, List<RecommendPlaceResult>> candidates = new HashMap<>();
         for (PlaceType placeType : PlaceType.values()) {
             if (placeType == PlaceType.HOTEL || placeType == PlaceType.AIRPORT) continue;
             candidates.put(placeType, placeSelectService.recommendPlaces(
                     placeType, region, trip.getPriceType(), null,
-                    datePlan.getTripThemeType(), WeatherType.SUNNY, List.of(), 10)
-                    .stream().map(PlaceInfo::of).toList());
+                    datePlan.getTripThemeType(), WeatherType.SUNNY, excludePlaces, 10));
         }
         return candidates;
     }
@@ -270,14 +251,6 @@ public class AutoCreatePlanService {
                                     .endTime(pp.getEndTime())
                                     .build();
                 })
-                .toList();
-    }
-
-    // 현재 DatePlan의 배정된 placeId 목록 (hotel 추천 exclude용)
-    private List<Long> getPlacedPlaceIds(DatePlan datePlan) {
-        return planSelectService.findPlacePlansByDatePlan(datePlan).stream()
-                .map(PlacePlan::getPlaceId)
-                .filter(Objects::nonNull)
                 .toList();
     }
 
