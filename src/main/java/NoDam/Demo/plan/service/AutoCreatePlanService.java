@@ -7,6 +7,7 @@ import NoDam.Demo.common.util.DateUtil;
 import NoDam.Demo.common.util.ListUtil;
 import NoDam.Demo.place.domain.Place;
 import NoDam.Demo.place.dto.PlaceInfo;
+import NoDam.Demo.place.dto.RecommendPlaceResult;
 import NoDam.Demo.place.service.AirportSelectService;
 import NoDam.Demo.place.service.MapApiService;
 import NoDam.Demo.place.service.HotelRecommendService;
@@ -136,7 +137,7 @@ public class AutoCreatePlanService {
 
             // 2. 후보 장소 조회 (HOTEL, AIRPORT 제외)
             Region region = regionQueryService.findById(datePlan.getRegionId());
-            Map<PlaceType, List<PlaceInfo>> candidates = buildCandidates(trip, datePlan, region);
+            Map<PlaceType, List<RecommendPlaceResult>> candidates = buildCandidates(trip, datePlan, region);
 
             // 3. 날짜에 배정된 필수 장소 조회
             List<PlaceInfo> necessaryPlaces = getNecessaryPlaces(datePlan);
@@ -200,7 +201,7 @@ public class AutoCreatePlanService {
     public CompletableFuture<DatePlan> autoGeneratePlans(Trip trip, DatePlan targetDate) {
         return runWithPlanningLock(trip, () -> {
             Region region = regionQueryService.findById(targetDate.getRegionId());
-            Map<PlaceType, List<PlaceInfo>> candidates = buildCandidates(trip, targetDate, region);
+            Map<PlaceType, List<RecommendPlaceResult>> candidates = buildCandidates(trip, targetDate, region);
             List<PlaceInfo> necessaryPlaces = getNecessaryPlaces(targetDate);
             List<PlacePlanInfo> fixedPlans = toPlacePlanInfos(planSelectService.findPlacePlansByDatePlan(targetDate));
 
@@ -242,14 +243,13 @@ public class AutoCreatePlanService {
     }
 
     // 후보 장소 조회 (HOTEL, AIRPORT는 직접 처리하므로 제외)
-    private Map<PlaceType, List<PlaceInfo>> buildCandidates(Trip trip, DatePlan datePlan, Region region) {
-        Map<PlaceType, List<PlaceInfo>> candidates = new HashMap<>();
+    private Map<PlaceType, List<RecommendPlaceResult>> buildCandidates(Trip trip, DatePlan datePlan, Region region) {
+        Map<PlaceType, List<RecommendPlaceResult>> candidates = new HashMap<>();
         for (PlaceType placeType : PlaceType.values()) {
             if (placeType == PlaceType.HOTEL || placeType == PlaceType.AIRPORT) continue;
             candidates.put(placeType, placeSelectService.recommendPlaces(
                     placeType, region, trip.getPriceType(), null,
-                    datePlan.getTripThemeType(), WeatherType.SUNNY, List.of(), 10)
-                    .stream().map(PlaceInfo::of).toList());
+                    datePlan.getTripThemeType(), WeatherType.SUNNY, List.of(), 10));
         }
         return candidates;
     }
