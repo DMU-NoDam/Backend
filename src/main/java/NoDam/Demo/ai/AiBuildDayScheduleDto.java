@@ -5,6 +5,7 @@ import NoDam.Demo.common.type.ScheduleType;
 import NoDam.Demo.common.type.TripThemeType;
 import NoDam.Demo.place.domain.Place;
 import NoDam.Demo.place.dto.PlaceInfo;
+import NoDam.Demo.place.dto.RecommendPlaceResult;
 import NoDam.Demo.plan.dto.response.PlacePlanInfo;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -26,7 +27,7 @@ public class AiBuildDayScheduleDto {
     private List<PlaceItem> necessaryPlaces;
     private List<FixedPlanItem> fixedPlans;
     private List<PlaceItem> previousDaysPlaces;
-    private Map<PlaceType, List<PlaceItem>> candidates;
+    private Map<PlaceType, List<RecommendPlaceResult>> candidates;
 
     @Getter
     @Builder

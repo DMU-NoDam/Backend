@@ -9,6 +9,7 @@ import NoDam.Demo.common.type.TripThemeType;
 import NoDam.Demo.common.util.TimeUtil;
 import NoDam.Demo.place.domain.Place;
 import NoDam.Demo.place.dto.PlaceInfo;
+import NoDam.Demo.place.dto.RecommendPlaceResult;
 import NoDam.Demo.plan.dto.response.PlacePlanInfo;
 import NoDam.Demo.plan.dto.ai.AiRecommendPlaceResponseDto;
 import NoDam.Demo.plan.dto.request.PlacePlanRequestDto;
@@ -41,7 +42,7 @@ public class DayScheduleService {
             TripThemeType themeType,
             List<PlaceInfo> necessaryPlaces,
             List<PlacePlanInfo> fixedPlans,
-            Map<PlaceType, List<PlaceInfo>> candidates,
+            Map<PlaceType, List<RecommendPlaceResult>> candidates,
             List<Place> previousDaysPlaces
     ) {
         if ("mock".equals(aiProvider)) return buildScheduleMock(candidates);
@@ -52,11 +53,7 @@ public class DayScheduleService {
                 .necessaryPlaces(necessaryPlaces.stream().map(AiBuildDayScheduleDto.PlaceItem::of).toList())
                 .fixedPlans(fixedPlans.stream().map(AiBuildDayScheduleDto.FixedPlanItem::of).toList())
                 .previousDaysPlaces(previousDaysPlaces.stream().map(AiBuildDayScheduleDto.PlaceItem::of).toList())
-                .candidates(candidates.entrySet().stream()
-                        .collect(Collectors.toMap(
-                                Map.Entry::getKey,
-                                e -> e.getValue().stream().map(AiBuildDayScheduleDto.PlaceItem::of).toList()
-                        )))
+                .candidates(candidates)
                 .build();
 
         AiRecommendPlaceResponseDto response = aiService.call(
@@ -72,16 +69,16 @@ public class DayScheduleService {
     }
 
     // mock: 식당 12:00~14:00, 관광지 15:00~16:00 각 1개
-    private List<PlacePlanRequestDto> buildScheduleMock(Map<PlaceType, List<PlaceInfo>> candidates) {
+    private List<PlacePlanRequestDto> buildScheduleMock(Map<PlaceType, List<RecommendPlaceResult>> candidates) {
         List<PlacePlanRequestDto> result = new ArrayList<>();
 
-        List<PlaceInfo> restaurants = candidates.getOrDefault(PlaceType.RESTAURANT, List.of());
+        List<RecommendPlaceResult> restaurants = candidates.getOrDefault(PlaceType.RESTAURANT, List.of());
         if (!restaurants.isEmpty())
-            result.add(new PlacePlanRequestDto(LocalTime.of(12, 0), LocalTime.of(14, 0), restaurants.get(0).getId()));
+            result.add(new PlacePlanRequestDto(LocalTime.of(12, 0), LocalTime.of(14, 0), restaurants.get(0).getPlace().getId()));
 
-        List<PlaceInfo> sights = candidates.getOrDefault(PlaceType.SIGHT, List.of());
+        List<RecommendPlaceResult> sights = candidates.getOrDefault(PlaceType.SIGHT, List.of());
         if (!sights.isEmpty())
-            result.add(new PlacePlanRequestDto(LocalTime.of(15, 0), LocalTime.of(16, 0), sights.get(0).getId()));
+            result.add(new PlacePlanRequestDto(LocalTime.of(15, 0), LocalTime.of(16, 0), sights.get(0).getPlace().getId()));
 
         return result;
     }

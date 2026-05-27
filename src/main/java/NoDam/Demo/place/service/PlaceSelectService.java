@@ -5,6 +5,9 @@ import NoDam.Demo.common.excetion.ErrorCode;
 import NoDam.Demo.common.type.*;
 import NoDam.Demo.place.PlaceRepository;
 import NoDam.Demo.place.domain.Place;
+import NoDam.Demo.place.domain.TypeWeight;
+import NoDam.Demo.place.dto.PlaceInfo;
+import NoDam.Demo.place.dto.RecommendPlaceResult;
 import NoDam.Demo.region.domain.Region;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -37,7 +40,7 @@ public class PlaceSelectService {
     }
 
     // todo : 장소 시간 고려할 것
-    public List<Place> recommendPlaces(
+    public List<RecommendPlaceResult> recommendPlaces(
         PlaceType placeType, // not null
         Region region, // not null
         PriceType priceType, // can null
@@ -47,16 +50,22 @@ public class PlaceSelectService {
         List<Long> excludeIds, // 제외할 place id 목록
         int count
     ) {
-        return placeRepository.findPlacesByFilters(
-                placeType,
+        List<Place> places = placeRepository.findPlacesByFilters(
+                placeType.name(),
                 region.getId(),
-                priceType,
-                recommendSeason,
-                recommendTripTheme,
-                recommendWeatherType,
-                excludeIds == null ? List.of() : excludeIds,
+                priceType            != null ? priceType.name()            : null,
+                recommendSeason      != null ? recommendSeason.name()      : null,
+                recommendTripTheme   != null ? recommendTripTheme.name()   : null,
+                recommendWeatherType != null ? recommendWeatherType.name() : null,
+                excludeIds == null || excludeIds.isEmpty() ? List.of(-1L) : excludeIds,
                 PageRequest.of(0, count)
         );
+        return places.stream()
+                .map(place -> new RecommendPlaceResult(
+                        PlaceInfo.of(place),
+                        TypeWeight.computeDetail(place, priceType, recommendSeason, recommendTripTheme, recommendWeatherType)
+                ))
+                .toList();
     }
 
 }
