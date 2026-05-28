@@ -7,7 +7,6 @@ import NoDam.Demo.common.type.PlaceType;
 import NoDam.Demo.common.type.ScheduleType;
 import NoDam.Demo.common.type.TripThemeType;
 import NoDam.Demo.common.util.TimeUtil;
-import NoDam.Demo.place.domain.Place;
 import NoDam.Demo.place.dto.PlaceInfo;
 import NoDam.Demo.place.dto.RecommendPlaceResult;
 import NoDam.Demo.plan.dto.response.PlacePlanInfo;
@@ -23,6 +22,7 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -42,8 +42,7 @@ public class DayScheduleService {
             TripThemeType themeType,
             List<PlaceInfo> necessaryPlaces,
             List<PlacePlanInfo> fixedPlans,
-            Map<PlaceType, List<RecommendPlaceResult>> candidates,
-            List<Place> previousDaysPlaces
+            Map<PlaceType, List<RecommendPlaceResult>> candidates
     ) {
         if ("mock".equals(aiProvider)) return buildScheduleMock(candidates);
 
@@ -52,12 +51,16 @@ public class DayScheduleService {
                 .themeType(themeType)
                 .necessaryPlaces(necessaryPlaces.stream().map(AiBuildDayScheduleDto.PlaceItem::of).toList())
                 .fixedPlans(fixedPlans.stream().map(AiBuildDayScheduleDto.FixedPlanItem::of).toList())
-                .previousDaysPlaces(previousDaysPlaces.stream().map(AiBuildDayScheduleDto.PlaceItem::of).toList())
                 .candidates(candidates)
                 .build();
 
         AiRecommendPlaceResponseDto response = aiService.call(
                 Prompt.BUILD_DAY_SCHEDULE, AiRecommendPlaceResponseDto.class, request);
+
+        Set<Long> fixedPlaceIds = fixedPlans.stream()
+                .filter(fp -> fp.getPlaceInfo() != null && fp.getPlaceInfo().getId() != null)
+                .map(fp -> fp.getPlaceInfo().getId())
+                .collect(Collectors.toSet());
 
         return response.getSelectedPlaces().stream()
                 .map(s -> new PlacePlanRequestDto(
@@ -65,6 +68,7 @@ public class DayScheduleService {
                         TimeUtil.toLocalTime(s.getEndTime()),
                         s.getPlaceId()
                 ))
+                .filter(p -> p.getPlaceId() == null || !fixedPlaceIds.contains(p.getPlaceId()))
                 .toList();
     }
 
