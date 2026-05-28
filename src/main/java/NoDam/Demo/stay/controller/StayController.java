@@ -25,12 +25,12 @@ public class StayController {
     private final XoteloSearchService xoteloSearchService;
     private final XoteloRatesService xoteloRatesService; // 추가 : /rates 호출용
 
-    @GetMapping("/search")
-    @Operation(summary = "stay 지역 코드로 검색")
-    public ResponseEntity<SuccessResponse<List<XoteloSearchResponseDto>>> searchStays(@RequestParam String regionCode) {
-        List<XoteloSearchResponseDto> stays = xoteloSearchService.searchStays(regionCode);
-        return ResponseEntity.ok().body(new SuccessResponse<>("success", stays));
-    }
+//    @GetMapping("/search")
+//    @Operation(summary = "stay 지역 코드로 검색")
+//    public ResponseEntity<SuccessResponse<List<XoteloSearchResponseDto>>> searchStays(@RequestParam String regionCode) {
+//        List<XoteloSearchResponseDto> stays = xoteloSearchService.searchStays(regionCode);
+//        return ResponseEntity.ok().body(new SuccessResponse<>("success", stays));
+//    }
 
     // 추가 : hotelKey + 체크인/체크아웃 으로 OTA 별 가격 조회
     // 예: GET /stay/public/rates?hotelKey=g14129528-d310308&checkIn=2026-05-18&checkOut=2026-05-22
