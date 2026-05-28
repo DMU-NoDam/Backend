@@ -26,7 +26,6 @@ public class AiBuildDayScheduleDto {
     private TripThemeType themeType;
     private List<PlaceItem> necessaryPlaces;
     private List<FixedPlanItem> fixedPlans;
-    private List<PlaceItem> previousDaysPlaces;
     private Map<PlaceType, List<RecommendPlaceResult>> candidates;
 
     @Getter

@@ -113,7 +113,7 @@ public class AiService {
                     .post()
                     .uri(translateBaseUrl)
                     .contentType(MediaType.APPLICATION_JSON)
-                    .bodyValue(new TranslateRequestDto(texts, sourceLang, targetLang))
+                    .bodyValue(new TranslateRequestDto(texts, sourceLang, "en"))
                     .retrieve()
                     .onStatus(status -> !status.is2xxSuccessful(), clientResponse ->
                             clientResponse.bodyToMono(String.class)
