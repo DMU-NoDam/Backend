@@ -106,7 +106,7 @@ public class GooglePlaceInfo {
         dto.setWeatherType(null);
         dto.setTripThemeType(null);
         dto.setSeasonType(null);
-        dto.setPriceType(priceType.priceType);
+        dto.setPriceType(priceType != null ? priceType.priceType : null);
         return dto;
     }
 
