@@ -1,13 +1,14 @@
 # cli test
 
 port : 8080
+기본 url : http://localhost:8080/back
 
 ## test 진행
 curl을 통해 요청을 보내고 반환값을 저장한다
 
 예시 curl
 ```
-curl -X POST http://localhost:8080/test/user \
+curl -X POST http://localhost:8080/back/test/user \
   -H "Content-Type: application/json" \
   -d '{"id": null, "role": "USER"}'
 ```
