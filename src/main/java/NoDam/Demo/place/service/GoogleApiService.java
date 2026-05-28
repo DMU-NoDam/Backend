@@ -34,6 +34,8 @@ public class GoogleApiService {
 
     private static final String PLACE_FIELD_MASK = "places.id,places.types,places.location,places.formattedAddress,places.rating,places.googleMapsUri,places.regularOpeningHours.periods,places.websiteUri,places.displayName.text,places.parkingOptions.freeParkingLot,places.priceLevel,places.priceRange";
 
+    private static final String PLACE_BY_ID_FIELD_MASK = "id,types,location,formattedAddress,rating,googleMapsUri,regularOpeningHours.periods,websiteUri,displayName.text,parkingOptions.freeParkingLot,priceLevel,priceRange";
+
     private final Logger logger = LoggerFactory.getLogger("google api service :: ");
 
     public List<GooglePlaceInfo> searchByText(String hotelName) {
@@ -72,7 +74,7 @@ public class GoogleApiService {
     public GooglePlaceInfo searchByGoogleId(String googleId) {
         GooglePlaceResponseDto response = WebClient.create()
                 .get()
-                .uri(googleSearchByIdUrl + "/" + googleId + "?fields=" + PLACE_FIELD_MASK + "&key=" + googleApiKey)
+                .uri(googleSearchByIdUrl + "/" + googleId + "?fields=" + PLACE_BY_ID_FIELD_MASK + "&key=" + googleApiKey)
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError, clientResponse ->
                         clientResponse.bodyToMono(String.class)
