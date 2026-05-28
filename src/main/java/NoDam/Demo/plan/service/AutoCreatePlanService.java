@@ -8,7 +8,6 @@ import NoDam.Demo.place.dto.PlaceInfo;
 import NoDam.Demo.place.dto.RecommendPlaceResult;
 import NoDam.Demo.place.service.AirportSelectService;
 import NoDam.Demo.place.service.MapApiService;
-import NoDam.Demo.place.service.HotelRecommendService;
 import NoDam.Demo.place.service.PlaceSelectService;
 import NoDam.Demo.plan.domain.DatePlan;
 import NoDam.Demo.plan.domain.PlacePlan;
@@ -46,7 +45,6 @@ public class AutoCreatePlanService {
     private final AirportSelectService airportSelectService;
     private final NecessaryPlaceDistributeService necessaryPlaceDistributeService;
     private final DayScheduleService dayScheduleService;
-    private final HotelRecommendService hotelRecommendService;
 
     private final Logger logger = LoggerFactory.getLogger(AutoCreatePlanService.class);
 
@@ -153,8 +151,8 @@ public class AutoCreatePlanService {
             if (datePlan.getHotelPlaceId() == null) {
                 planSelectService.findEmptyPlacePlanByType(datePlan, PlaceType.HOTEL)
                         .ifPresent(placeholder -> {
-                            hotelRecommendService.recommend(region, trip.getPriceType(), excludePlaces)
-                                    .ifPresent(h -> planCreateService.updateHotelPlacePlanId(placeholder, h.getId()));
+                            Place recommendedHotel = placeSelectService.recommendHotelPlace(region);
+                            planCreateService.updateHotelPlacePlanId(placeholder, recommendedHotel.getId());
                         });
             }
             planCreateService.updateDatePlanStatus(datePlan, PlanStatus.HOTEL_ASSIGNED);
