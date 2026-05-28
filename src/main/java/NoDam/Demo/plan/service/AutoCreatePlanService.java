@@ -143,7 +143,7 @@ public class AutoCreatePlanService {
             List<PlacePlanInfo> fixedPlans = toPlacePlanInfos(planSelectService.findPlacePlansByDatePlan(datePlan));
             List<PlacePlanRequestDto> plans = dayScheduleService.buildSchedule(
                     trip.getScheduleType(), datePlan.getTripThemeType(),
-                    necessaryPlaces, fixedPlans, candidates, excludePlaces);
+                    necessaryPlaces, fixedPlans, candidates);
             validatePlaces(plans);
 
             createdDatePlans.add(planCreateService.createPlans(datePlan, plans));
@@ -188,7 +188,7 @@ public class AutoCreatePlanService {
 
             List<PlacePlanRequestDto> plans = dayScheduleService.buildSchedule(
                     trip.getScheduleType(), targetDate.getTripThemeType(),
-                    necessaryPlaces, fixedPlans, candidates, excludePlaces);
+                    necessaryPlaces, fixedPlans, candidates);
             validatePlaces(plans);
 
             DatePlan created = planCreateService.createPlans(targetDate, plans);

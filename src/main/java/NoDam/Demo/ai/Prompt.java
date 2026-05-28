@@ -35,12 +35,11 @@ public enum Prompt {
 
     /**
      * args[0] : AiBuildDayScheduleDto (JSON)
-     * - scheduleType       : LOOSE | NORMAL | TIGHT
-     * - themeType          : FOOD | HEALING | LANDMARK | ACTIVITY
-     * - necessaryPlaces    : List<PlaceItem> (id, placeType, name, lon, lat) — 반드시 포함해야 할 장소
-     * - fixedPlans         : List<FixedPlanItem> (startTime, endTime, place) — 고정된 시간대 (공항, 호텔)
-     * - previousDaysPlaces : List<PlaceItem> — 이전 날짜에 이미 선정된 장소 목록
-     * - candidates         : Map<PlaceType, List<PlaceItem>> (RESTAURANT | CAFE | SIGHT | SHOP)
+     * - scheduleType    : LOOSE | NORMAL | TIGHT
+     * - themeType       : FOOD | HEALING | LANDMARK | ACTIVITY
+     * - necessaryPlaces : List<PlaceItem> (id, placeType, name, lon, lat) — 반드시 포함해야 할 장소
+     * - fixedPlans      : List<FixedPlanItem> (startTime, endTime, place) — 고정된 시간대 (공항, 호텔)
+     * - candidates      : Map<PlaceType, List<PlaceItem>> (RESTAURANT | CAFE | SIGHT | SHOP) — 이전 날 장소 제외됨
      * args[1] : responseFormat (AiService가 자동 생성)
      */
     BUILD_DAY_SCHEDULE("""
@@ -55,7 +54,7 @@ public enum Prompt {
             - themeType에 맞는 장소를 우선 배치합니다.
             - - food : RESTAURANT 우선, HEALING : CAFE, HOTEL 우선, LANDMARK : sight 우선
             - RESTAURANT은 식사 시간을 고려하여 선정합니다.
-            - previousDaysPlaces에 포함된 장소는 선정하지 않습니다. (호텔, 공항 제외)
+            - candidates에 포함된 장소만 선정합니다. (이전 날 장소는 이미 제외됨)
             - fixedPlans의 시간대와 겹치지 않도록 일정을 배치합니다. (호텔, 공항 제외)
             - 장소 간 이동 시간을 고려하여 시간이 겹치지 않도록 합니다.
             - 이미 선정된 장소을 제외하고는 place id에 null값을 허용하지 않습니다.
