@@ -81,7 +81,7 @@ public class TripController {
                         hotel, flightInfo.destinationAirport(), flightInfo.firstDayAirportTime(), flightInfo.lastDayAirportTime())
                 )
                 .thenCompose((v) -> autoCreatePlanService.autoGenerateAllPlans(trip))
-                .thenCompose((datePlans) -> autoCreatePlanService.autoGenerateAllThemeTransportPlans(trip, datePlans))
+                .thenCompose((datePlans) -> autoCreatePlanService.autoGenerateAllThemeTransportPlans(trip))
                 .exceptionally((throwable) -> { logger.error("plan auto create fail"); throwable.printStackTrace(); return null; }); // nothing to do!
 
         return ResponseEntity.ok().body(new SuccessResponse<>("success", TripInfoDto.from(trip, false)));
