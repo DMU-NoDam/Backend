@@ -33,7 +33,7 @@ public class Place extends BaseEntity {
     private Long regionId; // cross-module: 최고 하위 region 참조
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 15)
+    @Column(nullable = true, length = 15)
     private PlaceType placeType;
 
     @Column(nullable = false, unique = true)

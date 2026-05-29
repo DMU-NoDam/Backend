@@ -23,6 +23,8 @@ import NoDam.Demo.region.service.RegionQueryService;
 import NoDam.Demo.trip.domain.Trip;
 import NoDam.Demo.trip.service.TripSelectService;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.util.Pair;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -50,6 +52,8 @@ public class PlaceFacadeService {
     private final AiService aiService;
 
     private final boolean isMockAi;
+
+    private final Logger logger = LoggerFactory.getLogger(PlaceFacadeService.class);
 
     public Place findByGoogleId(String googleId) {
         if(googleId == null || googleId.isEmpty())
@@ -87,7 +91,9 @@ public class PlaceFacadeService {
             selectedPlaces.addAll(savedPlaces);
         }
 
-        return CompletableFuture.completedFuture(ListUtil.sortByRequestOrder(googleIds, selectedPlaces, Place::getGoogleId));
+        List<Place> result = ListUtil.sortByRequestOrder(googleIds, selectedPlaces, Place::getGoogleId);
+        logger.info("findAllByGoogleId end size={}", result.size());
+        return CompletableFuture.completedFuture(result);
     }
 
     private List<Place> saveNewPlaces(List<String> notSavedGoogleIds) {
