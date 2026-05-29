@@ -84,6 +84,7 @@ public class GooglePlaceInfo {
     }
 
     private static PlaceType toPlaceType(List<String> googleTypes) {
+        if (googleTypes == null || googleTypes.isEmpty()) return null;
         for(String googleType : googleTypes) {
             for(PlaceType localType : PlaceType.values()) {
                 if(googleType.toLowerCase().contains(localType.name().toLowerCase()))
