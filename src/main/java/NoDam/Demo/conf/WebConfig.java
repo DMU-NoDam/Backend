@@ -21,7 +21,9 @@ public class WebConfig {
                           "http://localhost:*",
                           "https://localhost:*",
                           "http://192.168.*:*",
-                          "https://192.168.*:*"
+                          "https://192.168.*:*",
+                          "https://172.*.*:*",
+                          "http://172.*.*:*"
                         )
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")
                         .allowedHeaders("*")
