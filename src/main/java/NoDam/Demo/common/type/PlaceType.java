@@ -1,5 +1,9 @@
 package NoDam.Demo.common.type;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+
+import java.util.Arrays;
+
 public enum PlaceType {
 
     RESTAURANT("식당"), // 식당
@@ -9,14 +13,22 @@ public enum PlaceType {
     HOTEL("호텔"),
     AIRPORT("공항"); // 공항
 
-    private final String name;
+    private final String korean;
 
-    PlaceType(String name) {
-        this.name = name;
+    PlaceType(String korean) {
+        this.korean = korean;
     }
 
     @Override
     public String toString() {
-        return name;
+        return korean;
+    }
+
+    @JsonCreator
+    public static PlaceType fromKorean(String value) {
+        return Arrays.stream(values())
+                .filter(e -> e.korean.equals(value))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Unknown PlaceType: " + value));
     }
 }
