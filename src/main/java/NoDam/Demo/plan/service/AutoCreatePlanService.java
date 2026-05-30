@@ -302,13 +302,20 @@ public class AutoCreatePlanService {
         });
     }
 
-    @Async
-    // 동시성: 같은 PlacePlan 쌍에 동시 호출 시 중복 TransportPlan 생성 가능
-    public CompletableFuture<List<TransportPlan>> createAllTransportPlan(Trip trip, DatePlan datePlan) {
+//    @Async
+//    // 동시성: 같은 PlacePlan 쌍에 동시 호출 시 중복 TransportPlan 생성 가능
+//    public CompletableFuture<List<TransportPlan>> createAllTransportPlan(Trip trip, DatePlan datePlan) {
+//        return runWithPlanningLock(trip, () -> {
+//            List<TransportPlan> transportPlans = generateTransportPlans(datePlan);
+//            logger.info("createAllTransportPlan end tripId={} datePlanId={}", trip.getId(), datePlan.getId());
+//            return CompletableFuture.completedFuture(transportPlans);
+//        });
+//    }
+
+    public List<TransportPlan> createAllTransportPlan(Trip trip, DatePlan datePlan) {
         return runWithPlanningLock(trip, () -> {
             List<TransportPlan> transportPlans = generateTransportPlans(datePlan);
-            logger.info("createAllTransportPlan end tripId={} datePlanId={}", trip.getId(), datePlan.getId());
-            return CompletableFuture.completedFuture(transportPlans);
+            return transportPlans;
         });
     }
 
