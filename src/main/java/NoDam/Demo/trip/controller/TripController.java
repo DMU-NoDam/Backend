@@ -7,6 +7,7 @@ import NoDam.Demo.place.service.PlaceFacadeService;
 import NoDam.Demo.plan.service.AutoCreatePlanService;
 import NoDam.Demo.trip.domain.Trip;
 import NoDam.Demo.trip.dto.request.TripCreateFacadeRequestDto;
+import NoDam.Demo.trip.dto.request.TripUpdateDto;
 import NoDam.Demo.trip.dto.response.TripInfoDto;
 import NoDam.Demo.trip.service.TripFacadeService;
 import NoDam.Demo.user.domain.User;
@@ -23,13 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -132,4 +127,16 @@ public class TripController {
         Trip trip = tripFacadeService.updateTripTheme(user.getId(), tripId, theme);
         return ResponseEntity.ok().body(new SuccessResponse("success", null));
     }
+
+    @PutMapping("/api/{tripId}")
+    @Operation(summary = "여행 정보 수정")
+    public ResponseEntity<SuccessResponse<TripInfoDto>> updateTrip(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long tripId,
+            @RequestBody TripUpdateDto request
+    ) {
+        Trip trip = tripFacadeService.updateTripInfo(user.getId(), tripId, request);
+        return ResponseEntity.ok().body(new SuccessResponse<>("success", TripInfoDto.from(trip, false)));
+    }
+
 }

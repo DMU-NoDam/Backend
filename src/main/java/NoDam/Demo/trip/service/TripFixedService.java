@@ -82,4 +82,10 @@ public class TripFixedService {
         trip.updateTheme(themeType);
         return tripRepository.save(trip);
     }
+
+    @Transactional
+    public Trip updateTripInfo(Trip trip, String name, Integer personCount) {
+        trip.updateInfo(name, personCount);
+        return tripRepository.save(trip);
+    }
 }

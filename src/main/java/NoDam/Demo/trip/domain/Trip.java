@@ -93,4 +93,9 @@ public class Trip extends BaseEntity {
         this.tripThemeType = themeType;
     }
 
+    public void updateInfo(String name, Integer personCount) {
+        if (name != null && !name.isBlank()) this.name = name;
+        if (personCount != null) this.personCount = personCount;
+    }
+
 }
