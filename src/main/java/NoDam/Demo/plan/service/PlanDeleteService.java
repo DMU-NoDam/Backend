@@ -23,10 +23,7 @@ public class PlanDeleteService {
     public void deletePlacePlanWithTransports(PlacePlan placePlan) {
         long placePlanId = placePlan.getId();
 
-        if(placePlan.getToTransport() != null)
-            transportPlanRepository.softDelete(placePlan.getToTransport().getId());
-        if(placePlan.getFromTransport() != null)
-            transportPlanRepository.softDelete(placePlan.getFromTransport().getId());
+        transportPlanRepository.softDeleteAllByPlacePlan(placePlanId);
 
         placePlanRepository.softDelete(placePlanId);
     }
