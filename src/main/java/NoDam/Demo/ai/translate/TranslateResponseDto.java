@@ -2,13 +2,25 @@ package NoDam.Demo.ai.translate;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.ToString;
 
 import java.util.List;
 
 @Getter
-@ToString
 @NoArgsConstructor
 public class TranslateResponseDto {
-    private List<String> translatedText;
+    private List<Value> value;
+
+    @Getter
+    @NoArgsConstructor
+    public static class Value {
+        private List<Translation> translations;
+    }
+
+    @Getter
+    @NoArgsConstructor
+    public static class Translation {
+        private String language;
+        private int sourceCharacters;
+        private String text;
+    }
 }
