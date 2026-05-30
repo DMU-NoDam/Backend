@@ -72,7 +72,7 @@ public class PlanFacadeService {
         PlacePlan placePlan = planSelectService.findPlacePlanWithDatePlanAndTransport(placePlanId);
         tripSelectService.findById(placePlan.getDatePlan().getTripId(), userId);
 
-        planDeleteService.deletePlacePlanWithTransports(placePlan);
+        planDeleteService.deletePlacePlanWithTransports(placePlan.getId());
     }
 
     public TransportPlanInfo getTransportPlanDetail(Long transportPlanId) {
@@ -98,12 +98,15 @@ public class PlanFacadeService {
         DatePlan datePlan = first.getDatePlan();
         Trip trip = tripSelectService.findById(datePlan.getTripId(), userId);
 
-        changePlacePlan(datePlan, trip, first, second.getPlaceId());
-        changePlacePlan(datePlan, trip, second, first.getPlaceId());
+        Long firstPlaceId = first.getPlaceId();
+        Long secondPlaceId = second.getPlaceId();
+
+        first = changePlacePlan(datePlan, trip, first, secondPlaceId);
+        second = changePlacePlan(datePlan, trip, second, firstPlaceId);
     }
 
     private PlacePlan changePlacePlan(DatePlan datePlan, Trip trip, PlacePlan oldPlacePlan, Long newPlaceId) {
-        planDeleteService.deletePlacePlanWithTransports(oldPlacePlan);
+        planDeleteService.deletePlacePlanWithTransports(oldPlacePlan.getId());
 
         PlacePlan newPlacePlan = planCreateService.createPlacePlan(
                 datePlan,

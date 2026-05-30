@@ -21,16 +21,16 @@ import org.hibernate.annotations.Where;
 public class PlacePlan extends Plan {
 
     @ManyToOne
-    @JoinColumn(name = "date_plan_id", nullable = false)
+    @JoinColumn(name = "date_plan_id")
     private DatePlan datePlan;
 
     @Column(nullable = true)
     private Long placeId; // cross-module: place 참조
 
-    @OneToOne(mappedBy = "fromPlacePlan")
+    @OneToOne(mappedBy = "fromPlacePlan", orphanRemoval = true)
     private TransportPlan fromTransport;
 
-    @OneToOne(mappedBy = "toPlacePlan")
+    @OneToOne(mappedBy = "toPlacePlan", orphanRemoval = true)
     private TransportPlan toTransport;
 
     public void updatePlaceId(Long placeId) {
