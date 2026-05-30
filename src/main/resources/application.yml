@@ -80,8 +80,9 @@ external:
     routes-url: https://routes.googleapis.com/directions/v2:computeRoutes
     api-key: ${GOOGLE_API_KEY}
   translate:
-    base-url: http://nodam.duckdns.org:8117/translate
-    mock: true
+    base-url: https://api.cognitive.microsofttranslator.com
+    api-version: 2025-10-01-preview
+    api-key: ${MICROSOFT_TRANSLATE_API_KEY}
   navitime:
     base-url: https://navitime-route-totalnavi.p.rapidapi.com
     rapid-api-key: ${NAVITIME_RAPID_API_KEY}
