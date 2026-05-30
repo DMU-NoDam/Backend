@@ -1,6 +1,7 @@
 package NoDam.Demo.common.type;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
 
 import java.util.Arrays;
 
@@ -31,4 +32,10 @@ public enum PlaceType {
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Unknown PlaceType: " + value));
     }
+
+    @JsonValue
+    public String getKorean() {
+        return korean;
+    }
+    
 }
