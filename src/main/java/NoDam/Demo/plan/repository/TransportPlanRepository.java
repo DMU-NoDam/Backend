@@ -18,4 +18,9 @@ public interface TransportPlanRepository extends JpaRepository<TransportPlan, Lo
     @Query("update TransportPlan t set t.isDeleted = true where t.id = :id")
     void softDelete(@Param("id") Long transportId);
 
+    @Modifying
+    @Query("update TransportPlan tp set tp.isDeleted = true " +
+            "where tp.toPlacePlan.id = :placePlanId or tp.fromPlacePlan.id = :placePlanId")
+    void softDeleteAllByPlacePlan(@Param("place_plan_id") Long placePlanId);
+
 }
