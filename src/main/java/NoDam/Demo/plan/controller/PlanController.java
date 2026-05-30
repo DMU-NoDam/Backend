@@ -2,6 +2,7 @@ package NoDam.Demo.plan.controller;
 
 import NoDam.Demo.common.SuccessResponse;
 import NoDam.Demo.common.type.TripThemeType;
+import NoDam.Demo.place.dto.PlaceSwitchRequestDto;
 import NoDam.Demo.plan.dto.request.ChangePlacePlanRequestDto;
 import NoDam.Demo.plan.dto.response.PlacePlanInfo;
 import NoDam.Demo.plan.dto.response.PlanStatusResponse;
@@ -71,6 +72,15 @@ public class PlanController {
     ) {
         PlacePlanInfo result = planFacadeService.changePlacePlan(dto.getOldPlacePlanId(), dto.getNewPlaceId(), user.getId());
         return ResponseEntity.ok(new SuccessResponse<PlacePlanInfo>("success", result));
+    }
+
+    @PutMapping("/api/place-plan/switch")
+    public ResponseEntity<SuccessResponse<PlacePlanInfo>> switchPlacePlan(
+            @RequestBody PlaceSwitchRequestDto dto,
+            @AuthenticationPrincipal User user
+    ) {
+        planFacadeService.switchPlacePlan(dto.getPlacePlan1(), dto.getPlacePlan2(), user.getId());
+        return ResponseEntity.ok(new SuccessResponse<PlacePlanInfo>("success", null));
     }
 
 }

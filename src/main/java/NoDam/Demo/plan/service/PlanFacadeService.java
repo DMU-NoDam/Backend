@@ -86,18 +86,35 @@ public class PlanFacadeService {
         Trip trip = tripSelectService.findById(datePlan.getTripId(), userId);
         Place newPlace = placeQueryService.findById(newPlaceId);
 
+        PlacePlan newPlacePlan = changePlacePlan(datePlan, trip, oldPlacePlan, newPlace.getId());
+
+        return PlacePlanInfo.of(newPlacePlan, newPlace);
+    }
+
+    public void switchPlacePlan(Long placePlanId1, Long placePlanId2, Long userId) {
+        PlacePlan first = planSelectService.findPlacePlanWithDatePlanAndTransport(placePlanId1);
+        PlacePlan second = planSelectService.findPlacePlanWithDatePlanAndTransport(placePlanId2);
+
+        DatePlan datePlan = first.getDatePlan();
+        Trip trip = tripSelectService.findById(datePlan.getTripId(), userId);
+
+        changePlacePlan(datePlan, trip, first, second.getPlaceId());
+        changePlacePlan(datePlan, trip, second, first.getPlaceId());
+    }
+
+    private PlacePlan changePlacePlan(DatePlan datePlan, Trip trip, PlacePlan oldPlacePlan, Long newPlaceId) {
         planDeleteService.deletePlacePlanWithTransports(oldPlacePlan);
 
         PlacePlan newPlacePlan = planCreateService.createPlacePlan(
                 datePlan,
-                newPlace.getId(),
+                newPlaceId,
                 oldPlacePlan.getStartTime(),
                 oldPlacePlan.getEndTime()
         );
 
         autoCreatePlanService.createAllTransportPlan(trip, datePlan);
 
-        return PlacePlanInfo.of(newPlacePlan, newPlace);
+        return newPlacePlan;
     }
 
 }
