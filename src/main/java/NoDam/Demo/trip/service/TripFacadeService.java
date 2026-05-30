@@ -8,6 +8,7 @@ import NoDam.Demo.plan.service.PlanSelectService;
 import NoDam.Demo.trip.domain.Trip;
 import NoDam.Demo.trip.dto.request.TripCreateDto;
 import NoDam.Demo.trip.dto.request.TripCreateFacadeRequestDto;
+import NoDam.Demo.trip.dto.request.TripUpdateDto;
 import NoDam.Demo.trip.dto.request.TripCreateFacadeRequestDto.FlightInfo;
 
 import java.time.LocalTime;
@@ -90,6 +91,11 @@ public class TripFacadeService {
     public Trip updateTripTheme(Long userId, Long tripId, TripThemeType themeType) {
         Trip trip = tripSelectService.findById(tripId, userId);
         return tripFixedService.updateTripTheme(trip, themeType);
+    }
+
+    public Trip updateTripInfo(Long userId, Long tripId, TripUpdateDto request) {
+        Trip trip = tripSelectService.findById(tripId, userId);
+        return tripFixedService.updateTripInfo(trip, request.getName(), request.getPersonCount());
     }
 
 }
