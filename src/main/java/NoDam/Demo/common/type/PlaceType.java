@@ -37,5 +37,5 @@ public enum PlaceType {
     public String getKorean() {
         return korean;
     }
-    
+
 }
