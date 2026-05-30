@@ -24,11 +24,11 @@ import org.hibernate.annotations.Where;
 public class TransportPlan extends Plan {
 
     @OneToOne
-    @JoinColumn(name = "from_place_plan_id", nullable = false)
+    @JoinColumn(name = "from_place_plan_id", nullable = true)
     private PlacePlan fromPlacePlan;
 
     @OneToOne
-    @JoinColumn(name = "to_place_plan_id", nullable = false)
+    @JoinColumn(name = "to_place_plan_id", nullable = true)
     private PlacePlan toPlacePlan;
 
     @Column(nullable = false)
@@ -52,6 +52,9 @@ public class TransportPlan extends Plan {
             this.takeTime = routeInfo.getTotalDurationSeconds();
         }
     }
+
+    public void detachFromPlace() { this.fromPlacePlan = null; }
+    public void detachToPlace()   { this.toPlacePlan = null;   }
 
     // 소요 시간 더한 뒤 1시간 단위 올림
     private static LocalTime calcEndTime(LocalTime start, RouteInfo routeInfo) {

@@ -10,6 +10,8 @@ import org.hibernate.Hibernate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
+
 @Service
 @RequiredArgsConstructor
 public class PlanDeleteService {
@@ -20,12 +22,16 @@ public class PlanDeleteService {
     private final EntityManager entityManager;
 
     @Transactional
-    public void deletePlacePlanWithTransports(PlacePlan placePlan) {
-        long placePlanId = placePlan.getId();
+    public void deletePlacePlanWithTransports(Long placePlanId) {
+        PlacePlan target = placePlanRepository.findById(placePlanId).orElseThrow();
 
-        transportPlanRepository.softDeleteAllByPlacePlan(placePlanId);
+        if (target.getToTransport() != null && target.getToTransport().getFromPlacePlan() != null)
+            target.getToTransport().getFromPlacePlan().setFromTransportNull();
 
-        placePlanRepository.softDelete(placePlanId);
+        if (target.getFromTransport() != null && target.getFromTransport().getToPlacePlan() != null)
+            target.getFromTransport().getToPlacePlan().setToTransportNull();
+
+        placePlanRepository.delete(target);
     }
 
 }
