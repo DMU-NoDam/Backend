@@ -119,8 +119,9 @@ public class AiService {
         try {
             body = WebClient.create()
                     .post()
-                    .uri(translateBaseUrl + "/translate?api-version=" + translateApiVersion)
+                    .uri(translateBaseUrl + "?api-version=" + translateApiVersion)
                     .header("Ocp-Apim-Subscription-Key", translateApiKey)
+                    .header("Ocp-Apim-Subscription-Region", "koreacentral")
                     .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue(new TranslateRequestDto(inputs))
                     .retrieve()
