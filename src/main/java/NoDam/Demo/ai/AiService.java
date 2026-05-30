@@ -40,8 +40,11 @@ public class AiService {
     @Value("${external.translate.base-url}")
     private String translateBaseUrl;
 
-    @Value("${external.translate.mock}")
-    private boolean translateMock;
+    @Value("${external.translate.api-version}")
+    private String translateApiVersion;
+
+    @Value("${external.translate.api-key}")
+    private String translateApiKey;
 
     private final Logger logger = LoggerFactory.getLogger(AiService.class);
 
@@ -104,16 +107,22 @@ public class AiService {
     public List<String> translate(List<String> texts, String sourceLang, String targetLang) {
         if (texts == null || texts.isEmpty())
             throw new RuntimeException("translate texts is null or empty");
-        if (translateMock)
-            return texts;
+
+        List<TranslateRequestDto.Input> inputs = texts.stream()
+                .map(text -> new TranslateRequestDto.Input(
+                        text, sourceLang,
+                        List.of(new TranslateRequestDto.Target(targetLang))
+                ))
+                .toList();
 
         String body;
         try {
             body = WebClient.create()
                     .post()
-                    .uri(translateBaseUrl)
+                    .uri(translateBaseUrl + "/translate?api-version=" + translateApiVersion)
+                    .header("Ocp-Apim-Subscription-Key", translateApiKey)
                     .contentType(MediaType.APPLICATION_JSON)
-                    .bodyValue(new TranslateRequestDto(texts, sourceLang, "en"))
+                    .bodyValue(new TranslateRequestDto(inputs))
                     .retrieve()
                     .onStatus(status -> !status.is2xxSuccessful(), clientResponse ->
                             clientResponse.bodyToMono(String.class)
@@ -133,7 +142,9 @@ public class AiService {
 
         try {
             TranslateResponseDto response = objectMapper.readValue(body, TranslateResponseDto.class);
-            return response.getTranslatedText();
+            return response.getValue().stream()
+                    .map(v -> v.getTranslations().get(0).getText())
+                    .toList();
         } catch (Exception e) {
             logger.error("Translate API response parse failed: body={}", body);
             throw new CustomException(ErrorCode.API_FAIL);

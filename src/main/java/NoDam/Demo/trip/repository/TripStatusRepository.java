@@ -11,7 +11,7 @@ import org.springframework.stereotype.Repository;
 public interface TripStatusRepository extends JpaRepository<Trip, Long> {
 
     @Modifying
-    @Query("UPDATE Trip t SET t.isPlanning = :updateStatus WHERE t.id = :id AND t.isPlanning = :oldStatus")
+    @Query("UPDATE Trip t SET t.isPlanning = :updateStatus WHERE t.id = :id AND t.isPlanning = :oldStatus AND (t.isDeleted = false)")
     int tryUpdateTripStatus(
             @Param("id") Long id,
             @Param("oldStatus") Boolean oldStatus,
@@ -19,7 +19,7 @@ public interface TripStatusRepository extends JpaRepository<Trip, Long> {
     );
 
     @Modifying
-    @Query("UPDATE Trip t SET t.isPlanning = :updateStatus WHERE t.id = :id")
+    @Query("UPDATE Trip t SET t.isPlanning = :updateStatus WHERE t.id = :id AND (t.isDeleted = false)")
     void tryUpdateTripStatusForce(
             @Param("id") Long id,
             @Param("updateStatus") Boolean updateStatus
