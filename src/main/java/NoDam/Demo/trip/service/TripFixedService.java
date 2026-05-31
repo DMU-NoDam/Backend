@@ -66,7 +66,7 @@ public class TripFixedService {
             );
 
             trip.updateFixed(true);
-            return trip;
+            return tripRepository.save(trip);
         });
     }
 
@@ -74,7 +74,7 @@ public class TripFixedService {
         return transactionTemplate.execute((status) -> {
             userFixedTripRepository.deleteByUserIdAndTrip(userId, trip);
             trip.updateFixed(false);
-            return trip;
+            return tripRepository.save(trip);
         });
     }
 
