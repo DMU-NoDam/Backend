@@ -56,7 +56,7 @@ oauth:
 
 external:
   ai:
-    provider: mock   # cli | gemini | mock
+    provider: ${AI_PROVIDER}   # cli | gemini | mock
     connect-timeout-seconds: 99999 # 5
     read-timeout-seconds: 99999 # 60
     response-timeout-seconds: 9999999 # 60
