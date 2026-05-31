@@ -70,9 +70,12 @@ public class PlanFacadeService {
 
     public void deletePlacePlan(Long placePlanId, Long userId) {
         PlacePlan placePlan = planSelectService.findPlacePlanWithDatePlanAndTransport(placePlanId);
-        tripSelectService.findById(placePlan.getDatePlan().getTripId(), userId);
+        DatePlan datePlan = placePlan.getDatePlan();
+        Trip trip = tripSelectService.findById(placePlan.getDatePlan().getTripId(), userId);
 
         planDeleteService.deletePlacePlanWithTransports(placePlan.getId());
+
+        autoCreatePlanService.createAllTransportPlan(trip, datePlan);
     }
 
     public TransportPlanInfo getTransportPlanDetail(Long transportPlanId) {
