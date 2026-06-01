@@ -2,6 +2,8 @@ package NoDam.Demo.place.service;
 
 import NoDam.Demo.ai.AiService;
 import NoDam.Demo.ai.Prompt;
+import NoDam.Demo.common.excetion.CustomException;
+import NoDam.Demo.common.excetion.ErrorCode;
 import NoDam.Demo.common.type.*;
 import NoDam.Demo.common.util.ListUtil;
 import NoDam.Demo.common.util.TimeUtil;
@@ -113,6 +115,7 @@ public class PlaceFacadeService {
         return placeQueryService.saveAll(requestDtos);
     }
 
+    // todo : plan facade랑 코드 곂침
     public List<RecommendedPlaceInfo> recommendPlace(RecommendPlaceRequestDto dto, Long userId, WeatherType weather) {
         PlacePlan targetPlan = planSelectService.findPlacePlanWithDatePlanAndTransport(dto.getPlacePlanId());
         DatePlan datePlan = targetPlan.getDatePlan();
@@ -212,11 +215,22 @@ public class PlaceFacadeService {
                         .toList())
                 .build();
 
-        AiRecommendPlaceResponseDto aiResponse = aiService.call(
-                Prompt.RECOMMEND_PLACE,
-                AiRecommendPlaceResponseDto.class,
-                aiRequest
-        );
+        AiRecommendPlaceResponseDto aiResponse;
+        try {
+            aiResponse = aiService.call(
+                    Prompt.RECOMMEND_PLACE,
+                    AiRecommendPlaceResponseDto.class,
+                    aiRequest
+            );
+        } catch (CustomException e) {
+            if(!e.errorCode.equals(ErrorCode.API_FAIL))
+                throw e;
+
+            return candidates.stream()
+                    .limit(5)
+                    .map(pair -> RecommendedPlaceInfo.of(pair.getFirst().getPlace(), pair.getSecond(), oldStartTime, oldEndTime))
+                    .toList();
+        }
 
         Map<Long, Pair<RecommendPlaceResult, RouteInfo>> candidateMap = candidates.stream()
                 .collect(Collectors.toMap(pair -> pair.getFirst().getPlace().getId(), pair -> pair));
