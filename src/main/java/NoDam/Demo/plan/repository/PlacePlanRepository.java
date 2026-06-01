@@ -1,6 +1,5 @@
 package NoDam.Demo.plan.repository;
 
-import NoDam.Demo.common.type.PlaceType;
 import NoDam.Demo.common.type.TripThemeType;
 import NoDam.Demo.place.domain.Place;
 import NoDam.Demo.plan.domain.PlacePlan;
@@ -23,10 +22,6 @@ public interface PlacePlanRepository extends JpaRepository<PlacePlan, Long> {
 
     @Query("SELECT pp FROM PlacePlan pp JOIN FETCH pp.datePlan LEFT JOIN FETCH pp.fromTransport LEFT JOIN FETCH pp.toTransport WHERE pp.id = :id")
     Optional<PlacePlan> findByIdWithDatePlanAndTransport(@Param("id") Long id);
-
-    @Query("select pp from PlacePlan pp left join Place p on pp.placeId = p.id " +
-            "WHERE pp.datePlan.id = :datePlanId AND (p.placeType = :placeType OR pp.placeId IS NULL)")
-    List<PlacePlan> findByDatePlanIdAndPlaceType(@Param("datePlanId") Long datePlanId, @Param("placeType") PlaceType placeType);
 
     // trip + theme 기준으로 배정된 place 조회 (공항, 호텔은 제외함)
     @Query("SELECT p FROM PlacePlan pp " +

@@ -117,10 +117,4 @@ public class PlanCreateService {
         datePlanRepository.save(datePlan);
     }
 
-    @Transactional
-    public void updateHotelPlacePlanId(PlacePlan placePlan, Long placeId) {
-        placePlan.updatePlaceId(placeId);
-        planRepository.save(placePlan);
-    }
-
 }

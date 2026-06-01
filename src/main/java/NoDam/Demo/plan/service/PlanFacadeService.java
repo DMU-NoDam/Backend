@@ -120,7 +120,7 @@ public class PlanFacadeService {
 
         autoCreatePlanService.createAllTransportPlan(trip, datePlan);
 
-        return newPlacePlan;
+        return planSelectService.findPlacePlanWithDatePlanAndTransport(newPlacePlan.getId());
     }
 
 }
