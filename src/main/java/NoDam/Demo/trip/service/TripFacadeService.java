@@ -4,6 +4,8 @@ import NoDam.Demo.common.type.TripThemeType;
 import NoDam.Demo.common.util.TimeUtil;
 import NoDam.Demo.place.domain.Place;
 import NoDam.Demo.place.service.PlaceSelectService;
+import NoDam.Demo.plan.domain.DatePlan;
+import NoDam.Demo.plan.service.PlanDeleteService;
 import NoDam.Demo.plan.service.PlanSelectService;
 import NoDam.Demo.trip.domain.Trip;
 import NoDam.Demo.trip.dto.request.TripCreateDto;
@@ -29,6 +31,7 @@ public class TripFacadeService {
     private final TripSelectService tripSelectService;
     private final PlaceSelectService placeSelectService;
     private final PlanSelectService planSelectService;
+    private final PlanDeleteService planDeleteService;
 
     // trip domain 생성 까지만 (ai생성은 다른 api 분리, transaction 때문!)
     // transactional (사용 금지!)
@@ -36,13 +39,14 @@ public class TripFacadeService {
         return tripCreateService.createTrip(userId, request);
     }
 
-    // 공항/숙소 place 및 시간 resolve (DatePlan 생성 시 사용)
+    // todo : 지울 것!
     public record FlightHotelInfo(
             Place destinationAirport,
             LocalTime firstDayAirportTime,
             LocalTime lastDayAirportTime
     ) {}
 
+    // todo : 지울 것!
     public FlightHotelInfo resolveFlightInfo(TripCreateFacadeRequestDto request) {
         FlightInfo depart = request.getDepartFlight();
         FlightInfo arrive = request.getArriveFlight();
@@ -90,7 +94,16 @@ public class TripFacadeService {
 
     public Trip updateTripTheme(Long userId, Long tripId, TripThemeType themeType) {
         Trip trip = tripSelectService.findById(tripId, userId);
-        return tripFixedService.updateTripTheme(trip, themeType);
+        trip = tripFixedService.updateTripTheme(trip, themeType);
+
+        // delete other themes
+        List<DatePlan> otherDatePlans = planSelectService.findAllDatePlanWithTransport(trip)
+                .stream()
+                .filter(dp->!dp.getTripThemeType().equals(themeType))
+                .toList();
+        planDeleteService.deleteDatePlansWithTransports(otherDatePlans);
+
+        return trip;
     }
 
     public Trip updateTripInfo(Long userId, Long tripId, TripUpdateDto request) {
