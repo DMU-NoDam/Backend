@@ -1,5 +1,6 @@
 package NoDam.Demo.plan.domain;
 
+import NoDam.Demo.common.domain.BaseEntity;
 import NoDam.Demo.common.type.PlanStatus;
 import NoDam.Demo.common.type.TripThemeType;
 import jakarta.persistence.*;
@@ -12,12 +13,16 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.Where;
 
 @Entity
 @Table(name = "date_plan")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
-public class DatePlan {
+@SQLDelete(sql = "UPDATE date_plan SET is_deleted = true WHERE id = ?")
+@Where(clause = "is_deleted = false")
+public class DatePlan extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
