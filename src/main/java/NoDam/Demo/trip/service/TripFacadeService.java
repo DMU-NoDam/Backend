@@ -101,7 +101,7 @@ public class TripFacadeService {
                 .stream()
                 .filter(dp->!dp.getTripThemeType().equals(themeType))
                 .toList();
-        planDeleteService.deleteDatePlansWithTransports(otherDatePlans);
+        // planDeleteService.deleteDatePlansWithTransports(otherDatePlans);
 
         return trip;
     }
