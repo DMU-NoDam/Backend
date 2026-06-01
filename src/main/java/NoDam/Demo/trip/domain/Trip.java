@@ -90,7 +90,8 @@ public class Trip extends BaseEntity {
     }
 
     public void updateTheme(TripThemeType themeType) {
-        this.tripThemeType = themeType;
+        if(themeType != null && this.tripThemeType == null)
+            this.tripThemeType = themeType;
     }
 
     public void updateInfo(String name, Integer personCount) {
