@@ -80,16 +80,28 @@ public class AutoCreatePlanService {
             airport = airportSelectService.findAirportByRegion(firstRegion).orElse(null);
         }
 
-        // 3. 필수 장소 날짜별 분배
+        // 3. 호텔 추천 - 사용자 입력 없을 때만, 날짜별 region으로 추천
+        Map<LocalDate, Long> hotelIdByDate = new HashMap<>();
+        if (hotel != null) {
+            dates.forEach(date -> hotelIdByDate.put(date, hotel.getId()));
+        } else {
+            for (LocalDate date : dates) {
+                if (date.equals(trip.getEndDate())) continue;
+                Region region = dateRegionMap.get(date);
+                hotelIdByDate.put(date, placeSelectService.recommendHotelPlace(region).getId());
+            }
+        }
+
+        // 4. 필수 장소 날짜별 분배
         Map<LocalDate, List<Place>> necessaryPlacesByDate =
                 necessaryPlaceDistributeService.distribute(necessaryPlaces, dates);
 
-        // 4. DatePlan 생성 (TripThemeType별)
+        // 5. DatePlan 생성 (TripThemeType별)
         final Place finalAirport = airport;
         for (TripThemeType theme : TripThemeType.values()) {
             List<DatePlanRequestDto> dtos = buildDatePlanDtos(
                     trip, theme, dates, dateRegionMap, necessaryPlacesByDate,
-                    hotel, finalAirport, firstDayAirportTime, lastDayAirportTime);
+                    hotelIdByDate, finalAirport, firstDayAirportTime, lastDayAirportTime);
             createdDatePlans.addAll(planCreateService.createDatePlans(trip, dtos));
         }
 
@@ -147,16 +159,6 @@ public class AutoCreatePlanService {
 
             createdDatePlans.add(planCreateService.createPlans(datePlan, plans));
             planCreateService.updateDatePlanStatus(datePlan, PlanStatus.AI_PLANNED);
-
-            // 5. hotel placeholder에 추천 호텔 배정
-            if (datePlan.getHotelPlaceId() == null) {
-                planSelectService.findEmptyPlacePlanByType(datePlan, PlaceType.HOTEL)
-                        .ifPresent(placeholder -> {
-                            Place recommendedHotel = placeSelectService.recommendHotelPlace(region);
-                            planCreateService.updateHotelPlacePlanId(placeholder, recommendedHotel.getId());
-                        });
-            }
-            planCreateService.updateDatePlanStatus(datePlan, PlanStatus.HOTEL_ASSIGNED);
         }
 
         logger.info("autoGenerateAllPlans end tripId={}", trip.getId());
@@ -210,8 +212,9 @@ public class AutoCreatePlanService {
         if (trip.getEndDate().equals(datePlan.getDate()))
             plans.add(new PlacePlanRequestDto(datePlan.getAirportTime(), LocalTime.of(23, 59), datePlan.getAirportPlaceId()));
 
-        // 매일: 호텔 (not null → 실제 호텔, null → placeholder)
-        plans.add(new PlacePlanRequestDto(LocalTime.of(20, 0), LocalTime.of(23, 50), datePlan.getHotelPlaceId()));
+        // 마지막 날 제외: 호텔 (not null → 실제 호텔, null → placeholder)
+        if(!trip.getEndDate().equals(datePlan.getDate()))
+            plans.add(new PlacePlanRequestDto(LocalTime.of(20, 0), LocalTime.of(23, 50), datePlan.getHotelPlaceId()));
 
         return plans;
     }
@@ -261,12 +264,11 @@ public class AutoCreatePlanService {
             List<LocalDate> dates,
             Map<LocalDate, Region> dateRegionMap,
             Map<LocalDate, List<Place>> necessaryPlacesByDate,
-            Place hotel,
+            Map<LocalDate, Long> hotelIdByDate,
             Place airport,
             LocalTime firstDayAirportTime,
             LocalTime lastDayAirportTime
     ) {
-        Long hotelPlaceId = hotel != null ? hotel.getId() : null;
         Long airportPlaceId = airport != null ? airport.getId() : null;
 
         return dates.stream().map(date -> {
@@ -282,7 +284,7 @@ public class AutoCreatePlanService {
             Long dateAirportPlaceId = airportTime != null ? airportPlaceId : null;
 
             return new DatePlanRequestDto(date, region, themeType, necessaryPlaces,
-                    hotelPlaceId, dateAirportPlaceId, airportTime);
+                    hotelIdByDate.get(date), dateAirportPlaceId, airportTime);
         }).toList();
     }
 

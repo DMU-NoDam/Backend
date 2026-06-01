@@ -56,14 +56,6 @@ public class PlanSelectService {
         return placePlanRepository.findPlacesByTripIdAndTheme(trip.getId(), theme);
     }
 
-    // placeType에 해당하는 PlacePlan 중 placeId가 null인 것(placeholder) 반환
-    public Optional<PlacePlan> findEmptyPlacePlanByType(DatePlan datePlan, PlaceType placeType) {
-        return placePlanRepository.findByDatePlanIdAndPlaceType(datePlan.getId(), placeType)
-                .stream()
-                .filter(pp -> pp.getPlaceId() == null)
-                .findFirst();
-    }
-
     public boolean hasTransportPlan(DatePlan datePlan) {
         return !transportPlanRepository.findByFromPlacePlan_DatePlanId(datePlan.getId()).isEmpty();
     }
