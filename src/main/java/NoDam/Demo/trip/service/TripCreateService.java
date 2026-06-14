@@ -1,5 +1,6 @@
 package NoDam.Demo.trip.service;
 
+import NoDam.Demo.common.type.ScheduleType;
 import NoDam.Demo.common.util.DateUtil;
 import NoDam.Demo.trip.domain.Trip;
 import NoDam.Demo.trip.dto.request.TripCreateDto;
@@ -28,7 +29,7 @@ public class TripCreateService {
                 .userId(userId)
                 .uuid(request.getUuid())
                 .personCount(request.getPersonCount())
-                .scheduleType(request.getScheduleType())
+                .scheduleType(ScheduleType.LOOSE)
                 .priceType(request.getPriceType())
                 .startDate(DateUtil.toLocalDate(request.getStartDate()))
                 .endDate(DateUtil.toLocalDate(request.getEndDate()))
