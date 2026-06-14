@@ -234,7 +234,7 @@ public class AutoCreatePlanService {
             if (placeType == PlaceType.HOTEL || placeType == PlaceType.AIRPORT) continue;
             candidates.put(placeType, placeSelectService.recommendPlaces(
                     placeType, region, trip.getPriceType(), null,
-                    datePlan.getTripThemeType(), WeatherType.SUNNY, excludePlaces, 10));
+                    datePlan.getTripThemeType(), WeatherType.SUNNY, excludePlaces, 5));
         }
         return candidates;
     }
