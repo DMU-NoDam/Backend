@@ -199,7 +199,7 @@ public class PlaceFacadeService {
             PlaceInfo previousPlace,
             PlaceInfo nextPlace
     ) {
-        if(isMockAi)
+        if(true)
             return candidates.stream()
                     .limit(5)
                     .map(pair -> RecommendedPlaceInfo.of(pair.getFirst().getPlace(), pair.getSecond(), oldStartTime, oldEndTime))
