@@ -17,6 +17,9 @@
 
 ## 프로젝트 소개
 
+<img width="213" height="76" alt="스크린샷 2026-06-16 오후 5 27 38" src="https://github.com/user-attachments/assets/2bc92b33-04ca-4876-80e6-3fe7f2a03682" />
+
+
 여행을 준비할 때는 항공, 숙소, 관광지 정보를 각각 따로 검색해야 하는 번거로움이 있고, 그 정보를 모아 하나의 일정으로 엮어내는 과정에서 많은 시간과 심리적 피로가 발생합니다.
 
 **ARUBI**는 이 문제를 해결하기 위해, 사용자가 지역·날짜·인원 등 최소한의 정보만 입력하면 AI가 검증된 장소 데이터를 바탕으로 동선까지 고려한 맞춤형 여행 일정을 자동으로 생성해주는 서비스입니다.
@@ -70,123 +73,7 @@
 
 ## ERD
 
-```mermaid
-erDiagram
-    USER ||--o{ TRIP : 생성
-    USER ||--o{ TRIP_USER : 참여
-    TRIP ||--o{ TRIP_USER : 참여자
-    SITE ||--o{ TRIP : 여행지역
-    SITE ||--o{ PLACE : 소속장소
-    SITE ||--o{ SITE_EXCHANGE : 환율
-    SITE ||--o{ SITE_TRANSPORT : 교통수단
-    SITE ||--o{ SITE_WEATHER : 날씨
-    TRIP ||--o{ EMPTY_PLAN : 빈일정
-    TRIP ||--o{ PLACE_PLAN : 장소일정
-    TRIP ||--o{ TRANSPORT_PLAN : 이동일정
-    PLACE ||--o{ PLACE_PLAN : 방문장소
-    PLACE ||--o{ TRANSPORT_PLAN : 출발지
-    PLACE ||--o{ TRANSPORT_PLAN : 도착지
-
-    USER {
-        bigint id PK
-        varchar email
-        varchar name
-        varchar oauth_provider
-        varchar oauth_id
-        varchar role
-    }
-    SITE {
-        bigint id PK
-        varchar name
-    }
-    TRIP {
-        bigint id PK
-        bigint user_id FK
-        bigint site_id FK
-        char uuid
-        varchar name
-        int person_count
-        varchar schedule_type
-        varchar transport_type
-        varchar trip_theme_type
-        date start_date
-        date end_date
-        bigint total_price
-    }
-    TRIP_USER {
-        bigint user_id PK_FK
-        bigint trip_id PK_FK
-    }
-    EMPTY_PLAN {
-        bigint id PK
-        bigint trip_id FK
-        datetime start_time
-        datetime end_time
-        int price_per
-    }
-    PLACE {
-        bigint id PK
-        bigint site_id FK
-        varchar place_type
-        varchar google_id
-        varchar name
-        varchar address
-        decimal y
-        decimal x
-        int price_per
-        time start_time
-        time end_time
-    }
-    PLACE_PLAN {
-        bigint id PK
-        bigint trip_id FK
-        bigint place_id FK
-        datetime start_time
-        datetime end_time
-        int price_per
-    }
-    TRANSPORT_PLAN {
-        bigint id PK
-        bigint trip_id FK
-        bigint to_place_id FK
-        bigint from_place_id FK
-        varchar transport_type
-        varchar google_id
-        datetime start_time
-        datetime end_time
-        int price_per
-    }
-    SITE_EXCHANGE {
-        bigint id PK
-        bigint site_id FK
-        decimal rate
-    }
-    SITE_TRANSPORT {
-        bigint id PK
-        bigint site_id FK
-        varchar transport_type
-        int price
-    }
-    SITE_WEATHER {
-        bigint id PK
-        bigint site_id FK
-        varchar weather
-    }
-```
-
-| 테이블 | 설명 |
-|--------|------|
-| `user` | 회원 정보 (OAuth 기반) |
-| `site` | 여행 지역 정보 |
-| `trip` | 여행(여행 일정의 단위) 정보 |
-| `trip_user` | 한 여행에 참여하는 사용자 매핑 (다중 인원 여행 지원) |
-| `place` | 좌표 기반 장소 정보 |
-| `place_plan` | 여행에 배정된 장소 일정 |
-| `transport_plan` | 장소 간 이동 일정 |
-| `empty_plan` | 일정 중 비어있는 시간대 |
-| `site_weather` | 지역 날씨 정보 |
-| `site_exchange` | 지역 환율 정보 |
-| `site_transport` | 지역 교통 수단별 평균 요금 정보 |
+<img width="1119" height="688" alt="스크린샷 2026-06-16 오후 4 50 22" src="https://github.com/user-attachments/assets/a4920117-7f55-4cc4-a9d5-cf153fa086d0" />
 
 ---
 
