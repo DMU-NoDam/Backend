@@ -1,6 +1,6 @@
 package NoDam.Demo.trip.dto.request;
 
-import NoDam.Demo.flight.type.AirportCode;
+import NoDam.Demo.flight.service.AirportCode;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;

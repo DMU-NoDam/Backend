@@ -95,8 +95,8 @@ public class AirLabsService {
 
         return FlightInfoResponseDto.builder()
                 .flightIata(data.getFlight_iata())
-                .departureAirport(data.getDep_iata())
-                .arrivalAirport(data.getArr_iata())
+                .departureAirport(AirportCode.from(data.getDep_iata()))
+                .arrivalAirport(AirportCode.from(data.getArr_iata()))
                 .departureTime(date + " " + data.getDep_time())
                 .arrivalTime(arrDate + " " + data.getArr_time())
                 .duration(data.getDuration())

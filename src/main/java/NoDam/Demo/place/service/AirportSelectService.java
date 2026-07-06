@@ -18,10 +18,14 @@ public class AirportSelectService {
     private final PlaceRepository placeRepository;
 
     // TODO: region별 공항 2개 이상인 지역 처리
-    public Optional<Place> findAirportByRegion(Region region) {
+    public Place findAirportByRegion(Region region) {
         List<Place> airports = placeRepository.findByPlaceTypeAndRegionId(
                 PlaceType.AIRPORT, region.getId(), PageRequest.of(0, 1));
-        return airports.isEmpty() ? Optional.empty() : Optional.of(airports.get(0));
+
+        if(airports.isEmpty())
+            throw new RuntimeException("air port db is not found region = " + region.getName());
+
+        return airports.getFirst(); // todo : 2개 이상인 경우 가중치?
     }
 
 }

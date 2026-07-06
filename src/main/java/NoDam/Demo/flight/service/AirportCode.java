@@ -1,4 +1,4 @@
-package NoDam.Demo.flight.type;
+package NoDam.Demo.flight.service;
 
 import NoDam.Demo.common.excetion.CustomException;
 import NoDam.Demo.common.excetion.ErrorCode;
