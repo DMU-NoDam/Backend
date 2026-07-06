@@ -16,8 +16,7 @@ public class AiRegionAssignRequestDto {
     private List<String> dates;                  // yyyy-MM-dd
     private List<RegionInfo> regions;
     private List<PlaceCoordinate> necessaryPlaces;
-    private PlaceCoordinate airport;             // nullable
-    private PlaceCoordinate hotel;               // nullable
+    private PlaceCoordinate airport;            // nullable
 
     @Getter
     @Builder

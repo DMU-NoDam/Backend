@@ -13,6 +13,7 @@ import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -22,12 +23,16 @@ public class RegionAssignService {
     private final AiPort aiPort;
     private final boolean isMockAi;
 
+    // TODO: 공항 region 강제화 - 1일차=공항 region 고정, 마지막날은 다른 region 최소 1일 확보 시에만 고정
+    // TODO: 입력 검증 추가 - 공항 region ∈ 선택 region 불변식 (현재 대조 없음)
+    // TODO: AI에는 순서 말고 분배(각 region 며칠)만 위임
+    // todo : 현재 ai의존적임, depart airport정보가 있음에도 사용되지 않음, 로직상 분배해도 문제 없어 보임
     public Map<LocalDate, Region> assign(
             List<LocalDate> dates,
             List<Region> regions,
             List<Place> necessaryPlaces,
-            Place airport,
-            Place hotel
+            Optional<Place> arrivalAirport,
+            Optional<Place> departAirport // 출발 (귀국) 공항
     ) {
         if (regions.size() == 1) {
             return dates.stream().collect(Collectors.toMap(d -> d, d -> regions.get(0),
@@ -37,7 +42,7 @@ public class RegionAssignService {
         if(isMockAi)
             return mockAssign(dates, regions, necessaryPlaces);
 
-        AiRegionAssignRequestDto request = buildRequest(dates, regions, necessaryPlaces, airport, hotel);
+        AiRegionAssignRequestDto request = buildRequest(dates, regions, necessaryPlaces, arrivalAirport);
         AiRegionAssignResponseDto response = aiPort.call(Prompt.ASSIGN_REGION, AiRegionAssignResponseDto.class, request);
 
         Map<LocalDate, Region> result = parseResponse(response, regions, dates);
@@ -86,7 +91,7 @@ public class RegionAssignService {
 
     private AiRegionAssignRequestDto buildRequest(
             List<LocalDate> dates, List<Region> regions, List<Place> necessaryPlaces,
-            Place airport, Place hotel
+            Optional<Place> airport
     ) {
         Map<Long, Long> placeCountByRegion = necessaryPlaces.stream()
                 .collect(Collectors.groupingBy(Place::getRegionId, Collectors.counting()));
@@ -107,22 +112,16 @@ public class RegionAssignService {
                         .build())
                 .toList();
 
-        AiRegionAssignRequestDto.PlaceCoordinate airportCoord = airport == null ? null :
+        AiRegionAssignRequestDto.PlaceCoordinate airportCoord = airport.isEmpty() ? null :
                 AiRegionAssignRequestDto.PlaceCoordinate.builder()
-                        .placeId(airport.getId()).name(airport.getName())
-                        .lat(airport.getLat()).lon(airport.getLon()).build();
-
-        AiRegionAssignRequestDto.PlaceCoordinate hotelCoord = hotel == null ? null :
-                AiRegionAssignRequestDto.PlaceCoordinate.builder()
-                        .placeId(hotel.getId()).name(hotel.getName())
-                        .lat(hotel.getLat()).lon(hotel.getLon()).build();
+                        .placeId(airport.get().getId()).name(airport.get().getName())
+                        .lat(airport.get().getLat()).lon(airport.get().getLon()).build();
 
         return AiRegionAssignRequestDto.builder()
                 .dates(dates.stream().map(LocalDate::toString).toList())
                 .regions(regionInfos)
                 .necessaryPlaces(placeCoords)
                 .airport(airportCoord)
-                .hotel(hotelCoord)
                 .build();
     }
 

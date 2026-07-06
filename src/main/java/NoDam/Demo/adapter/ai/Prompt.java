@@ -73,7 +73,6 @@ public enum Prompt {
      * - regions       : List<RegionInfo> (regionId, name, lat, lon, placeCount)
      * - necessaryPlaces : List<PlaceCoordinate>
      * - airport       : PlaceCoordinate (nullable)
-     * - hotel         : PlaceCoordinate (nullable)
      * args[1] : responseFormat (AiService가 자동 생성)
      */
     ASSIGN_REGION("""
@@ -84,7 +83,6 @@ public enum Prompt {
             - 같은 region은 연속된 날짜에 배치하여 불필요한 이동을 줄입니다.
             - placeCount가 많은 region에 더 많은 날짜를 배정합니다.
             - airport가 있으면 첫날과 마지막날은 airport와 가까운 region을 배정합니다.
-            - hotel이 있으면 hotel 위치를 동선 최적화에 활용합니다.
             - 모든 날짜에 반드시 하나의 regionId를 배정해야 합니다.
 
             [입력 데이터]
