@@ -1,7 +1,9 @@
 package NoDam.Demo.place.service;
 
-import NoDam.Demo.ai.AiService;
-import NoDam.Demo.ai.Prompt;
+import NoDam.Demo.adapter.ai.AiPort;
+import NoDam.Demo.adapter.ai.Prompt;
+import NoDam.Demo.adapter.google.GooglePort;
+import NoDam.Demo.adapter.route.RoutePort;
 import NoDam.Demo.common.excetion.CustomException;
 import NoDam.Demo.common.excetion.ErrorCode;
 import NoDam.Demo.common.type.*;
@@ -46,12 +48,12 @@ public class PlaceFacadeService {
 
     private final PlaceSelectService placeSelectService;
     private final PlaceQueryService placeQueryService;
-    private final GoogleApiService googleApiService;
-    private final MapApiService mapApiService;
+    private final GooglePort googlePort;
+    private final RoutePort routePort;
     private final RegionQueryService regionQueryService;
     private final PlanSelectService planSelectService;
     private final TripSelectService tripSelectService;
-    private final AiService aiService;
+    private final AiPort aiPort;
 
     private final boolean isMockAi;
 
@@ -101,7 +103,7 @@ public class PlaceFacadeService {
     private List<Place> saveNewPlaces(List<String> notSavedGoogleIds) {
         List<GooglePlaceInfo> newGooglePlaces = notSavedGoogleIds
                 .stream()
-                .map(googleId->googleApiService.searchByGoogleId(googleId))
+                .map(googleId->googlePort.searchByGoogleId(googleId))
                 .toList();
         List<PlaceRequestDto> placeRequestDtos = new ArrayList<>();
 
@@ -182,7 +184,7 @@ public class PlaceFacadeService {
         // transport 계산 (null이면 RouteInfo.empty로 포함)
         List<Pair<RecommendPlaceResult, RouteInfo>> reachable = new ArrayList<>();
         for (RecommendPlaceResult result : candidates) {
-            RouteInfo route = mapApiService.computeRoutesNavitimeFromCoord(userLat, userLon, result.getPlace(), startTime);
+            RouteInfo route = routePort.computeRoutesFromCoord(userLat, userLon, result.getPlace(), startTime);
             reachable.add(Pair.of(result, route != null ? route : RouteInfo.empty()));
         }
 
@@ -217,7 +219,7 @@ public class PlaceFacadeService {
 
         AiRecommendPlaceResponseDto aiResponse;
         try {
-            aiResponse = aiService.call(
+            aiResponse = aiPort.call(
                     Prompt.RECOMMEND_PLACE,
                     AiRecommendPlaceResponseDto.class,
                     aiRequest

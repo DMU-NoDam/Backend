@@ -1,6 +1,6 @@
 package NoDam.Demo.plan.dto.ai;
 
-import NoDam.Demo.ai.AiExample;
+import NoDam.Demo.adapter.ai.AiExample;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

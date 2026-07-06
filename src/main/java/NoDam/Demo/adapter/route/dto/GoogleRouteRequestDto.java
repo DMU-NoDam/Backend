@@ -1,4 +1,4 @@
-package NoDam.Demo.place.dto.google;
+package NoDam.Demo.adapter.route.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

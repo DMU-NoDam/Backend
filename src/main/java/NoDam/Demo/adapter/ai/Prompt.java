@@ -1,4 +1,4 @@
-package NoDam.Demo.ai;
+package NoDam.Demo.adapter.ai;
 
 public enum Prompt {
 

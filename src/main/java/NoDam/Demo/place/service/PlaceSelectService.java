@@ -1,5 +1,6 @@
 package NoDam.Demo.place.service;
 
+import NoDam.Demo.adapter.google.GooglePort;
 import NoDam.Demo.common.excetion.CustomException;
 import NoDam.Demo.common.excetion.ErrorCode;
 import NoDam.Demo.common.type.*;
@@ -27,7 +28,7 @@ public class PlaceSelectService {
 
     private final PlaceRepository placeRepository;
     private final XoteloSearchService xoteloSearchService;
-    private final GoogleApiService googleApiService;
+    private final GooglePort googlePort;
 
     public Place findById(Long placeId) {
         return placeRepository.findById(placeId)
@@ -53,7 +54,7 @@ public class PlaceSelectService {
         for (XoteloSearchResponseDto hotel : xoteloHotels) {
             if (hotel.getLatitude() == null || hotel.getLongitude() == null) continue;
 
-            List<GooglePlaceInfo> googleResults = googleApiService.searchByText(hotel.getName());
+            List<GooglePlaceInfo> googleResults = googlePort.searchByText(hotel.getName());
             for (GooglePlaceInfo info : googleResults) {
                 if (!Coordinate.isSameLocation(hotel.getLatitude(), hotel.getLongitude(), info.getLat(), info.getLon())) continue;
 
@@ -81,7 +82,7 @@ public class PlaceSelectService {
         for (XoteloSearchResponseDto hotel : xoteloHotels) {
             if (hotel.getLatitude() != null && hotel.getLongitude() != null) continue;
 
-            List<GooglePlaceInfo> googleResults = googleApiService.searchByText(hotel.getName());
+            List<GooglePlaceInfo> googleResults = googlePort.searchByText(hotel.getName());
             if (googleResults.isEmpty()) continue;
 
             GooglePlaceInfo finalMatched = googleResults.get(0);

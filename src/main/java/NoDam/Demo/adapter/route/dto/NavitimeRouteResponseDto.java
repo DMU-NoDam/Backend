@@ -1,4 +1,4 @@
-package NoDam.Demo.place.dto.navitime;
+package NoDam.Demo.adapter.route.dto;
 
 import NoDam.Demo.place.domain.Coordinate;
 import NoDam.Demo.plan.dto.response.RouteInfo;
@@ -6,7 +6,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.ToString;
 
 import java.util.List;
 

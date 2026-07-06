@@ -1,8 +1,8 @@
 package NoDam.Demo.plan.service;
 
-import NoDam.Demo.ai.AiBuildDayScheduleDto;
-import NoDam.Demo.ai.AiService;
-import NoDam.Demo.ai.Prompt;
+import NoDam.Demo.adapter.ai.AiBuildDayScheduleDto;
+import NoDam.Demo.adapter.ai.AiPort;
+import NoDam.Demo.adapter.ai.Prompt;
 import NoDam.Demo.common.type.PlaceType;
 import NoDam.Demo.common.type.ScheduleType;
 import NoDam.Demo.common.type.TripThemeType;
@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class DayScheduleService {
 
-    private final AiService aiService;
+    private final AiPort aiPort;
 
     @Value("${external.ai.provider}")
     private String aiProvider;
@@ -54,7 +54,7 @@ public class DayScheduleService {
                 .candidates(candidates)
                 .build();
 
-        AiRecommendPlaceResponseDto response = aiService.call(
+        AiRecommendPlaceResponseDto response = aiPort.call(
                 Prompt.BUILD_DAY_SCHEDULE, AiRecommendPlaceResponseDto.class, request);
 
         Set<Long> fixedPlaceIds = fixedPlans.stream()

@@ -1,4 +1,4 @@
-package NoDam.Demo.place.dto.google;
+package NoDam.Demo.adapter.route.dto;
 
 import NoDam.Demo.place.domain.Coordinate;
 import NoDam.Demo.plan.dto.response.RouteInfo;

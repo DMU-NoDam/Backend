@@ -1,12 +1,12 @@
-package NoDam.Demo.place.service;
+package NoDam.Demo.adapter.google;
 
 import NoDam.Demo.common.excetion.CustomException;
 import NoDam.Demo.common.excetion.ErrorCode;
-import NoDam.Demo.place.dto.google.GooglePlaceInfo;
-import NoDam.Demo.place.dto.google.GooglePlaceResponseDto;
+import NoDam.Demo.adapter.google.dto.GooglePlaceInfo;
+import NoDam.Demo.adapter.google.dto.GooglePlaceResponseDto;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,7 +21,7 @@ import reactor.core.publisher.Mono;
 
 @Service
 @RequiredArgsConstructor
-public class GoogleApiService {
+public class GoogleApi implements GooglePort {
 
     @Value("${external.google.api-key}")
     private String googleApiKey;
@@ -38,6 +38,7 @@ public class GoogleApiService {
 
     private final Logger logger = LoggerFactory.getLogger("google api service :: ");
 
+    @Override
     public List<GooglePlaceInfo> searchByText(String hotelName) {
         try {
             Map<String, List<GooglePlaceResponseDto>> response = WebClient.create()
@@ -71,6 +72,7 @@ public class GoogleApiService {
         }
     }
 
+    @Override
     public GooglePlaceInfo searchByGoogleId(String googleId) {
         GooglePlaceResponseDto response = WebClient.create()
                 .get()

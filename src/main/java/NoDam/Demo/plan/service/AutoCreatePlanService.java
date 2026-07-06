@@ -7,7 +7,7 @@ import NoDam.Demo.place.domain.Place;
 import NoDam.Demo.place.dto.PlaceInfo;
 import NoDam.Demo.place.dto.RecommendPlaceResult;
 import NoDam.Demo.place.service.AirportSelectService;
-import NoDam.Demo.place.service.MapApiService;
+import NoDam.Demo.adapter.route.RoutePort;
 import NoDam.Demo.place.service.PlaceSelectService;
 import NoDam.Demo.plan.domain.DatePlan;
 import NoDam.Demo.plan.domain.PlacePlan;
@@ -40,7 +40,7 @@ public class AutoCreatePlanService {
     private final PlanSelectService planSelectService;
     private final PlaceSelectService placeSelectService;
     private final RegionQueryService regionQueryService;
-    private final MapApiService mapApiService;
+    private final RoutePort routePort;
     private final RegionAssignService regionAssignService;
     private final AirportSelectService airportSelectService;
     private final NecessaryPlaceDistributeService necessaryPlaceDistributeService;
@@ -347,7 +347,7 @@ public class AutoCreatePlanService {
             Place toPlace = placeMap.get(next.getPlaceId());
             if (fromPlace == null || toPlace == null) continue;
 
-            RouteInfo routeInfo = mapApiService.computeRoutesNavitimeFromPlace(fromPlace, toPlace, current.getEndTime());
+            RouteInfo routeInfo = routePort.computeRoutesFromPlace(fromPlace, toPlace, current.getEndTime());
             if (routeInfo == null) continue;
 
             transportPlans.add(TransportPlan.builder()

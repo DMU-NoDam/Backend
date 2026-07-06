@@ -1,9 +1,9 @@
-package NoDam.Demo.ai;
+package NoDam.Demo.adapter.ai;
 
 import NoDam.Demo.common.excetion.CustomException;
 import NoDam.Demo.common.excetion.ErrorCode;
-import NoDam.Demo.ai.translate.TranslateRequestDto;
-import NoDam.Demo.ai.translate.TranslateResponseDto;
+import NoDam.Demo.adapter.ai.translate.TranslateRequestDto;
+import NoDam.Demo.adapter.ai.translate.TranslateResponseDto;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.netty.channel.ChannelOption;
@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @Service
-public class AiService {
+public class AiPortImpl implements AiPort {
 
     private final ObjectMapper objectMapper;
     private final String provider;
@@ -46,7 +46,7 @@ public class AiService {
     @Value("${external.translate.api-key}")
     private String translateApiKey;
 
-    private final Logger logger = LoggerFactory.getLogger(AiService.class);
+    private final Logger logger = LoggerFactory.getLogger(AiPortImpl.class);
 
     // CLI
     private record CliRequest(String prompt) {}
@@ -63,7 +63,7 @@ public class AiService {
         record Part(String text) {}
     }
 
-    public AiService(
+    public AiPortImpl(
             ObjectMapper objectMapper,
             @Value("${external.ai.provider}") String provider,
             @Value("${external.ai.cli.base-url}") String cliBaseUrl,
@@ -104,6 +104,7 @@ public class AiService {
                 .build();
     }
 
+    @Override
     public List<String> translate(List<String> texts, String sourceLang, String targetLang) {
         if (texts == null || texts.isEmpty())
             throw new RuntimeException("translate texts is null or empty");
@@ -152,6 +153,7 @@ public class AiService {
         }
     }
 
+    @Override
     public <T> T call(Prompt prompt, Class<T> responseType, Object... args) {
         String[] serializedArgs = Arrays.stream(args)
                 .map(this::serialize)

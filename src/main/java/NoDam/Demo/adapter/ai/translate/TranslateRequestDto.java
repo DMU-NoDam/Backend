@@ -1,4 +1,4 @@
-package NoDam.Demo.ai.translate;
+package NoDam.Demo.adapter.ai.translate;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

@@ -1,4 +1,4 @@
-package NoDam.Demo.place.dto.google;
+package NoDam.Demo.adapter.google.dto;
 
 import lombok.Getter;
 import lombok.Setter;

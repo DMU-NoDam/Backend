@@ -1,13 +1,13 @@
-package NoDam.Demo.place.service;
+package NoDam.Demo.adapter.route;
 
+import NoDam.Demo.adapter.route.dto.GoogleRouteRequestDto;
+import NoDam.Demo.adapter.route.dto.GoogleRouteResponseDto;
+import NoDam.Demo.adapter.route.dto.NavitimeRouteResponseDto;
 import NoDam.Demo.common.excetion.CustomException;
 import NoDam.Demo.common.excetion.ErrorCode;
 import NoDam.Demo.place.domain.Place;
 import NoDam.Demo.place.dto.PlaceInfo;
-import NoDam.Demo.place.dto.google.GoogleRouteRequestDto;
-import NoDam.Demo.place.dto.google.GoogleRouteResponseDto;
-import NoDam.Demo.place.dto.navitime.NavitimeRouteResponseDto;
-import NoDam.Demo.ai.AiService;
+import NoDam.Demo.adapter.ai.AiPort;
 import NoDam.Demo.plan.dto.response.RouteInfo;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -28,10 +28,9 @@ import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
-public class MapApiService {
+public class NavitimeRouteApi implements RoutePort{
 
-    private final GoogleApiService googleApiService;
-    private final AiService aiService;
+    private final AiPort aiPort;
 
 
     @Value("${external.navitime.base-url}")
@@ -53,7 +52,8 @@ public class MapApiService {
 
     private final Logger logger = LoggerFactory.getLogger("map api service :: ");
 
-    public RouteInfo computeRoutesNavitimeFromCoord(Double startLat, Double startLon, PlaceInfo end, LocalTime startTime) {
+    @Override
+    public RouteInfo computeRoutesFromCoord(Double startLat, Double startLon, PlaceInfo end, LocalTime startTime) {
         if(startLat == null || startLon == null)
             return RouteInfo.empty();
 
@@ -62,7 +62,8 @@ public class MapApiService {
         return routes;
     }
 
-    public RouteInfo computeRoutesNavitimeFromPlace(Place start, Place end, LocalTime startTime) {
+    @Override
+    public RouteInfo computeRoutesFromPlace(Place start, Place end, LocalTime startTime) {
         RouteInfo routes = callNavitime(start.getLat(), start.getLon(), end.getLat(), end.getLon(), startTime);
         routes.setStartAndEndName(start.getName(), end.getName());
         translateRouteNames(routes, "ja", "ko");
@@ -127,7 +128,7 @@ public class MapApiService {
         if (allPoints.isEmpty()) return routeInfo;
 
         List<String> names = allPoints.stream().map(RouteInfo.Point::getName).toList();
-        List<String> translated = aiService.translate(names, sourceLang, targetLang);
+        List<String> translated = aiPort.translate(names, sourceLang, targetLang);
 
         for (int i = 0; i < allPoints.size(); i++) {
             allPoints.get(i).setName(translated.get(i));

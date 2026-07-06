@@ -1,4 +1,4 @@
-package NoDam.Demo.ai;
+package NoDam.Demo.adapter.ai;
 
 import NoDam.Demo.common.type.PlaceType;
 import NoDam.Demo.common.type.ScheduleType;

@@ -1,7 +1,7 @@
 package NoDam.Demo.plan.service;
 
-import NoDam.Demo.ai.AiService;
-import NoDam.Demo.ai.Prompt;
+import NoDam.Demo.adapter.ai.AiPort;
+import NoDam.Demo.adapter.ai.Prompt;
 import NoDam.Demo.place.domain.Place;
 import NoDam.Demo.plan.dto.ai.AiRegionAssignRequestDto;
 import NoDam.Demo.plan.dto.ai.AiRegionAssignResponseDto;
@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class RegionAssignService {
 
-    private final AiService aiService;
+    private final AiPort aiPort;
     private final boolean isMockAi;
 
     public Map<LocalDate, Region> assign(
@@ -38,7 +38,7 @@ public class RegionAssignService {
             return mockAssign(dates, regions, necessaryPlaces);
 
         AiRegionAssignRequestDto request = buildRequest(dates, regions, necessaryPlaces, airport, hotel);
-        AiRegionAssignResponseDto response = aiService.call(Prompt.ASSIGN_REGION, AiRegionAssignResponseDto.class, request);
+        AiRegionAssignResponseDto response = aiPort.call(Prompt.ASSIGN_REGION, AiRegionAssignResponseDto.class, request);
 
         Map<LocalDate, Region> result = parseResponse(response, regions, dates);
         return result;
