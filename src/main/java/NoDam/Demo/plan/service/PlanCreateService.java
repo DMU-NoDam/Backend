@@ -61,8 +61,8 @@ public class PlanCreateService {
                         .googleIds(dto.getNecessaryPlaces() != null
                                 ? dto.getNecessaryPlaces().stream().map(p -> p.getGoogleId()).toList()
                                 : List.of())
-                        .hotelPlaceId(dto.getHotelPlaceId())
-                        .airportPlaceId(dto.getAirportPlaceId())
+                        .hotelPlaceId(dto.getHotelPlace().getId())
+                        .airportPlaceId(dto.getAirportPlace().getId())
                         .airportTime(dto.getAirportTime())
                         .build())
                 .toList();

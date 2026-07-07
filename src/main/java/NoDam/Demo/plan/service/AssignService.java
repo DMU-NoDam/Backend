@@ -2,7 +2,9 @@ package NoDam.Demo.plan.service;
 
 import NoDam.Demo.adapter.ai.AiPort;
 import NoDam.Demo.adapter.ai.Prompt;
+import NoDam.Demo.common.util.TimeUtil;
 import NoDam.Demo.place.domain.Place;
+import NoDam.Demo.plan.domain.AirportSchedule;
 import NoDam.Demo.plan.dto.ai.AiRegionAssignRequestDto;
 import NoDam.Demo.plan.dto.ai.AiRegionAssignResponseDto;
 import NoDam.Demo.region.domain.Region;
@@ -10,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,16 +22,19 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class RegionAssignService {
+public class AssignService {
 
     private final AiPort aiPort;
     private final boolean isMockAi;
+
+    private static final LocalTime DEFAULT_ARRIVAL_TIME = LocalTime.of(10, 0); // 항공편 미입력 시 도착 기준 시간
+    private static final LocalTime DEFAULT_DEPART_TIME = LocalTime.of(18, 0);  // 항공편 미입력 시 출발 기준 시간
 
     // TODO: 공항 region 강제화 - 1일차=공항 region 고정, 마지막날은 다른 region 최소 1일 확보 시에만 고정
     // TODO: 입력 검증 추가 - 공항 region ∈ 선택 region 불변식 (현재 대조 없음)
     // TODO: AI에는 순서 말고 분배(각 region 며칠)만 위임
     // todo : 현재 ai의존적임, depart airport정보가 있음에도 사용되지 않음, 로직상 분배해도 문제 없어 보임
-    public Map<LocalDate, Region> assign(
+    public Map<LocalDate, Region> assignRegion(
             List<LocalDate> dates,
             List<Region> regions,
             List<Place> necessaryPlaces,
@@ -123,6 +130,80 @@ public class RegionAssignService {
                 .necessaryPlaces(placeCoords)
                 .airport(airportCoord)
                 .build();
+    }
+
+    // 날짜별 호텔 배정 (plan 규칙 소유)
+    // - 마지막 날은 체크아웃이므로 호텔 배정 안 함 (결과에서 제외)
+    // - 사용자 지정 호텔이 있으면 전 날짜 동일, 없으면 각 날짜 region의 추천 호텔
+    // - 추천/변환은 하지 않음. 이미 Place로 변환된 추천 호텔을 입력으로 받는다
+    public Map<LocalDate, Place> assignHotel(
+            List<LocalDate> dates,
+            Map<LocalDate, Region> dateRegionMap,
+            Map<Long, Place> recommendedHotelByRegion,
+            Optional<Place> userHotel
+    ) {
+        Map<LocalDate, Place> result = new LinkedHashMap<>();
+        if (dates == null || dates.isEmpty()) return result;
+
+        LocalDate checkoutDate = dates.get(dates.size() - 1); // 마지막 날 = 체크아웃
+
+        for (LocalDate date : dates) {
+            if (date.equals(checkoutDate)) continue; // 마지막 날: 호텔 없음
+
+            Place hotel = userHotel
+                    .orElseGet(() -> recommendedHotelByRegion.get(dateRegionMap.get(date).getId()));
+            if (hotel != null) result.put(date, hotel);
+        }
+
+        return result;
+    }
+
+    // 공항 배정 (plan 규칙 소유)
+    // - 첫날 = 도착 공항, 마지막날 = 출발 공항
+    // - 사용자 항공편 있으면 그 공항 + 항공편 시간 정시 올림, 없으면 추천 공항 + 기본 시간(도착 10:00 / 출발 18:00)
+    // - 공항 선택(추천)은 하지 않음. 사용자 항공편(Optional)과 이미 resolved된 추천 공항을 입력으로 받는다
+    public Map<LocalDate, AirportSchedule> assignAirport(
+            LocalDate startDate,
+            LocalDate endDate,
+            Optional<AirportSchedule> arrivalFlight,
+            Optional<AirportSchedule> departFlight,
+            Place recommendArrival,
+            Place recommendDepart
+    ) {
+        Map<LocalDate, AirportSchedule> result = new LinkedHashMap<>();
+
+        result.put(startDate, arrivalFlight
+                .map(flight -> new AirportSchedule(flight.airport(), TimeUtil.ceilToNextHour(flight.time())))
+                .orElse(new AirportSchedule(recommendArrival, DEFAULT_ARRIVAL_TIME)));
+
+        // 첫날 == 마지막날(당일치기)이면 도착 배정을 유지한다
+        result.putIfAbsent(endDate, departFlight
+                .map(flight -> new AirportSchedule(flight.airport(), TimeUtil.ceilToNextHour(flight.time())))
+                .orElse(new AirportSchedule(recommendDepart, DEFAULT_DEPART_TIME)));
+
+        return result;
+    }
+
+    // TODO: Nearest Neighbor 클러스터링 + 날짜별 가용 시간 매칭으로 고도화
+    public Map<LocalDate, List<Place>> distribute(List<Place> necessaryPlaces, List<LocalDate> dates) {
+        Map<LocalDate, List<Place>> result = new LinkedHashMap<>();
+        dates.forEach(d -> result.put(d, new ArrayList<>()));
+
+        if (necessaryPlaces == null || necessaryPlaces.isEmpty()) return result;
+
+        int total = necessaryPlaces.size();
+        int days = dates.size();
+        int perDay = total / days;
+        int remainder = total % days;
+
+        int cursor = 0;
+        for (int i = 0; i < days; i++) {
+            int count = perDay + (i < remainder ? 1 : 0);
+            result.get(dates.get(i)).addAll(necessaryPlaces.subList(cursor, cursor + count));
+            cursor += count;
+        }
+
+        return result;
     }
 
 }
