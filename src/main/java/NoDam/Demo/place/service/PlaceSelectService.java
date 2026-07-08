@@ -4,24 +4,19 @@ import NoDam.Demo.adapter.google.GooglePort;
 import NoDam.Demo.common.excetion.CustomException;
 import NoDam.Demo.common.excetion.ErrorCode;
 import NoDam.Demo.common.type.*;
+import NoDam.Demo.common.util.ListUtil;
 import NoDam.Demo.place.PlaceRepository;
-import NoDam.Demo.place.domain.Coordinate;
 import NoDam.Demo.place.domain.Place;
 import NoDam.Demo.place.domain.TypeWeight;
 import NoDam.Demo.place.dto.PlaceInfo;
-import NoDam.Demo.place.dto.PlaceRequestDto;
 import NoDam.Demo.place.dto.RecommendPlaceResult;
-import NoDam.Demo.place.dto.google.GooglePlaceInfo;
 import NoDam.Demo.region.domain.Region;
-import NoDam.Demo.stay.dto.XoteloSearchResponseDto;
-import NoDam.Demo.stay.service.XoteloSearchService;
+import NoDam.Demo.region.service.RegionQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -29,7 +24,6 @@ import java.util.Optional;
 public class PlaceSelectService {
 
     private final PlaceRepository placeRepository;
-    private final GooglePort googlePort;
 
     public Place findById(Long placeId) {
         return placeRepository.findById(placeId)
@@ -40,15 +34,13 @@ public class PlaceSelectService {
         return placeRepository.findAllById(placeIds);
     }
 
-    // todo : google port 사용해서 saveNewPlaces까지 책임 지도록
-    public Place findByGoogleId(String googleId) {
-        return placeRepository.findByGoogleId(googleId).get();
+    public Optional<Place> findByGoogleId(String googleId) {
+        return placeRepository.findByGoogleId(googleId);
     }
 
-    // todo : google port 사용해서 saveNewPlaces까지 책임 지도록
     public List<Place> findAllByGoogleId(List<String> googleIds) {
-        // 없는 값 save new 까지 처리 + sort by request
-        return placeRepository.findAllByGoogleId(googleIds);
+        List<Place> selectedPlaces = placeRepository.findAllByGoogleId(googleIds);
+        return ListUtil.sortByRequestOrder(googleIds, selectedPlaces, (p)->p.getGoogleId());
     }
 
     // todo : 장소 시간 고려할 것

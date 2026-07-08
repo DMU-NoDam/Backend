@@ -15,7 +15,7 @@ import NoDam.Demo.place.dto.RecommendPlaceResult;
 import NoDam.Demo.place.dto.PlaceRequestDto;
 import NoDam.Demo.place.dto.RecommendPlaceRequestDto;
 import NoDam.Demo.place.dto.RecommendedPlaceInfo;
-import NoDam.Demo.place.dto.google.GooglePlaceInfo;
+import NoDam.Demo.adapter.google.dto.GooglePlaceInfo;
 import NoDam.Demo.plan.domain.DatePlan;
 import NoDam.Demo.plan.domain.PlacePlan;
 import NoDam.Demo.plan.dto.ai.AiRecommendPlaceRequestDto;
@@ -68,36 +68,6 @@ public class PlaceFacadeService {
         );
 
         return place;
-    }
-
-    @Async
-    public CompletableFuture<List<Place>> findAllByGoogleId(List<String> googleIds) {
-        if(googleIds == null || googleIds.isEmpty())
-            return CompletableFuture.completedFuture(List.of());
-
-        if(googleIds.contains(null))
-            throw new RuntimeException("PlaceFacadeService.findAllByGoogle :: parameter googleIds contain null");
-
-        // DB에서 조회 후 요청 순서대로 정렬 (누락된 장소는 null로 표시됨)
-        List<Place> selectedPlaces = ListUtil.sortByRequestOrder(googleIds, placeSelectService.findAllByGoogleId(googleIds), Place::getGoogleId);
-
-        if(selectedPlaces.contains(null)) {
-            // DB에 저장되지 않은 place가 존재함 -> missing id 추출
-            List<String> notSavedGooglePlaceIds = IntStream.range(0, googleIds.size())
-                    .filter(i -> selectedPlaces.get(i) == null)
-                    .mapToObj(googleIds::get)
-                    .toList();
-
-            List<Place> savedPlaces = saveNewPlaces(notSavedGooglePlaceIds);
-            
-            // null 제거 후 새로 저장된 장소 추가
-            selectedPlaces.removeIf(java.util.Objects::isNull);
-            selectedPlaces.addAll(savedPlaces);
-        }
-
-        List<Place> result = ListUtil.sortByRequestOrder(googleIds, selectedPlaces, Place::getGoogleId);
-        logger.info("findAllByGoogleId end size={}", result.size());
-        return CompletableFuture.completedFuture(result);
     }
 
     private List<Place> saveNewPlaces(List<String> notSavedGoogleIds) {
