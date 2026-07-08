@@ -1,5 +1,6 @@
 package NoDam.Demo.plan.domain;
 
+import NoDam.Demo.common.converter.LongListConverter;
 import NoDam.Demo.common.domain.BaseEntity;
 import NoDam.Demo.common.type.PlanStatus;
 import NoDam.Demo.common.type.TripThemeType;
@@ -41,8 +42,9 @@ public class DatePlan extends BaseEntity {
     @Column(nullable = false, length = 15)
     private TripThemeType tripThemeType;
 
-    @Column(name = "google_id_list", nullable = true)
-    private String googleIds;
+    @Convert(converter = LongListConverter.class)
+    @Column(nullable = true)
+    private List<Long> necessaryPlaces; // 필수 장소 place id 목록
 
     @Column(nullable = true)
     private Long hotelPlaceId; // 해당 날짜 숙소 place id
@@ -61,12 +63,12 @@ public class DatePlan extends BaseEntity {
     private List<PlacePlan> placePlans = new ArrayList<>();
 
     @Builder
-    public DatePlan(LocalDate date, Long tripId, Long regionId, List<String> googleIds, TripThemeType tripThemeType,
+    public DatePlan(LocalDate date, Long tripId, Long regionId, List<Long> necessaryPlaces, TripThemeType tripThemeType,
                     Long hotelPlaceId, Long airportPlaceId, LocalTime airportTime) {
         this.date = date;
         this.tripId = tripId;
         this.regionId = regionId;
-        this.googleIds = googleIds != null ? String.join(",", googleIds) : "";
+        this.necessaryPlaces = necessaryPlaces != null ? necessaryPlaces : List.of();
         this.tripThemeType = tripThemeType;
         this.hotelPlaceId = hotelPlaceId;
         this.airportPlaceId = airportPlaceId;

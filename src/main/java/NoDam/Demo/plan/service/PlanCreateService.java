@@ -58,8 +58,8 @@ public class PlanCreateService {
                         .tripId(trip.getId())
                         .regionId(dto.getRegion().getId())
                         .tripThemeType(dto.getThemeType())
-                        .googleIds(dto.getNecessaryPlaces() != null
-                                ? dto.getNecessaryPlaces().stream().map(p -> p.getGoogleId()).toList()
+                        .necessaryPlaces(dto.getNecessaryPlaces() != null
+                                ? dto.getNecessaryPlaces().stream().map(p -> p.getId()).toList()
                                 : List.of())
                         .hotelPlaceId(dto.getHotelPlace().getId())
                         .airportPlaceId(dto.getAirportPlace().getId())

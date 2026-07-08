@@ -21,9 +21,9 @@ public class DatePlanRequestDto {
     private LocalDate date; // yyyy-mm-dd
     private Region region; // not null
     private TripThemeType themeType; // not null
-    private List<Place> necessaryPlaces; // can null
-    private Long hotelPlaceId; // nullable
-    private Long airportPlaceId; // nullable
+    private List<Place> necessaryPlaces; // not null
+    private Place hotelPlace; // not null (추천 하고 들어올 것)
+    private Place airportPlace; // nullable
     private LocalTime airportTime; // nullable
 
 }

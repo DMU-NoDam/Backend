@@ -7,7 +7,7 @@ import NoDam.Demo.common.type.PlaceType;
 import NoDam.Demo.common.type.ScheduleType;
 import NoDam.Demo.common.type.TripThemeType;
 import NoDam.Demo.common.util.TimeUtil;
-import NoDam.Demo.place.dto.PlaceInfo;
+import NoDam.Demo.place.domain.Place;
 import NoDam.Demo.place.dto.RecommendPlaceResult;
 import NoDam.Demo.plan.dto.response.PlacePlanInfo;
 import NoDam.Demo.plan.dto.ai.AiRecommendPlaceResponseDto;
@@ -40,7 +40,7 @@ public class DayScheduleService {
     public List<PlacePlanRequestDto> buildSchedule(
             ScheduleType scheduleType,
             TripThemeType themeType,
-            List<PlaceInfo> necessaryPlaces,
+            List<Place> necessaryPlaces,
             List<PlacePlanInfo> fixedPlans,
             Map<PlaceType, List<RecommendPlaceResult>> candidates
     ) {
