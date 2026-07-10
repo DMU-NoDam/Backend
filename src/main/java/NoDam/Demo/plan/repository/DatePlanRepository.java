@@ -5,9 +5,13 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 public interface DatePlanRepository extends JpaRepository<DatePlan, Long> {
+
+    Optional<DatePlan> findByTripIdAndDate(Long tripId, LocalDate date);
 
     @Query("select distinct dp from DatePlan dp left join fetch dp.placePlans p where dp.tripId = :tripId")
     List<DatePlan> findAllDatePlanWithPlans(@Param("tripId") Long tripId);

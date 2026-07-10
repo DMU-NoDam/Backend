@@ -1,4 +1,4 @@
-package NoDam.Demo.util;
+package NoDam.Demo.common.util;
 
 public class StringUtil {
 

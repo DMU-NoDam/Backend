@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -86,6 +87,35 @@ public class PlanCreateService {
 
         planRepository.saveAll(entities);
         return datePlanRepository.findById(datePlan.getId()).get();
+    }
+
+    // 공항(첫날/마지막날), 호텔(저녁·아침) 고정 PlacePlan 생성 + 저장
+    public DatePlan createFixedPlans(Trip trip, DatePlan datePlan) {
+        List<PlacePlanRequestDto> plans = new ArrayList<>();
+
+        // 첫날: 도착 공항 (자정 ~ 공항 도착 시간)
+        if (trip.getStartDate().equals(datePlan.getDate()))
+            plans.add(new PlacePlanRequestDto(LocalTime.MIDNIGHT, datePlan.getAirportTime(), datePlan.getAirportPlaceId()));
+
+        // 마지막날: 출발 공항 (공항 출발 시간 ~ 23:59)
+        if (trip.getEndDate().equals(datePlan.getDate()))
+            plans.add(new PlacePlanRequestDto(datePlan.getAirportTime(), LocalTime.of(23, 59), datePlan.getAirportPlaceId()));
+
+        // 첫날 제외: 아침 첫 장소 = 전날 밤 잔 호텔 (자정 ~ 09:00)
+        if (!trip.getStartDate().equals(datePlan.getDate())) {
+            Long previousHotelPlaceId = datePlanRepository
+                    .findByTripIdAndDate(datePlan.getTripId(), datePlan.getDate().minusDays(1))
+                    .map(DatePlan::getHotelPlaceId)
+                    .orElse(null);
+            if (previousHotelPlaceId != null)
+                plans.add(new PlacePlanRequestDto(LocalTime.MIDNIGHT, LocalTime.of(9, 0), previousHotelPlaceId));
+        }
+
+        // 마지막 날 제외: 저녁 호텔 (not null → 실제 호텔, null → placeholder)
+        if (!trip.getEndDate().equals(datePlan.getDate()))
+            plans.add(new PlacePlanRequestDto(LocalTime.of(20, 0), LocalTime.of(23, 50), datePlan.getHotelPlaceId()));
+
+        return createPlans(datePlan, plans);
     }
 
     public List<TransportPlan> createTransportPlans(List<TransportPlan> transportPlans) {

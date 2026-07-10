@@ -31,7 +31,6 @@ public class TripFacadeService {
     private final TripSelectService tripSelectService;
     private final PlaceSelectService placeSelectService;
     private final PlanSelectService planSelectService;
-    private final PlanDeleteService planDeleteService;
 
     // trip domain 생성 까지만 (ai생성은 다른 api 분리, transaction 때문!)
     // transactional (사용 금지!)

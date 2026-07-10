@@ -16,7 +16,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -41,6 +43,25 @@ public class PlaceSelectService {
     public List<Place> findAllByGoogleId(List<String> googleIds) {
         List<Place> selectedPlaces = placeRepository.findAllByGoogleId(googleIds);
         return ListUtil.sortByRequestOrder(googleIds, selectedPlaces, (p)->p.getGoogleId());
+    }
+
+    // todo : 한번의 query로 처리 고려할 것
+    public Map<PlaceType, List<RecommendPlaceResult>> recommendPlacesByType(
+            Region region, // not null
+            PriceType priceType, // can null
+            SeasonType recommendSeason, // can null
+            TripThemeType recommendTripTheme, // can null
+            WeatherType recommendWeatherType, // can null
+            List<Place> excludePlaces, // 제외할 place 목록
+            int count
+    ) {
+        Map<PlaceType, List<RecommendPlaceResult>> result = new HashMap<>();
+        for (PlaceType placeType : PlaceType.values()) {
+            result.put(placeType, recommendPlaces(
+                    placeType, region, priceType, recommendSeason,
+                    recommendTripTheme, recommendWeatherType, excludePlaces, count));
+        }
+        return result;
     }
 
     // todo : 장소 시간 고려할 것

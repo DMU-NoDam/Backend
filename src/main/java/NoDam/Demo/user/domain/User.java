@@ -1,6 +1,6 @@
 package NoDam.Demo.user.domain;
 
-import static NoDam.Demo.util.StringUtil.isEmpty;
+import static NoDam.Demo.common.util.StringUtil.isEmpty;
 
 import NoDam.Demo.common.domain.BaseEntity;
 import NoDam.Demo.common.excetion.CustomException;
