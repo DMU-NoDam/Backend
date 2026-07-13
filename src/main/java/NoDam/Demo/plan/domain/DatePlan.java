@@ -2,7 +2,6 @@ package NoDam.Demo.plan.domain;
 
 import NoDam.Demo.common.converter.LongListConverter;
 import NoDam.Demo.common.domain.BaseEntity;
-import NoDam.Demo.common.type.PlanStatus;
 import NoDam.Demo.common.type.TripThemeType;
 import jakarta.persistence.*;
 

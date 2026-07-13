@@ -7,7 +7,6 @@ import NoDam.Demo.common.excetion.ErrorCode;
 import NoDam.Demo.common.type.*;
 import NoDam.Demo.common.util.DateUtil;
 import NoDam.Demo.common.util.ListUtil;
-import NoDam.Demo.common.util.TimeUtil;
 import NoDam.Demo.place.domain.Place;
 import NoDam.Demo.place.dto.PlaceRequestDto;
 import NoDam.Demo.place.dto.RecommendPlaceResult;
@@ -18,6 +17,7 @@ import NoDam.Demo.place.service.PlaceSelectService;
 import NoDam.Demo.plan.domain.AirportSchedule;
 import NoDam.Demo.plan.domain.DatePlan;
 import NoDam.Demo.plan.domain.PlacePlan;
+import NoDam.Demo.plan.domain.PlanStatus;
 import NoDam.Demo.plan.domain.TransportPlan;
 import NoDam.Demo.plan.dto.TransportLeg;
 import NoDam.Demo.plan.dto.request.DatePlanRequestDto;
@@ -29,7 +29,7 @@ import NoDam.Demo.region.service.RegionQueryService;
 import NoDam.Demo.stay.service.XoteloSearchService;
 import NoDam.Demo.trip.domain.Trip;
 import NoDam.Demo.trip.domain.TripRequest;
-import NoDam.Demo.trip.dto.request.TripCreateFacadeRequestDto;
+import NoDam.Demo.trip.service.TripLockService;
 import NoDam.Demo.trip.service.TripRequestService;
 import NoDam.Demo.trip.service.TripSelectService;
 import lombok.RequiredArgsConstructor;
@@ -42,7 +42,6 @@ import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -64,6 +63,7 @@ public class AutoCreatePlanService {
     private final TransportPlanService transportPlanService;
     private final TripSelectService tripSelectService;
     private final TripRequestService tripRequestService;
+    private final TripLockService tripLockService;
 
     private final Logger logger = LoggerFactory.getLogger(AutoCreatePlanService.class);
 
@@ -147,7 +147,7 @@ public class AutoCreatePlanService {
         if (tripDates == null || !tripDates.isEmpty())
             return tripDates; // 멱등성 처리
 
-        return runWithPlanningLock(trip, () -> {
+        return tripLockService.runWithLock(trip, () -> {
 
             List<LocalDate> dates = DateUtil.toDateRange(trip.getStartDate(), trip.getEndDate());
 
@@ -241,23 +241,10 @@ public class AutoCreatePlanService {
         return ListUtil.sortByRequestOrder(googleIdList, merged, Place::getGoogleId);
     }
 
-    private <T> T runWithPlanningLock(Trip trip, Supplier<T> task) {
-        planCreateService.updateTripStatus(trip, true);
-        try {
-            T result = task.get();
-            planCreateService.updateTripStatus(trip, false);
-            return result;
-        } catch (Exception e) {
-            logger.error("planningLock 처리 중 에러 tripId={}", trip.getId(), e);
-            planCreateService.forceUpdateTripStatus(trip, false);
-            throw e;
-        }
-    }
-
     @Async
     public CompletableFuture<List<DatePlan>> autoGenerateAllPlans(Long tripId, Long userId) {
         Trip trip = tripSelectService.findById(tripId, userId);
-        return runWithPlanningLock(trip, () -> {
+        return tripLockService.runWithLock(trip, () -> {
             List<DatePlan> createdDatePlans = new ArrayList<>();
 
             for (DatePlan datePlan : planSelectService.findAllDatePlan(trip)) {
@@ -266,7 +253,6 @@ public class AutoCreatePlanService {
                 // 1. 공항, 호텔 생성
                 if (status.isBefore(PlanStatus.FIXED_PLANNED)) {
                     planCreateService.createFixedPlans(trip, datePlan);
-                    planCreateService.updateDatePlanStatus(datePlan, PlanStatus.FIXED_PLANNED);
                 }
 
                 // 2. 후보 장소 조회 (HOTEL, AIRPORT 제외)
@@ -304,8 +290,7 @@ public class AutoCreatePlanService {
                         throw new CustomException(ErrorCode.API_FAIL);
                     }
 
-                    createdDatePlans.add(planCreateService.createPlans(datePlan, generatedPlans));
-                    planCreateService.updateDatePlanStatus(datePlan, PlanStatus.AI_PLANNED);
+                    createdDatePlans.add(planCreateService.createPlacePlans(datePlan, generatedPlans));
                 }
             }
 
@@ -317,13 +302,12 @@ public class AutoCreatePlanService {
     @Async
     public CompletableFuture<List<TransportPlan>> autoGenerateAllThemeTransportPlans(Long tripId, Long userId) {
         Trip trip = tripSelectService.findById(tripId, userId);
-        return runWithPlanningLock(trip, () -> {
+        return tripLockService.runWithLock(trip, () -> {
             List<TransportPlan> allCreated = new ArrayList<>();
 
             for (DatePlan datePlan : planSelectService.findAllDatePlan(trip)) {
                 if (datePlan.getPlanStatus().isAfterOrEqual(PlanStatus.TRANSPORT_PLANNED)) continue;
                 allCreated.addAll(generateTransportPlansByLeg(datePlan));
-                planCreateService.updateDatePlanStatus(datePlan, PlanStatus.TRANSPORT_PLANNED);
             }
 
             logger.info("autoGenerateAllThemeTransportPlans end tripId={}", trip.getId());
@@ -353,7 +337,7 @@ public class AutoCreatePlanService {
             results.put(leg, routeInfo);
         }
 
-        return transportPlanService.saveTransportLegs(results);
+        return transportPlanService.saveTransportLegs(targetDate, results);
     }
 
 }

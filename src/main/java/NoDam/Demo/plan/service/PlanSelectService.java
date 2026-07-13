@@ -3,8 +3,8 @@ package NoDam.Demo.plan.service;
 import NoDam.Demo.common.excetion.CustomException;
 import NoDam.Demo.common.excetion.ErrorCode;
 import NoDam.Demo.common.type.PlaceType;
-import NoDam.Demo.common.type.PlanStatus;
 import NoDam.Demo.common.type.TripThemeType;
+import NoDam.Demo.plan.domain.PlanStatus;
 import NoDam.Demo.place.domain.Place;
 import NoDam.Demo.plan.domain.DatePlan;
 import NoDam.Demo.plan.domain.PlacePlan;
@@ -81,7 +81,7 @@ public class PlanSelectService {
             List<DatePlan> datePlan = datePlans.get(eachTrip);
             boolean status = !datePlan // 한개라도 ai planned가 아닌게 있다면 false
                     .stream()
-                    .anyMatch(p->!p.getPlanStatus().equals(PlanStatus.AI_PLANNED));
+                    .anyMatch(p->!p.getPlanStatus().isAfterOrEqual(PlanStatus.AI_PLANNED));
             tripStatus.put(eachTrip, status);
         }
 
@@ -92,7 +92,7 @@ public class PlanSelectService {
         List<DatePlan> datePlans = findAllDatePlan(trip);
         boolean status = !datePlans // 한개라도 ai planned가 아닌게 있다면 false
                 .stream()
-                .anyMatch(p->!p.getPlanStatus().equals(PlanStatus.AI_PLANNED));
+                .anyMatch(p->!p.getPlanStatus().isAfterOrEqual(PlanStatus.AI_PLANNED));
 
         return status;
     }

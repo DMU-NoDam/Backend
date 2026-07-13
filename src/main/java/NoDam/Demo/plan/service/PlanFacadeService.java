@@ -1,8 +1,8 @@
 package NoDam.Demo.plan.service;
 
 import NoDam.Demo.adapter.route.RoutePort;
-import NoDam.Demo.common.type.PlanStatus;
 import NoDam.Demo.common.type.TripThemeType;
+import NoDam.Demo.plan.domain.PlanStatus;
 import NoDam.Demo.place.domain.Place;
 import NoDam.Demo.place.service.PlaceSelectService;
 import NoDam.Demo.plan.domain.DatePlan;
@@ -68,10 +68,11 @@ public class PlanFacadeService {
         Trip trip = tripSelectService.findById(tripId, userId);
         List<DatePlan> datePlans = planSelectService.findAllDatePlan(trip);
 
-        boolean allCompleted = !datePlans.isEmpty() &&
-                datePlans.stream().allMatch(dp -> dp.getPlanStatus().isAfterOrEqual(PlanStatus.TRANSPORT_PLANNED));
+        // DatePlan이 하나도 없으면(Trip 생성 직후) status는 null
+        PlanStatus planStatus = PlanStatus.lowest(datePlans.stream().map(DatePlan::getPlanStatus).toList());
+        boolean allCompleted = planStatus != null && planStatus.isAfterOrEqual(PlanStatus.TRANSPORT_PLANNED);
 
-        return new PlanStatusResponse(allCompleted, trip.getIsPlanning());
+        return new PlanStatusResponse(planStatus, allCompleted, trip.getIsPlanning());
     }
 
     public void deletePlacePlan(Long placePlanId, Long userId) {
@@ -152,7 +153,7 @@ public class PlanFacadeService {
             results.put(leg, routeInfo);
         }
 
-        return transportPlanService.saveTransportLegs(results);
+        return transportPlanService.saveTransportLegs(targetDate, results);
     }
 
 }
