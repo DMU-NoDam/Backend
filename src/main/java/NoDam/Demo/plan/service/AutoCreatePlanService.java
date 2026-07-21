@@ -71,27 +71,29 @@ public class AutoCreatePlanService {
     // 동시성 : getGooglePlaceListOrSave 의 select-then-save 는 place.googleId unique 제약으로 정합성 보장
     @Async
     public CompletableFuture<TripRequest> translateGooglePlaceToDbPlace(Long tripId, Long userId) {
-        tripSelectService.findById(tripId, userId); // 소유권 검증
+        Trip trip = tripSelectService.findById(tripId, userId); // 소유권 검증
 
-        // 1. TripRequest가 변환(google 조회)이 필요한 google id 목록을 스스로 판단 (필수 장소 + 호텔)
-        List<String> googleIds = tripRequestService.findGoogleIdsToConvert(tripId);
+        return tripLockService.runWithLock(trip, ()-> {
+            // 1. TripRequest가 변환(google 조회)이 필요한 google id 목록을 스스로 판단 (필수 장소 + 호텔)
+            List<String> googleIds = tripRequestService.findGoogleIdsToConvert(tripId);
 
-        // 2. google id -> place 변환 (없으면 저장), google id 기준 map 구성
-        Map<String, Place> placeByGoogleId = getGooglePlaceListOrSave(googleIds).stream()
-                .collect(Collectors.toMap(Place::getGoogleId, place -> place, (a, b) -> a));
+            // 2. google id -> place 변환 (없으면 저장), google id 기준 map 구성
+            Map<String, Place> placeByGoogleId = getGooglePlaceListOrSave(googleIds).stream()
+                    .collect(Collectors.toMap(Place::getGoogleId, place -> place, (a, b) -> a));
 
-        // 3. 변환 결과를 TripRequest에 반영 (공항은 code -> place id 정적 매핑)
-        TripRequest updated = tripRequestService.updateConvertedPlaces(tripId, placeByGoogleId);
+            // 3. 변환 결과를 TripRequest에 반영 (공항은 code -> place id 정적 매핑)
+            TripRequest updated = tripRequestService.updateConvertedPlaces(tripId, placeByGoogleId);
 
-        // 4. 공항 place 존재 검증 (Place 도메인 관심사이므로 facade에서 처리)
-        List<Long> airportPlaceIds = new ArrayList<>();
-        if (updated.getDepartAirportPlaceId() != null) airportPlaceIds.add(updated.getDepartAirportPlaceId());
-        if (updated.getArriveAirportPlaceId() != null) airportPlaceIds.add(updated.getArriveAirportPlaceId());
-        if (placeSelectService.findAllById(airportPlaceIds).size() != airportPlaceIds.size())
-            throw new CustomException(ErrorCode.NOT_FOUND);
+            // 4. 공항 place 존재 검증 (Place 도메인 관심사이므로 facade에서 처리)
+            List<Long> airportPlaceIds = new ArrayList<>();
+            if (updated.getDepartAirportPlaceId() != null) airportPlaceIds.add(updated.getDepartAirportPlaceId());
+            if (updated.getArriveAirportPlaceId() != null) airportPlaceIds.add(updated.getArriveAirportPlaceId());
+            if (placeSelectService.findAllById(airportPlaceIds).size() != airportPlaceIds.size())
+                throw new CustomException(ErrorCode.NOT_FOUND);
 
-        logger.info("translateGooglePlaceToDbPlace end tripId={}", tripId);
-        return CompletableFuture.completedFuture(updated);
+            logger.info("translateGooglePlaceToDbPlace end tripId={}", tripId);
+            return CompletableFuture.completedFuture(updated);
+        });
     }
 
     // 3. List<DatePlan> 생성 (2번에서 변환된 place id 사용, google 재호출 없음)
@@ -144,7 +146,7 @@ public class AutoCreatePlanService {
     ) {
         List<DatePlan> tripDates = planSelectService.findAllDatePlan(trip);
 
-        if (tripDates == null || !tripDates.isEmpty())
+        if (tripDates != null && !tripDates.isEmpty())
             return tripDates; // 멱등성 처리
 
         return tripLockService.runWithLock(trip, () -> {
@@ -170,18 +172,18 @@ public class AutoCreatePlanService {
             );
 
             // 3. 호텔 추천 - 사용자 입력 없을 때만 region별 1회 추천 후 Place 변환, 배정은 assignService로
-            Map<Long, Place> recommendedHotelByRegion = new HashMap<>();
+            Map<Region, Place> recommendedHotelByRegion = new HashMap<>();
             if (hotel.isEmpty()) {
                 // region당 1회 추천 (외부 api 중복 호출 방지)
-                Map<Long, String> hotelGoogleIdByRegion = new HashMap<>();
+                Map<Region, String> hotelGoogleIdByRegion = new HashMap<>();
                 for (Region region : dateRegionMap.values())
-                    hotelGoogleIdByRegion.computeIfAbsent(region.getId(),
+                    hotelGoogleIdByRegion.computeIfAbsent(region,
                             id -> hotelService.recommendHotel(region).getPlaceId());
                 // google id -> place 일괄 변환
                 Map<String, Place> placeByGoogleId = getGooglePlaceListOrSave(new ArrayList<>(hotelGoogleIdByRegion.values()))
                         .stream().collect(Collectors.toMap(Place::getGoogleId, place -> place));
-                hotelGoogleIdByRegion.forEach((regionId, googleId) ->
-                        recommendedHotelByRegion.put(regionId, placeByGoogleId.get(googleId)));
+                hotelGoogleIdByRegion.forEach((region, googleId) ->
+                        recommendedHotelByRegion.put(region, placeByGoogleId.get(googleId)));
             }
             Map<LocalDate, Place> hotelByDate = assignService.assignHotel(dates, dateRegionMap, recommendedHotelByRegion, hotel);
 
@@ -189,15 +191,17 @@ public class AutoCreatePlanService {
             Map<LocalDate, List<Place>> necessaryPlacesByDate = assignService.distribute(necessaryPlaces, dates);
 
             // 5. DatePlan 생성 (TripThemeType별)
+            // 지역/공항/호텔/필수장소는 날짜로만 결정되므로 테마별로 동일한 값을 공유한다 (총 날짜수 * 테마수 개 생성)
             List<DatePlanRequestDto> datePlanRequestDto = dates.stream()
-                    .map(date -> {
+                    .flatMap(date -> {
                         AirportSchedule airport = airportByDate.get(date);
-                        return new DatePlanRequestDto(
-                                date, dateRegionMap.get(date), trip.getTripThemeType(),
-                                necessaryPlacesByDate.get(date), hotelByDate.get(date),
-                                airport != null ? airport.airport() : null,
-                                airport != null ? airport.time() : null
-                        );
+                        return Arrays.stream(TripThemeType.values())
+                                .map(themeType -> new DatePlanRequestDto(
+                                        date, dateRegionMap.get(date), themeType,
+                                        necessaryPlacesByDate.get(date), hotelByDate.get(date),
+                                        airport != null ? airport.airport() : null,
+                                        airport != null ? airport.time() : null
+                                ));
                     })
                     .toList();
             List<DatePlan> datePlans = planCreateService.createDatePlans(trip, datePlanRequestDto);
@@ -261,7 +265,7 @@ public class AutoCreatePlanService {
                     Region region = regionQueryService.findById(datePlan.getRegionId());
                     List<Place> excludePlaces = planSelectService.findPlacedPlaces(trip, datePlan.getTripThemeType());
                     Map<PlaceType, List<RecommendPlaceResult>> candidates = placeSelectService.recommendPlacesByType(
-                            region, trip.getPriceType(), null, trip.getTripThemeType(), null, excludePlaces, 5
+                            region, trip.getPriceType(), null, datePlan.getTripThemeType(), null, excludePlaces, 5
                     );
 
                     List<PlacePlan> placedPlacePlans = planSelectService.findPlacePlansByDatePlan(datePlan);

@@ -1,12 +1,14 @@
 package NoDam.Demo.common.util;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 public class DateUtil {
 
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
     /**
      * yyyy-MM-dd 형식의 문자열을 LocalDate로 변환
@@ -16,6 +18,16 @@ public class DateUtil {
             return null;
         }
         return LocalDate.parse(dateString, FORMATTER);
+    }
+
+    /**
+     * yyyy-MM-dd HH:mm 형식의 문자열을 LocalDateTime으로 변환
+     */
+    public static LocalDateTime toLocalDateTime(String dateTimeString) {
+        if (dateTimeString == null || dateTimeString.isBlank()) {
+            return null;
+        }
+        return LocalDateTime.parse(dateTimeString, DATE_TIME_FORMATTER);
     }
 
     /**

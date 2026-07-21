@@ -1,5 +1,6 @@
 package NoDam.Demo.plan.repository;
 
+import NoDam.Demo.common.type.TripThemeType;
 import NoDam.Demo.plan.domain.DatePlan;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -11,7 +12,8 @@ import java.util.Optional;
 
 public interface DatePlanRepository extends JpaRepository<DatePlan, Long> {
 
-    Optional<DatePlan> findByTripIdAndDate(Long tripId, LocalDate date);
+    // DatePlan은 (tripId, date, theme) 단위로 존재하므로 theme까지 지정해야 단건이 보장된다
+    Optional<DatePlan> findByTripIdAndDateAndTripThemeType(Long tripId, LocalDate date, TripThemeType tripThemeType);
 
     @Query("select distinct dp from DatePlan dp left join fetch dp.placePlans p where dp.tripId = :tripId")
     List<DatePlan> findAllDatePlanWithPlans(@Param("tripId") Long tripId);

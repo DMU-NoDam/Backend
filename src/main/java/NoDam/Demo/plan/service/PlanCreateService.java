@@ -82,7 +82,8 @@ public class PlanCreateService {
         // 첫날 제외: 아침 첫 장소 = 전날 밤 잔 호텔 (자정 ~ 09:00)
         if (!trip.getStartDate().equals(datePlan.getDate())) {
             Long previousHotelPlaceId = datePlanRepository
-                    .findByTripIdAndDate(datePlan.getTripId(), datePlan.getDate().minusDays(1))
+                    .findByTripIdAndDateAndTripThemeType(
+                            datePlan.getTripId(), datePlan.getDate().minusDays(1), datePlan.getTripThemeType())
                     .map(DatePlan::getHotelPlaceId)
                     .orElse(null);
             if (previousHotelPlaceId != null)

@@ -8,7 +8,6 @@ import NoDam.Demo.plan.domain.DatePlan;
 import NoDam.Demo.plan.service.PlanDeleteService;
 import NoDam.Demo.plan.service.PlanSelectService;
 import NoDam.Demo.trip.domain.Trip;
-import NoDam.Demo.trip.dto.request.TripCreateDto;
 import NoDam.Demo.trip.dto.request.TripCreateFacadeRequestDto;
 import NoDam.Demo.trip.dto.request.TripUpdateDto;
 import NoDam.Demo.trip.dto.request.TripCreateFacadeRequestDto.FlightInfo;
@@ -27,15 +26,18 @@ import org.springframework.stereotype.Service;
 public class TripFacadeService {
 
     private final TripCreateService tripCreateService;
+    private final TripRequestService tripRequestService;
     private final TripFixedService tripFixedService;
     private final TripSelectService tripSelectService;
     private final PlaceSelectService placeSelectService;
     private final PlanSelectService planSelectService;
 
-    // trip domain 생성 까지만 (ai생성은 다른 api 분리, transaction 때문!)
+    // trip domain 생성 + 요청 스냅샷(TripRequest) 저장 까지만 (ai생성은 다른 api 분리, transaction 때문!)
     // transactional (사용 금지!)
-    public Trip createTrip(Long userId, TripCreateDto request) {
-        return tripCreateService.createTrip(userId, request);
+    public Trip createTrip(Long userId, TripCreateFacadeRequestDto request) {
+        Trip trip = tripCreateService.createTrip(userId, request.getTrip());
+        tripRequestService.create(trip.getId(), request);
+        return trip;
     }
 
     // todo : 지울 것!

@@ -61,19 +61,20 @@ public class TripController {
             @AuthenticationPrincipal User user,
             @RequestBody @Valid TripCreateFacadeRequestDto request
     ) {
-        // trip domain 생성까지만 담당 (2~5단계는 각각 별도 async api로 분리)
-        Trip trip = tripFacadeService.createTrip(user.getId(), request.getTrip());
+        // trip domain 생성 + 요청 스냅샷 저장까지만 담당 (2~5단계는 각각 별도 async api로 분리)
+        Trip trip = tripFacadeService.createTrip(user.getId(), request);
         return ResponseEntity.ok().body(new SuccessResponse<>("success", TripInfoDto.from(trip, false)));
     }
 
     @PostMapping("/api/{tripId}/date-plans")
-    @Operation(summary = "3. DatePlan 생성 (비동기)")
+    @Operation(summary = "2/3. DatePlan 생성 (비동기)")
     public ResponseEntity<SuccessResponse<Void>> generateDatePlans(
             @AuthenticationPrincipal User user,
             @PathVariable Long tripId
     ) {
-        autoCreatePlanService.translateGooglePlaceToDbPlace(tripId, user.getId()); // 2번 단계
-        autoCreatePlanService.generateAllDatePlans(tripId, user.getId());
+        // 2번(google -> place 변환) 완료 후 3번(DatePlan 생성) 실행 : 순서 의존이므로 thenCompose로 연결한다
+        autoCreatePlanService.translateGooglePlaceToDbPlace(tripId, user.getId())
+                .thenCompose(tripRequest -> autoCreatePlanService.generateAllDatePlans(tripId, user.getId()));
         return ResponseEntity.accepted().body(new SuccessResponse<>("accepted", null));
     }
 

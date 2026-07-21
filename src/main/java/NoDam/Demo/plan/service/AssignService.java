@@ -139,7 +139,7 @@ public class AssignService {
     public Map<LocalDate, Place> assignHotel(
             List<LocalDate> dates,
             Map<LocalDate, Region> dateRegionMap,
-            Map<Long, Place> recommendedHotelByRegion,
+            Map<Region, Place> recommendedHotelByRegion,
             Optional<Place> userHotel
     ) {
         Map<LocalDate, Place> result = new LinkedHashMap<>();
