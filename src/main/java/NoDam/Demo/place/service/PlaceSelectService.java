@@ -19,7 +19,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -27,7 +29,6 @@ import java.util.Optional;
 public class PlaceSelectService {
 
     private final PlaceRepository placeRepository;
-    private final XoteloSearchService xoteloSearchService;
     private final GooglePort googlePort;
 
     public Place findById(Long placeId) {
@@ -39,73 +40,15 @@ public class PlaceSelectService {
         return placeRepository.findAllById(placeIds);
     }
 
-    public Optional<Place> findByGoogleId(String googleId) {
-        return placeRepository.findByGoogleId(googleId);
+    // todo : google port 사용해서 saveNewPlaces까지 책임 지도록
+    public Place findByGoogleId(String googleId) {
+        return placeRepository.findByGoogleId(googleId).get();
     }
 
+    // todo : google port 사용해서 saveNewPlaces까지 책임 지도록
     public List<Place> findAllByGoogleId(List<String> googleIds) {
+        // 없는 값 save new 까지 처리 + sort by request
         return placeRepository.findAllByGoogleId(googleIds);
-    }
-
-    public Place recommendHotelPlace(Region region) {
-        List<XoteloSearchResponseDto> xoteloHotels = xoteloSearchService.searchStays(region);
-
-        // lat/lon 있는 호텔 먼저 시도
-        for (XoteloSearchResponseDto hotel : xoteloHotels) {
-            if (hotel.getLatitude() == null || hotel.getLongitude() == null) continue;
-
-            List<GooglePlaceInfo> googleResults = googlePort.searchByText(hotel.getName());
-            for (GooglePlaceInfo info : googleResults) {
-                if (!Coordinate.isSameLocation(hotel.getLatitude(), hotel.getLongitude(), info.getLat(), info.getLon())) continue;
-
-                return placeRepository.findByGoogleId(info.getPlaceId())
-                        .orElseGet(() -> {
-                            PlaceRequestDto dto = info.toPlaceDto(region);
-                            return placeRepository.save(Place.builder()
-                                    .regionId(dto.getRegion().getId())
-                                    .placeType(dto.getPlaceType())
-                                    .googleId(dto.getGoogleId())
-                                    .name(dto.getName())
-                                    .address(dto.getAddress())
-                                    .lon(dto.getLon())
-                                    .lat(dto.getLat())
-                                    .recommendWeatherType(dto.getWeatherType())
-                                    .recommendTripThemeType(dto.getTripThemeType())
-                                    .recommendSeasonType(dto.getSeasonType())
-                                    .priceType(dto.getPriceType())
-                                    .build());
-                        });
-            }
-        }
-
-        // lat/lon 없는 호텔 : google 첫 번째 결과 사용
-        for (XoteloSearchResponseDto hotel : xoteloHotels) {
-            if (hotel.getLatitude() != null && hotel.getLongitude() != null) continue;
-
-            List<GooglePlaceInfo> googleResults = googlePort.searchByText(hotel.getName());
-            if (googleResults.isEmpty()) continue;
-
-            GooglePlaceInfo finalMatched = googleResults.get(0);
-            return placeRepository.findByGoogleId(finalMatched.getPlaceId())
-                    .orElseGet(() -> {
-                        PlaceRequestDto dto = finalMatched.toPlaceDto(region);
-                        return placeRepository.save(Place.builder()
-                                .regionId(dto.getRegion().getId())
-                                .placeType(dto.getPlaceType())
-                                .googleId(dto.getGoogleId())
-                                .name(dto.getName())
-                                .address(dto.getAddress())
-                                .lon(dto.getLon())
-                                .lat(dto.getLat())
-                                .recommendWeatherType(dto.getWeatherType())
-                                .recommendTripThemeType(dto.getTripThemeType())
-                                .recommendSeasonType(dto.getSeasonType())
-                                .priceType(dto.getPriceType())
-                                .build());
-                    });
-        }
-
-        throw new CustomException(ErrorCode.NOT_FOUND);
     }
 
     // todo : 장소 시간 고려할 것

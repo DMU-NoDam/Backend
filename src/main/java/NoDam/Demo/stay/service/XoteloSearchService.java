@@ -1,5 +1,6 @@
 package NoDam.Demo.stay.service;
 
+import NoDam.Demo.adapter.google.GooglePort;
 import NoDam.Demo.common.excetion.CustomException;
 import NoDam.Demo.common.excetion.ErrorCode;
 import NoDam.Demo.place.domain.Coordinate;
@@ -26,8 +27,41 @@ public class XoteloSearchService {
 
     private final WebClient.Builder webClientBuilder;
     private final XoteloProperties xoteloProperties;
+    private final GooglePort googlePort;
 
-    public List<XoteloSearchResponseDto> searchStays(Region region) {
+    public GooglePlaceInfo recommendHotel(Region region) {
+        List<XoteloSearchResponseDto> xotelList = searchStays(region)
+                .stream()
+                .filter(e-> e != null && e.getName() != null)
+                .toList();
+
+        // lat lon 이 있는 호텔들 먼저
+        for (XoteloSearchResponseDto hotelInfo : xotelList) {
+            if(hotelInfo.getLatitude() == null || hotelInfo.getLatitude() == null)
+                continue;
+
+            List<GooglePlaceInfo> googleResults = googlePort.searchByText(hotelInfo.getName());
+            for(GooglePlaceInfo placeInfo : googleResults) {
+                if (Coordinate.isSameLocation(hotelInfo.getLatitude(), hotelInfo.getLongitude(), placeInfo.getLat(), placeInfo.getLon()))
+                    return placeInfo;
+            }
+        }
+
+        // lat lon이 없는 호텔들
+        for (XoteloSearchResponseDto hotelInfo : xotelList) {
+            if (hotelInfo.getLatitude() != null && hotelInfo.getLatitude() != null)
+                continue; // 위에서 시도함
+
+            List<GooglePlaceInfo> googleResults = googlePort.searchByText(hotelInfo.getName());
+            if (googleResults.isEmpty()) continue;
+
+            return googleResults.get(0);
+        }
+
+        throw new RuntimeException("not found hotel");
+    }
+
+    private List<XoteloSearchResponseDto> searchStays(Region region) {
         log.info("Stay search request for regionCode={}", region.getName());
 
         String apiKey = xoteloProperties.getRapidApiKey();
