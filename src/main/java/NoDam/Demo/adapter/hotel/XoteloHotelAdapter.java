@@ -1,35 +1,38 @@
-package NoDam.Demo.stay.service;
+package NoDam.Demo.adapter.hotel;
 
 import NoDam.Demo.adapter.google.GooglePort;
+import NoDam.Demo.adapter.google.dto.GooglePlaceInfo;
 import NoDam.Demo.common.excetion.CustomException;
 import NoDam.Demo.common.excetion.ErrorCode;
 import NoDam.Demo.place.domain.Coordinate;
-import NoDam.Demo.adapter.google.dto.GooglePlaceInfo;
 import NoDam.Demo.region.domain.Region;
 import NoDam.Demo.stay.config.XoteloProperties;
 import NoDam.Demo.stay.domain.XoteloRegionCode;
 import NoDam.Demo.stay.dto.XoteloSearchResponseDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
+// Xotelo 숙소 검색 + google 장소 매칭으로 호텔을 추천하는 adapter
 @Slf4j
-@Service
+@Component
 @RequiredArgsConstructor
-public class XoteloSearchService {
+public class XoteloHotelAdapter implements HotelPort {
 
     private final WebClient.Builder webClientBuilder;
     private final XoteloProperties xoteloProperties;
     private final GooglePort googlePort;
 
-    public GooglePlaceInfo recommendHotel(Region region) {
+    @Override
+    public Optional<String> recommendHotelGoogleId(Region region) {
         List<XoteloSearchResponseDto> xotelList = searchStays(region)
                 .stream()
                 .filter(e-> e != null && e.getName() != null)
@@ -37,28 +40,28 @@ public class XoteloSearchService {
 
         // lat lon 이 있는 호텔들 먼저
         for (XoteloSearchResponseDto hotelInfo : xotelList) {
-            if(hotelInfo.getLatitude() == null || hotelInfo.getLatitude() == null)
+            if(hotelInfo.getLatitude() == null || hotelInfo.getLongitude() == null)
                 continue;
 
             List<GooglePlaceInfo> googleResults = googlePort.searchByText(hotelInfo.getName());
             for(GooglePlaceInfo placeInfo : googleResults) {
                 if (Coordinate.isSameLocation(hotelInfo.getLatitude(), hotelInfo.getLongitude(), placeInfo.getLat(), placeInfo.getLon()))
-                    return placeInfo;
+                    return Optional.ofNullable(placeInfo.getPlaceId());
             }
         }
 
         // lat lon이 없는 호텔들
         for (XoteloSearchResponseDto hotelInfo : xotelList) {
-            if (hotelInfo.getLatitude() != null && hotelInfo.getLatitude() != null)
+            if (hotelInfo.getLatitude() != null && hotelInfo.getLongitude() != null)
                 continue; // 위에서 시도함
 
             List<GooglePlaceInfo> googleResults = googlePort.searchByText(hotelInfo.getName());
             if (googleResults.isEmpty()) continue;
 
-            return googleResults.get(0);
+            return Optional.ofNullable(googleResults.get(0).getPlaceId());
         }
 
-        throw new RuntimeException("not found hotel");
+        return Optional.empty();
     }
 
     private List<XoteloSearchResponseDto> searchStays(Region region) {
@@ -101,7 +104,7 @@ public class XoteloSearchService {
             log.error("Xotelo API Network Error: Status={}, Body={}", e.getStatusCode(), e.getResponseBodyAsString());
             throw new CustomException(ErrorCode.BAD_REQUEST);
         } catch (Exception e) {
-            log.error("Unknown error in XoteloSearchService", e);
+            log.error("Unknown error in XoteloHotelAdapter", e);
             throw new CustomException(ErrorCode.BAD_REQUEST);
         }
     }

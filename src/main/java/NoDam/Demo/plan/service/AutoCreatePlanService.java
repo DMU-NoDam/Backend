@@ -26,7 +26,7 @@ import NoDam.Demo.plan.dto.response.PlacePlanInfo;
 import NoDam.Demo.plan.dto.response.RouteInfo;
 import NoDam.Demo.region.domain.Region;
 import NoDam.Demo.region.service.RegionQueryService;
-import NoDam.Demo.stay.service.XoteloSearchService;
+import NoDam.Demo.adapter.hotel.HotelPort;
 import NoDam.Demo.trip.domain.Trip;
 import NoDam.Demo.trip.domain.TripRequest;
 import NoDam.Demo.trip.service.TripLockService;
@@ -57,7 +57,7 @@ public class AutoCreatePlanService {
     private final AssignService assignService;
     private final AirportSelectService airportSelectService;
     private final DayScheduleService dayScheduleService;
-    private final XoteloSearchService hotelService;
+    private final HotelPort hotelPort;
     private final GooglePort googlePort;
     private final PlaceQueryService placeQueryService;
     private final TransportPlanService transportPlanService;
@@ -176,9 +176,9 @@ public class AutoCreatePlanService {
             if (hotel.isEmpty()) {
                 // region당 1회 추천 (외부 api 중복 호출 방지)
                 Map<Region, String> hotelGoogleIdByRegion = new HashMap<>();
-                for (Region region : dateRegionMap.values())
-                    hotelGoogleIdByRegion.computeIfAbsent(region,
-                            id -> hotelService.recommendHotel(region).getPlaceId());
+                for (Region region : new HashSet<>(dateRegionMap.values()))
+                    hotelPort.recommendHotelGoogleId(region)
+                            .ifPresent(googleId -> hotelGoogleIdByRegion.put(region, googleId));
                 // google id -> place 일괄 변환
                 Map<String, Place> placeByGoogleId = getGooglePlaceListOrSave(new ArrayList<>(hotelGoogleIdByRegion.values()))
                         .stream().collect(Collectors.toMap(Place::getGoogleId, place -> place));

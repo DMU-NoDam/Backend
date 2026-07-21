@@ -4,7 +4,6 @@ import NoDam.Demo.common.SuccessResponse;
 import NoDam.Demo.stay.dto.XoteloRatesResponseDto;
 import NoDam.Demo.stay.dto.XoteloSearchResponseDto;
 import NoDam.Demo.stay.service.XoteloRatesService;
-import NoDam.Demo.stay.service.XoteloSearchService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +21,6 @@ import java.util.List;
 @Tag(name = "StayController")
 public class StayController {
 
-    private final XoteloSearchService xoteloSearchService;
     private final XoteloRatesService xoteloRatesService; // 추가 : /rates 호출용
 
 //    @GetMapping("/search")
