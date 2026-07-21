@@ -1,5 +1,5 @@
 .env
-
+insert_places.sql
 HELP.md
 .gradle
 build/
