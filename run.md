@@ -9,7 +9,12 @@
 ./gradlew clean build -x test
 
 # 2) 실행
-java -jar build/libs/Demo-0.0.1-SNAPSHOT.jar
+
+-- 처음 실행 (또는 db 값을 초기화할 때)
+java -jar build/libs/Demo-0.0.1-SNAPSHOT.jar --spring.jpa.hibernate.ddl-auto=create
+
+-- 두 번 째 실행
+java -jar build/libs/Demo-0.0.1-SNAPSHOT.jar --spring.jpa.hibernate.ddl-auto=update
 ```
 
 - 접속: `http://localhost:8080/back` (context-path `/back` 포함)
