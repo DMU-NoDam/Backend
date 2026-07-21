@@ -2,8 +2,9 @@ package NoDam.Demo.stay.service;
 
 import NoDam.Demo.common.excetion.CustomException;
 import NoDam.Demo.common.excetion.ErrorCode;
+import NoDam.Demo.place.domain.Coordinate;
+import NoDam.Demo.adapter.google.dto.GooglePlaceInfo;
 import NoDam.Demo.region.domain.Region;
-import NoDam.Demo.region.service.RegionQueryService;
 import NoDam.Demo.stay.config.XoteloProperties;
 import NoDam.Demo.stay.domain.XoteloRegionCode;
 import NoDam.Demo.stay.dto.XoteloSearchResponseDto;
