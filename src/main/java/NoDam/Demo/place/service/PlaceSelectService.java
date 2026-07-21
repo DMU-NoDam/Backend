@@ -26,6 +26,7 @@ import java.util.Optional;
 public class PlaceSelectService {
 
     private final PlaceRepository placeRepository;
+    private final GooglePort googlePort;
 
     public Place findById(Long placeId) {
         return placeRepository.findById(placeId)
@@ -36,32 +37,15 @@ public class PlaceSelectService {
         return placeRepository.findAllById(placeIds);
     }
 
-    public Optional<Place> findByGoogleId(String googleId) {
-        return placeRepository.findByGoogleId(googleId);
+    // todo : google port 사용해서 saveNewPlaces까지 책임 지도록
+    public Place findByGoogleId(String googleId) {
+        return placeRepository.findByGoogleId(googleId).get();
     }
 
+    // todo : google port 사용해서 saveNewPlaces까지 책임 지도록
     public List<Place> findAllByGoogleId(List<String> googleIds) {
-        List<Place> selectedPlaces = placeRepository.findAllByGoogleId(googleIds);
-        return ListUtil.sortByRequestOrder(googleIds, selectedPlaces, (p)->p.getGoogleId());
-    }
-
-    // todo : 한번의 query로 처리 고려할 것
-    public Map<PlaceType, List<RecommendPlaceResult>> recommendPlacesByType(
-            Region region, // not null
-            PriceType priceType, // can null
-            SeasonType recommendSeason, // can null
-            TripThemeType recommendTripTheme, // can null
-            WeatherType recommendWeatherType, // can null
-            List<Place> excludePlaces, // 제외할 place 목록
-            int count
-    ) {
-        Map<PlaceType, List<RecommendPlaceResult>> result = new HashMap<>();
-        for (PlaceType placeType : PlaceType.values()) {
-            result.put(placeType, recommendPlaces(
-                    placeType, region, priceType, recommendSeason,
-                    recommendTripTheme, recommendWeatherType, excludePlaces, count));
-        }
-        return result;
+        // 없는 값 save new 까지 처리 + sort by request
+        return placeRepository.findAllByGoogleId(googleIds);
     }
 
     // todo : 장소 시간 고려할 것
