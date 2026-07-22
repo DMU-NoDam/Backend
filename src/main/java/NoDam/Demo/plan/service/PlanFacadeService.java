@@ -70,9 +70,8 @@ public class PlanFacadeService {
 
         // DatePlan이 하나도 없으면(Trip 생성 직후) status는 null
         PlanStatus planStatus = PlanStatus.lowest(datePlans.stream().map(DatePlan::getPlanStatus).toList());
-        boolean allCompleted = planStatus != null && planStatus.isAfterOrEqual(PlanStatus.TRANSPORT_PLANNED);
 
-        return new PlanStatusResponse(planStatus, allCompleted, trip.getIsPlanning());
+        return new PlanStatusResponse(planStatus, trip.getIsPlanning());
     }
 
     public void deletePlacePlan(Long placePlanId, Long userId) {
@@ -141,7 +140,7 @@ public class PlanFacadeService {
         Map<Long, Place> placeMap = placeSelectService.findAllById(placeIds).stream()
                 .collect(Collectors.toMap(Place::getId, place -> place));
 
-        Map<TransportLeg, RouteInfo> results = new HashMap<>();
+        List<TransportPlan> created = new ArrayList<>();
         for (TransportLeg leg : legs) {
             RouteInfo routeInfo = routePort.computeRoutesFromPlace(
                     placeMap.get(leg.from().getPlaceId()),
@@ -150,10 +149,11 @@ public class PlanFacadeService {
             );
             if (routeInfo == null) continue;
 
-            results.put(leg, routeInfo);
+            created.add(transportPlanService.saveTransportLeg(leg, routeInfo));
         }
+        transportPlanService.completeTransportPlanning(targetDate);
 
-        return transportPlanService.saveTransportLegs(targetDate, results);
+        return created;
     }
 
 }

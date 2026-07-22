@@ -17,7 +17,6 @@ import java.util.List;
 public class PlanStatusResponse {
 
     private PlanStatus planStatus; // trip의 DatePlan 중 가장 뒤처진 상태 (DatePlan이 없으면 null)
-    private boolean allCompleted;
     private boolean isPlanning;
 
 }

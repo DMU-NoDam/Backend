@@ -151,7 +151,7 @@ public class AssignService {
             if (date.equals(checkoutDate)) continue; // 마지막 날: 호텔 없음
 
             Place hotel = userHotel
-                    .orElseGet(() -> recommendedHotelByRegion.get(dateRegionMap.get(date).getId()));
+                    .orElseGet(() -> recommendedHotelByRegion.get(dateRegionMap.get(date)));
             if (hotel != null) result.put(date, hotel);
         }
 

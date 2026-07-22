@@ -51,7 +51,7 @@ public class TripController {
                       },
                       "region": ["jp-tokyo"],
                       "selectedPlace": [],
-                      "departFlight": { "airport": "ICN", "time": "2025-01-01 10:00" },
+                      "departFlight": { "airport": "NRT", "time": "2025-01-01 18:00" },
                       "arriveFlight": { "airport": "NRT", "time": "2025-01-03 12:00" },
                       "hotel": null
                     }

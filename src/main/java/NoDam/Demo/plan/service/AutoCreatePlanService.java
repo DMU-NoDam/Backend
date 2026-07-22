@@ -85,11 +85,10 @@ public class AutoCreatePlanService {
             TripRequest updated = tripRequestService.updateConvertedPlaces(tripId, placeByGoogleId);
 
             // 4. 공항 place 존재 검증 (Place 도메인 관심사이므로 facade에서 처리)
-            List<Long> airportPlaceIds = new ArrayList<>();
-            if (updated.getDepartAirportPlaceId() != null) airportPlaceIds.add(updated.getDepartAirportPlaceId());
-            if (updated.getArriveAirportPlaceId() != null) airportPlaceIds.add(updated.getArriveAirportPlaceId());
-            if (placeSelectService.findAllById(airportPlaceIds).size() != airportPlaceIds.size())
-                throw new CustomException(ErrorCode.NOT_FOUND);
+            if (updated.getDepartAirportPlaceId() != null)
+                placeSelectService.findById(updated.getDepartAirportPlaceId());
+            if (updated.getArriveAirportPlaceId() != null)
+                placeSelectService.findById(updated.getArriveAirportPlaceId());
 
             logger.info("translateGooglePlaceToDbPlace end tripId={}", tripId);
             return CompletableFuture.completedFuture(updated);
@@ -329,7 +328,7 @@ public class AutoCreatePlanService {
         Map<Long, Place> placeMap = placeSelectService.findAllById(placeIds).stream()
                 .collect(Collectors.toMap(Place::getId, place -> place));
 
-        Map<TransportLeg, RouteInfo> results = new HashMap<>();
+        List<TransportPlan> created = new ArrayList<>();
         for (TransportLeg leg : legs) {
             RouteInfo routeInfo = routePort.computeRoutesFromPlace(
                     placeMap.get(leg.from().getPlaceId()),
@@ -338,10 +337,11 @@ public class AutoCreatePlanService {
             );
             if (routeInfo == null) continue;
 
-            results.put(leg, routeInfo);
+            created.add(transportPlanService.saveTransportLeg(leg, routeInfo));
         }
+        transportPlanService.completeTransportPlanning(targetDate);
 
-        return transportPlanService.saveTransportLegs(targetDate, results);
+        return created;
     }
 
 }

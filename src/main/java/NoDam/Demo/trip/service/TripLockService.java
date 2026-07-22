@@ -37,6 +37,7 @@ public class TripLockService {
             trip.updatePlanning(false);
             return result;
         } catch (Exception e) {
+            e.printStackTrace();
             // 내 작업 중 실패한 경우에만 해제한다
             transactionTemplate.execute(s -> {
                 tripStatusRepository.tryUpdateTripStatusForce(trip.getId(), false);
