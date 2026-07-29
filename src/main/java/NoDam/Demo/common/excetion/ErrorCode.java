@@ -10,6 +10,7 @@ public enum ErrorCode {
     NOT_AUTHOR(HttpStatus.BAD_REQUEST, "작성자가 아닙니다"),
     CONFLICT(HttpStatus.CONFLICT, "conflict"),
     BAD_REQUEST(HttpStatus.BAD_REQUEST, "bad request"),
+    ALREADY_JOINED_TRIP(HttpStatus.CONFLICT, "이미 참여한 여행입니다"),
 
     ALREADY_PROCESSING(HttpStatus.ACCEPTED, "already processing"),
 
