@@ -155,4 +155,14 @@ public class TripController {
         return ResponseEntity.ok().body(new SuccessResponse<>("success", TripInfoDto.from(trip, false)));
     }
 
+    @DeleteMapping("/api/{tripId}")
+    @Operation(summary = "여행 삭제 (OWNER 전용, 연관 일정/멤버/초대 데이터 함께 정리)")
+    public ResponseEntity<SuccessResponse<Void>> deleteTrip(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long tripId
+    ) {
+        tripFacadeService.deleteTrip(user.getId(), tripId);
+        return ResponseEntity.ok().body(new SuccessResponse<>("success", null));
+    }
+
 }
