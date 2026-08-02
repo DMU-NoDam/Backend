@@ -47,17 +47,4 @@ public class PlaceInfo {
                 .build();
     }
 
-    public Place toPlace() {
-        return Place.builder()
-                .regionId(regionId)
-                .placeType(placeType)
-                .googleId(googleId)
-                .name(name)
-                .address(address)
-                .lon(lon)
-                .lat(lat)
-                .priceType(priceType)
-                .build();
-    }
-
 }

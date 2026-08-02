@@ -20,6 +20,7 @@ public class DbHotelAdapter implements HotelPort {
     private final PlaceRepository placeRepository;
 
     @Override
+    // todo : hotel place가 db에 적기 때문에 단순 find 함수 사용, 추후 db에 hotel 정보가 많이 쌓이면 placeRepository.findPlacesByFilters()를 사용할 것
     public Optional<String> recommendHotelGoogleId(Region region) {
         return placeRepository
                 .findByPlaceTypeAndRegionId(PlaceType.HOTEL, region.getId(), PageRequest.of(0, 1))

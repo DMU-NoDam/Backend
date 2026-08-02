@@ -78,12 +78,12 @@ public class PlaceSelectService {
                 ? List.of(-1L)
                 : excludePlaces.stream().map(Place::getId).toList();
         List<Place> places = placeRepository.findPlacesByFilters(
-                placeType.name(),
+                placeType,
                 region.getId(),
-                priceType            != null ? priceType.name()            : null,
-                recommendSeason      != null ? recommendSeason.name()      : null,
-                recommendTripTheme   != null ? recommendTripTheme.name()   : null,
-                recommendWeatherType != null ? recommendWeatherType.name() : null,
+                priceType,
+                recommendSeason,
+                recommendTripTheme,
+                recommendWeatherType,
                 excludeIds,
                 PageRequest.of(0, count)
         );
