@@ -2,7 +2,6 @@ package NoDam.Demo.plan.service;
 
 import NoDam.Demo.common.excetion.CustomException;
 import NoDam.Demo.common.excetion.ErrorCode;
-import NoDam.Demo.common.type.PlaceType;
 import NoDam.Demo.common.type.TripThemeType;
 import NoDam.Demo.plan.domain.PlanStatus;
 import NoDam.Demo.place.domain.Place;
@@ -16,10 +15,7 @@ import NoDam.Demo.trip.domain.Trip;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.function.Function;
 
@@ -65,11 +61,19 @@ public class PlanSelectService {
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
     }
 
+    // DatePlan이 하나도 없는 trip도 빈 list를 value로 가진다 (key 누락 방지)
     public Map<Trip, List<DatePlan>> findAllByTrip(List<Trip> trips) {
         List<Long> tripIds = trips.stream().map(Trip::getId).toList();
         Map<Long, Trip> tripById = trips.stream().collect(Collectors.toMap(Trip::getId, Function.identity()));
-        return datePlanRepository.findAllByTripIdIn(tripIds).stream()
-                .collect(Collectors.groupingBy(dp -> tripById.get(dp.getTripId())));
+
+        Map<Trip, List<DatePlan>> datePlansByTrip = new HashMap<>();
+        for (Trip trip : trips)
+            datePlansByTrip.put(trip, new ArrayList<>());
+
+        for (DatePlan datePlan : datePlanRepository.findAllByTripIdIn(tripIds))
+            datePlansByTrip.get(tripById.get(datePlan.getTripId())).add(datePlan);
+
+        return datePlansByTrip;
     }
 
     // todo : domain 로직이 db담당인 query service에 들어왔음, ddd나 domain service로 옮길 것!
@@ -79,9 +83,15 @@ public class PlanSelectService {
 
         for(Trip eachTrip : datePlans.keySet()) {
             List<DatePlan> datePlan = datePlans.get(eachTrip);
-            boolean status = !datePlan // 한개라도 ai planned가 아닌게 있다면 false
-                    .stream()
-                    .anyMatch(p->!p.getPlanStatus().isAfterOrEqual(PlanStatus.AI_PLANNED));
+
+            boolean status = !datePlan.isEmpty(); // DatePlan이 없으면 아직 일정 생성 전이므로 false
+            for (DatePlan each : datePlan) { // 한개라도 ai planned가 아닌게 있다면 false
+                if (!each.getPlanStatus().isAfterOrEqual(PlanStatus.AI_PLANNED)) {
+                    status = false;
+                    break;
+                }
+            }
+
             tripStatus.put(eachTrip, status);
         }
 
@@ -90,9 +100,14 @@ public class PlanSelectService {
 
     public Boolean getTripStatus(Trip trip) {
         List<DatePlan> datePlans = findAllDatePlan(trip);
-        boolean status = !datePlans // 한개라도 ai planned가 아닌게 있다면 false
-                .stream()
-                .anyMatch(p->!p.getPlanStatus().isAfterOrEqual(PlanStatus.AI_PLANNED));
+
+        boolean status = !datePlans.isEmpty(); // DatePlan이 없으면 아직 일정 생성 전이므로 false
+        for (DatePlan each : datePlans) { // 한개라도 ai planned가 아닌게 있다면 false
+            if (!each.getPlanStatus().isAfterOrEqual(PlanStatus.AI_PLANNED)) {
+                status = false;
+                break;
+            }
+        }
 
         return status;
     }
