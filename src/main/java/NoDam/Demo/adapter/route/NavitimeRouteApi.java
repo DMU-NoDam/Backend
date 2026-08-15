@@ -64,6 +64,8 @@ public class NavitimeRouteApi implements RoutePort{
 
     @Override
     public RouteInfo computeRoutesFromPlace(Place start, Place end, LocalTime startTime) {
+        if (start == null || end == null || startTime == null) return null; // 계산할 구간이 없음
+
         RouteInfo routes = callNavitime(start.getLat(), start.getLon(), end.getLat(), end.getLon(), startTime);
         routes.setStartAndEndName(start.getName(), end.getName());
         translateRouteNames(routes, "ja", "ko");
