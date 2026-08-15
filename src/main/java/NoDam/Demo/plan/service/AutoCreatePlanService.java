@@ -19,7 +19,7 @@ import NoDam.Demo.plan.domain.DatePlan;
 import NoDam.Demo.plan.domain.PlacePlan;
 import NoDam.Demo.plan.domain.PlanStatus;
 import NoDam.Demo.plan.domain.TransportPlan;
-import NoDam.Demo.plan.dto.TransportLeg;
+import NoDam.Demo.plan.domain.TransportLeg;
 import NoDam.Demo.plan.dto.request.DatePlanRequestDto;
 import NoDam.Demo.plan.dto.request.PlacePlanRequestDto;
 import NoDam.Demo.plan.dto.response.PlacePlanInfo;
@@ -319,7 +319,7 @@ public class AutoCreatePlanService {
     }
 
     private List<TransportPlan> generateTransportPlansByLeg(DatePlan targetDate) {
-        List<TransportLeg> legs = transportPlanService.findEmptyTransportLegs(targetDate);
+        List<TransportLeg> legs = transportPlanService.findEmptyTransportLegs(targetDate.getId());
         List<Long> placeIds = legs.stream()
                 .flatMap(leg -> List.of(leg.from().getPlaceId(), leg.to().getPlaceId()).stream())
                 .distinct()

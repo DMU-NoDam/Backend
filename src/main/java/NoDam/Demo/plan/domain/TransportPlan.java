@@ -23,6 +23,10 @@ import org.hibernate.annotations.Where;
 @Getter
 public class TransportPlan extends Plan {
 
+    // 반정규화 : from/to가 끊겨도 어느 날짜의 이동이었는지 남는다 (date plan 단위 조회용)
+    @Column(name = "date_plan_id", nullable = false)
+    private Long datePlanId;
+
     @OneToOne
     @JoinColumn(name = "from_place_plan_id", nullable = true)
     private PlacePlan fromPlacePlan;
@@ -44,6 +48,7 @@ public class TransportPlan extends Plan {
     @Builder
     public TransportPlan(PlacePlan fromPlacePlan, PlacePlan toPlacePlan, RouteInfo routeInfo) {
         super(fromPlacePlan.getEndTime(), calcEndTime(fromPlacePlan.getEndTime(), routeInfo));
+        this.datePlanId = fromPlacePlan.getDatePlan().getId();
         this.fromPlacePlan = fromPlacePlan;
         this.toPlacePlan = toPlacePlan;
         this.routeInfo = routeInfo;
@@ -53,8 +58,15 @@ public class TransportPlan extends Plan {
         }
     }
 
-    public void detachFromPlace() { this.fromPlacePlan = null; }
-    public void detachToPlace()   { this.toPlacePlan = null;   }
+    // 한쪽만 끊어도 쓸 수 없는 이동이므로 양 끝을 함께 끊는다
+    public void detach() {
+        this.fromPlacePlan = null;
+        this.toPlacePlan = null;
+    }
+
+    public boolean getDetached() {
+        return fromPlacePlan == null || toPlacePlan == null;
+    }
 
     // 소요 시간 더한 뒤 1시간 단위 올림
     private static LocalTime calcEndTime(LocalTime start, RouteInfo routeInfo) {

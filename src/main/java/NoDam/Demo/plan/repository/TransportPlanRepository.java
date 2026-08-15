@@ -9,6 +9,10 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface TransportPlanRepository extends JpaRepository<TransportPlan, Long> {
+
+    // 반정규화한 date_plan_id 기준. from/to가 끊긴 것도 함께 조회된다
+    List<TransportPlan> findByDatePlanId(Long datePlanId);
+
     List<TransportPlan> findByFromPlacePlan_DatePlanId(Long datePlanId);
 
     @Query("SELECT t FROM TransportPlan t JOIN FETCH t.fromPlacePlan fp JOIN FETCH fp.datePlan WHERE t.id = :id")

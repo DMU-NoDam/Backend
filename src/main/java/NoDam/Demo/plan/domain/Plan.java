@@ -20,10 +20,10 @@ public abstract class Plan extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private LocalTime startTime;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private LocalTime endTime;
 
     protected Plan(LocalTime startTime, LocalTime endTime) {
