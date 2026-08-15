@@ -5,9 +5,11 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @NoArgsConstructor
-public class ChangePlacePlanRequestDto {
+public class MovePlacePlanRequestDto {
 
     private Long placePlanId;
-    private Long placeId;
+
+    private Long previousPlacePlanId; // 맨 앞이면 null
+    private Long nextPlacePlanId; // 맨 뒤면 null
 
 }

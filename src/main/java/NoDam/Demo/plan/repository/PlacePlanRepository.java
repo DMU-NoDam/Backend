@@ -35,6 +35,10 @@ public interface PlacePlanRepository extends JpaRepository<PlacePlan, Long> {
            "AND (dp.hotelPlaceId IS NULL OR pp.placeId <> dp.hotelPlaceId)")
     List<Place> findPlacesByTripIdAndTheme(@Param("tripId") Long tripId, @Param("theme") TripThemeType theme);
 
+    // PlacePlan에 배정된 Place 단건 조회 (cross-module: place 참조)
+    @Query("SELECT p FROM Place p WHERE p.id = :placeId")
+    Optional<Place> findPlaceById(@Param("placeId") Long placeId);
+
     @Modifying
     @Query("update PlacePlan pp set pp.isDeleted = true where pp.id = :id")
     void softDelete(@Param("id") Long PlacePlanId);

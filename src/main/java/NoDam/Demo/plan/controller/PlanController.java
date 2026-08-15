@@ -3,7 +3,12 @@ package NoDam.Demo.plan.controller;
 import NoDam.Demo.common.SuccessResponse;
 import NoDam.Demo.common.type.TripThemeType;
 import NoDam.Demo.place.dto.PlaceSwitchRequestDto;
+import NoDam.Demo.plan.dto.request.AddPlacePlanRequestDto;
 import NoDam.Demo.plan.dto.request.ChangePlacePlanRequestDto;
+import NoDam.Demo.plan.dto.request.FixPlacePlanRequestDto;
+import NoDam.Demo.plan.dto.request.MovePlacePlanRequestDto;
+import NoDam.Demo.plan.dto.request.RemovePlacePlanRequestDto;
+import NoDam.Demo.plan.dto.response.DatePlanInfo;
 import NoDam.Demo.plan.dto.response.PlacePlanInfo;
 import NoDam.Demo.plan.dto.response.PlanStatusResponse;
 import NoDam.Demo.plan.dto.response.TransportPlanInfo;
@@ -15,9 +20,11 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -39,13 +46,29 @@ public class PlanController {
         return ResponseEntity.ok(new SuccessResponse<PlanStatusResponse>("success", response));
     }
 
+    // todo : /api/{tripId}의 반환값이 변경 되면서 front에서 처리 가능 여부를 확인해야함 (불가능 하다면 back 처리 필요)
+//    @GetMapping("/api/{tripId}/summary")
+//    public ResponseEntity<SuccessResponse<Map<TripThemeType, >>> selectPlansSummary() {
+//
+//    }
+
+    // 확정 테마의 DatePlanInfo 목록. 테마 미확정이면 빈 목록
     @GetMapping("/api/{tripId}")
-    public ResponseEntity<SuccessResponse<Map<TripThemeType, List<PlacePlanInfo>>>> selectPlans(
+    public ResponseEntity<SuccessResponse<List<DatePlanInfo>>> selectPlans(
             @PathVariable Long tripId,
             @AuthenticationPrincipal User user
     ) {
-        Map<TripThemeType, List<PlacePlanInfo>> response = planFacadeService.getPlans(tripId, user.getId());
-        return ResponseEntity.ok(new SuccessResponse<>("success", response));
+        List<DatePlanInfo> response = planFacadeService.getPlans(tripId, user.getId());
+        return ResponseEntity.ok(new SuccessResponse<List<DatePlanInfo>>("success", response));
+    }
+
+    // polling용. 최신 version만 읽는다. 기록이 없으면 null
+    @GetMapping("/api/{datePlanId}/version")
+    public ResponseEntity<SuccessResponse<Long>> getLatestVersion(
+            @PathVariable Long datePlanId
+    ) {
+        Long response = planFacadeService.getLatestVersion(datePlanId);
+        return ResponseEntity.ok(new SuccessResponse<Long>("success", response));
     }
 
     @GetMapping("/api/transport-plan/{transportPlanId}")
@@ -56,31 +79,64 @@ public class PlanController {
         return ResponseEntity.ok(new SuccessResponse<TransportPlanInfo>("success", response));
     }
 
-    @DeleteMapping("/api/place-plan/{placePlanId}")
-    public ResponseEntity<SuccessResponse<Void>> deletePlacePlan(
-            @PathVariable Long placePlanId,
+    @PostMapping("/api/{datePlanId}/add-place")
+    public ResponseEntity<SuccessResponse<DatePlanInfo>> addPlacePlan(
+            @PathVariable Long datePlanId,
+            @RequestParam Long version,
+            @RequestBody AddPlacePlanRequestDto dto,
             @AuthenticationPrincipal User user
     ) {
-        planFacadeService.deletePlacePlan(placePlanId, user.getId());
-        return ResponseEntity.ok(new SuccessResponse<Void>("success", null));
+        DatePlanInfo response = planFacadeService.addPlacePlan(datePlanId, dto.getPlaceId(),
+                dto.getPreviousPlacePlanId(), dto.getNextPlacePlanId(), version, user.getId());
+        return ResponseEntity.ok(new SuccessResponse<DatePlanInfo>("success", response));
     }
 
-    @PutMapping("/api/place-plan")
-    public ResponseEntity<SuccessResponse<PlacePlanInfo>> changePlacePlan(
+    @PostMapping("/api/{datePlanId}/change-place")
+    public ResponseEntity<SuccessResponse<DatePlanInfo>> changePlacePlan(
+            @PathVariable Long datePlanId,
+            @RequestParam Long version,
             @RequestBody ChangePlacePlanRequestDto dto,
             @AuthenticationPrincipal User user
     ) {
-        PlacePlanInfo result = planFacadeService.changePlacePlan(dto.getOldPlacePlanId(), dto.getNewPlaceId(), user.getId());
-        return ResponseEntity.ok(new SuccessResponse<PlacePlanInfo>("success", result));
+        DatePlanInfo response = planFacadeService.changePlacePlan(
+                datePlanId, dto.getPlacePlanId(), dto.getPlaceId(), version, user.getId());
+        return ResponseEntity.ok(new SuccessResponse<DatePlanInfo>("success", response));
     }
 
-    @PutMapping("/api/place-plan/switch")
-    public ResponseEntity<SuccessResponse<PlacePlanInfo>> switchPlacePlan(
-            @RequestBody PlaceSwitchRequestDto dto,
+    @PostMapping("/api/{datePlanId}/move-place")
+    public ResponseEntity<SuccessResponse<DatePlanInfo>> movePlacePlan(
+            @PathVariable Long datePlanId,
+            @RequestParam Long version,
+            @RequestBody MovePlacePlanRequestDto dto,
             @AuthenticationPrincipal User user
     ) {
-        planFacadeService.switchPlacePlan(dto.getPlacePlan1(), dto.getPlacePlan2(), user.getId());
-        return ResponseEntity.ok(new SuccessResponse<PlacePlanInfo>("success", null));
+        DatePlanInfo response = planFacadeService.movePlacePlan(datePlanId, dto.getPlacePlanId(),
+                dto.getPreviousPlacePlanId(), dto.getNextPlacePlanId(), version, user.getId());
+        return ResponseEntity.ok(new SuccessResponse<DatePlanInfo>("success", response));
+    }
+
+    @PostMapping("/api/{datePlanId}/remove-place")
+    public ResponseEntity<SuccessResponse<DatePlanInfo>> removePlacePlan(
+            @PathVariable Long datePlanId,
+            @RequestParam Long version,
+            @RequestBody RemovePlacePlanRequestDto dto,
+            @AuthenticationPrincipal User user
+    ) {
+        DatePlanInfo response = planFacadeService.deletePlacePlan(
+                datePlanId, dto.getPlacePlanId(), version, user.getId());
+        return ResponseEntity.ok(new SuccessResponse<DatePlanInfo>("success", response));
+    }
+
+    @PostMapping("/api/{datePlanId}/fix-place")
+    public ResponseEntity<SuccessResponse<DatePlanInfo>> fixPlacePlan(
+            @PathVariable Long datePlanId,
+            @RequestParam Long version,
+            @RequestBody FixPlacePlanRequestDto dto,
+            @AuthenticationPrincipal User user
+    ) {
+        DatePlanInfo response = planFacadeService.fixPlacePlan(
+                datePlanId, dto.getPlacePlanId(), dto.getIsFixed(), version, user.getId());
+        return ResponseEntity.ok(new SuccessResponse<DatePlanInfo>("success", response));
     }
 
 }

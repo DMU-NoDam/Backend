@@ -8,12 +8,12 @@ import NoDam.Demo.place.domain.Place;
 import NoDam.Demo.plan.domain.DatePlan;
 import NoDam.Demo.plan.domain.PlacePlan;
 import NoDam.Demo.plan.domain.TransportPlan;
-import NoDam.Demo.plan.repository.DatePlanRepository;
-import NoDam.Demo.plan.repository.PlacePlanRepository;
-import NoDam.Demo.plan.repository.TransportPlanRepository;
+import NoDam.Demo.plan.dto.response.DatePlanInfo;
+import NoDam.Demo.plan.repository.*;
 import NoDam.Demo.trip.domain.Trip;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -26,6 +26,32 @@ public class PlanSelectService {
     private final DatePlanRepository datePlanRepository;
     private final PlacePlanRepository placePlanRepository;
     private final TransportPlanRepository transportPlanRepository;
+
+    private final DatePlanDBPort datePlanDBPort;
+    private final DatePlanDtoPort datePlanDtoPort;
+
+    public DatePlanInfo findLatestDatePlanInfo(Long datePlanId) {
+        DatePlan datePlan = datePlanDBPort.latestDatePlan(datePlanId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
+
+        return datePlanDtoPort.selectDatePlanInfo(datePlan);
+    }
+
+    // 확정 테마의 DatePlanInfo 목록
+    @Transactional
+    public List<DatePlanInfo> findDatePlanInfos(Trip trip, TripThemeType tripThemeType) {
+        List<DatePlan> datePlans = datePlanDBPort.datePlans(trip.getId());
+        List<DatePlanInfo> datePlanInfos = new ArrayList<>();
+
+        for(DatePlan each : datePlans) {
+            if(!each.getTripThemeType().equals(tripThemeType))
+                continue;
+
+            datePlanInfos.add(datePlanDtoPort.selectDatePlanInfo(each));
+        }
+
+        return datePlanInfos;
+    }
 
     public List<DatePlan> findAllDatePlan(Trip trip) {
         return datePlanRepository.findAllDatePlanWithPlans(trip.getId());
