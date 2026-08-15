@@ -18,6 +18,7 @@ import java.time.LocalTime;
 public class PlacePlanInfo {
 
     private Long id;
+    private Long orderIndex;
     private LocalDate date;
     private LocalTime startTime;
     private LocalTime endTime;
@@ -29,6 +30,7 @@ public class PlacePlanInfo {
     public static PlacePlanInfo of(PlacePlan placePlan, Place place) {
         return PlacePlanInfo.builder()
                 .id(placePlan.getId())
+                .orderIndex(placePlan.getOrderIndex())
                 .date(placePlan.getDatePlan().getDate())
                 .startTime(placePlan.getStartTime())
                 .endTime(placePlan.getEndTime())

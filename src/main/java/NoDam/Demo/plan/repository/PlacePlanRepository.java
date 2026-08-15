@@ -17,6 +17,8 @@ public interface PlacePlanRepository extends JpaRepository<PlacePlan, Long> {
 
     List<PlacePlan> findByDatePlanId(Long datePlanId);
 
+    List<PlacePlan> findByDatePlanIdOrderByOrderIndexAsc(Long datePlanId);
+
     @Query("SELECT pp FROM PlacePlan pp LEFT JOIN FETCH pp.fromTransport LEFT JOIN FETCH pp.toTransport WHERE pp.datePlan.id = :datePlanId")
     List<PlacePlan> findByDatePlanIdWithTransport(@Param("datePlanId") Long datePlanId);
 
