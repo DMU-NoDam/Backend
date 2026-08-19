@@ -73,7 +73,7 @@ public class TransportAsyncSingleThread {
         DatePlan datePlan = datePlanDBPort.latestDatePlan(datePlanId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
         List<TransportLeg> legList = datePlan.getDetachedTransportLegs();
-        if (legList.isEmpty()) return true;
+        if (legList.isEmpty()) return false;
 
         TransportLeg target = legList.getFirst();
 

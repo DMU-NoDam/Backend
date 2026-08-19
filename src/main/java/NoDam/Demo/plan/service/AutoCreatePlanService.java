@@ -24,6 +24,7 @@ import NoDam.Demo.plan.dto.request.DatePlanRequestDto;
 import NoDam.Demo.plan.dto.request.PlacePlanRequestDto;
 import NoDam.Demo.plan.dto.response.PlacePlanInfo;
 import NoDam.Demo.plan.dto.response.RouteInfo;
+import NoDam.Demo.plan.repository.DatePlanDBPort;
 import NoDam.Demo.region.domain.Region;
 import NoDam.Demo.region.service.RegionQueryService;
 import NoDam.Demo.adapter.hotel.HotelPort;
@@ -50,7 +51,6 @@ import java.util.stream.IntStream;
 public class AutoCreatePlanService {
 
     private final PlanCreateService planCreateService;
-    private final PlanSelectService planSelectService;
     private final PlaceSelectService placeSelectService;
     private final RegionQueryService regionQueryService;
     private final RoutePort routePort;
@@ -60,10 +60,10 @@ public class AutoCreatePlanService {
     private final HotelPort hotelPort;
     private final GooglePort googlePort;
     private final PlaceQueryService placeQueryService;
-    private final TransportPlanService transportPlanService;
     private final TripSelectService tripSelectService;
     private final TripRequestService tripRequestService;
     private final TripLockService tripLockService;
+    private final DatePlanDBPort datePlanDBPort;
 
     private final Logger logger = LoggerFactory.getLogger(AutoCreatePlanService.class);
 
@@ -100,7 +100,7 @@ public class AutoCreatePlanService {
     public CompletableFuture<List<DatePlan>> generateAllDatePlans(Long tripId, Long userId) {
         Trip trip = tripSelectService.findById(tripId, userId);
 
-        List<DatePlan> existing = planSelectService.findAllDatePlan(trip);
+        List<DatePlan> existing = datePlanDBPort.datePlans(tripId);
         if (existing != null && !existing.isEmpty())
             return CompletableFuture.completedFuture(existing); // 멱등성 처리
 
@@ -143,7 +143,7 @@ public class AutoCreatePlanService {
             Optional<AirportSchedule> departFlight,
             Optional<AirportSchedule> arriveFlight
     ) {
-        List<DatePlan> tripDates = planSelectService.findAllDatePlan(trip);
+        List<DatePlan> tripDates = datePlanDBPort.datePlans(trip.getId());
 
         if (tripDates != null && !tripDates.isEmpty())
             return tripDates; // 멱등성 처리
@@ -245,45 +245,52 @@ public class AutoCreatePlanService {
     }
 
     @Async
-    public CompletableFuture<List<DatePlan>> autoGenerateAllPlans(Long tripId, Long userId) {
+    public CompletableFuture<Void> autoGenerateAllPlans(Long tripId, Long userId) {
         Trip trip = tripSelectService.findById(tripId, userId);
-        return tripLockService.runWithLock(trip, () -> {
-            List<DatePlan> createdDatePlans = new ArrayList<>();
 
-            for (DatePlan datePlan : planSelectService.findAllDatePlan(trip)) {
+        return tripLockService.runWithLock(trip, () -> {
+            List<DatePlan> datePlans = datePlanDBPort.datePlans(tripId);
+            List<Place> excludePlaces = new ArrayList<>();
+
+            // 1. 공항, 호텔 생성
+            for (DatePlan datePlan : datePlans) {
                 PlanStatus status = datePlan.getPlanStatus();
 
-                // 1. 공항, 호텔 생성
                 if (status.isBefore(PlanStatus.FIXED_PLANNED)) {
                     planCreateService.createFixedPlans(trip, datePlan);
                 }
 
-                // 2. 후보 장소 조회 (HOTEL, AIRPORT 제외)
+                List<Place> placedPlaces = placeSelectService.findAllById(datePlan.getPlacePlans().stream().map(PlacePlan::getPlaceId).toList());
+                excludePlaces.addAll(placedPlaces);
+            }
+
+            // 3. ai 일정 생성
+            for (DatePlan datePlan : datePlans) {
+                PlanStatus status = datePlan.getPlanStatus();
+
+                // 후보 장소 조회 (HOTEL, AIRPORT 제외)
                 if (status.isBefore(PlanStatus.AI_PLANNED)) {
                     List<Place> necessaryPlaces = placeSelectService.findAllById(datePlan.getNecessaryPlaces());
                     Region region = regionQueryService.findById(datePlan.getRegionId());
-                    List<Place> excludePlaces = planSelectService.findPlacedPlaces(trip, datePlan.getTripThemeType());
+
+                    // 후보 조회
                     Map<PlaceType, List<RecommendPlaceResult>> candidates = placeSelectService.recommendPlacesByType(
                             region, trip.getPriceType(), null, datePlan.getTripThemeType(), null, excludePlaces, 5
                     );
 
-                    List<PlacePlan> placedPlacePlans = planSelectService.findPlacePlansByDatePlan(datePlan);
-                    Map<Long, Place> placeById = placeSelectService.findAllById(ListUtil.map(placedPlacePlans, PlacePlan::getPlaceId))
+                    // AI 일정 생성
+                    List<PlacePlan> fixedPlacePlans = datePlan.getPlacePlans();
+                    Map<Long, Place> placeMap = placeSelectService.findAllById(fixedPlacePlans.stream().map(PlacePlan::getPlaceId).toList())
                             .stream()
                             .collect(Collectors.toMap(Place::getId, Function.identity()));
-                    Map<PlacePlan, Place> placeMap = placedPlacePlans.stream()
-                            .collect(Collectors.toMap(Function.identity(), placePlan -> placeById.get(placePlan.getPlaceId())));
-
-                    List<PlacePlanInfo> fixedPlans = placedPlacePlans.stream()
-                            .map(placePlan -> PlacePlanInfo.of(placePlan, placeMap.get(placePlan)))
+                    List<PlacePlanInfo> fixedPlans = fixedPlacePlans.stream()
+                            .map(placePlan -> PlacePlanInfo.of(placePlan, placeMap.get(placePlan.getPlaceId()), null))
                             .toList();
-
-                    // 3. AI 일정 생성
                     List<PlacePlanRequestDto> generatedPlans = dayScheduleService.buildSchedule(
                             trip.getScheduleType(), datePlan.getTripThemeType(),
                             necessaryPlaces, fixedPlans, candidates);
 
-                    // validate ai response (ai가 존재하지 않는 place id값을 반환했는지 확인
+                    // validate ai response (ai가 존재하지 않는 place id값을 반환했는지 확인)
                     List<Long> placeIds = generatedPlans.stream().map(PlacePlanRequestDto::getPlaceId).toList();
                     List<Place> places = ListUtil.sortByRequestOrder(
                             generatedPlans, PlacePlanRequestDto::getPlaceId,
@@ -293,55 +300,47 @@ public class AutoCreatePlanService {
                         throw new CustomException(ErrorCode.API_FAIL);
                     }
 
-                    createdDatePlans.add(planCreateService.createPlacePlans(datePlan, generatedPlans));
+                    planCreateService.createPlacePlans(datePlan, generatedPlans);
                 }
             }
 
             logger.info("autoGenerateAllPlans end tripId={}", trip.getId());
-            return CompletableFuture.completedFuture(createdDatePlans);
+            return CompletableFuture.completedFuture(null);
         });
     }
 
     @Async
-    public CompletableFuture<List<TransportPlan>> autoGenerateAllThemeTransportPlans(Long tripId, Long userId) {
+    public CompletableFuture<Void> autoGenerateAllThemeTransportPlans(Long tripId, Long userId) {
         Trip trip = tripSelectService.findById(tripId, userId);
         return tripLockService.runWithLock(trip, () -> {
-            List<TransportPlan> allCreated = new ArrayList<>();
 
-            for (DatePlan datePlan : planSelectService.findAllDatePlan(trip)) {
+            for (DatePlan datePlan : datePlanDBPort.datePlans(tripId)) {
                 if (datePlan.getPlanStatus().isAfterOrEqual(PlanStatus.TRANSPORT_PLANNED)) continue;
-                allCreated.addAll(generateTransportPlansByLeg(datePlan));
+                generateTransportPlansByLeg(datePlan);
             }
 
             logger.info("autoGenerateAllThemeTransportPlans end tripId={}", trip.getId());
-            return CompletableFuture.completedFuture(allCreated);
+            return CompletableFuture.completedFuture(null);
         });
     }
 
-    private List<TransportPlan> generateTransportPlansByLeg(DatePlan targetDate) {
-        List<TransportLeg> legs = transportPlanService.findEmptyTransportLegs(targetDate.getId());
-        List<Long> placeIds = legs.stream()
-                .flatMap(leg -> List.of(leg.from().getPlaceId(), leg.to().getPlaceId()).stream())
-                .distinct()
-                .toList();
+    // todo : transport async single thread 랑 코드 비슷함
+    private void generateTransportPlansByLeg(DatePlan datePlan) {
+        List<TransportLeg> legList = datePlan.getDetachedTransportLegs();
 
-        Map<Long, Place> placeMap = placeSelectService.findAllById(placeIds).stream()
-                .collect(Collectors.toMap(Place::getId, place -> place));
+        for (TransportLeg leg : legList) {
+            Place from = placeSelectService.findById(leg.from().getPlaceId());
+            Place to = placeSelectService.findById(leg.to().getPlaceId());
 
-        List<TransportPlan> created = new ArrayList<>();
-        for (TransportLeg leg : legs) {
-            RouteInfo routeInfo = routePort.computeRoutesFromPlace(
-                    placeMap.get(leg.from().getPlaceId()),
-                    placeMap.get(leg.to().getPlaceId()),
-                    leg.from().getEndTime()
-            );
-            if (routeInfo == null) continue;
+            RouteInfo routeInfo = routePort.computeRoutesFromPlace(from, to, leg.from().getEndTime());
+            // route info null이어도 일단 add 처리 --> 건너 뛰기 기능이 없음
 
-            created.add(transportPlanService.saveTransportLeg(leg, routeInfo));
+            // 저장 가능한지 여부는 domain 내부 판단
+            datePlan.addTransportPlan(leg, routeInfo);
         }
-        transportPlanService.completeTransportPlanning(targetDate);
 
-        return created;
+        datePlan.updatePlanStatus(PlanStatus.TRANSPORT_PLANNED); // todo : 남은 transport plan이 있다면 fall back 처리 필요
+        datePlanDBPort.saveDatePlan(datePlan);
     }
 
 }

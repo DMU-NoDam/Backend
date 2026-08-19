@@ -17,6 +17,8 @@ import NoDam.Demo.plan.dto.response.PlacePlanInfo;
 import NoDam.Demo.plan.dto.response.PlanStatusResponse;
 import NoDam.Demo.plan.dto.response.TransportPlanInfo;
 import NoDam.Demo.plan.repository.DatePlanDBPort;
+import NoDam.Demo.plan.repository.DatePlanDtoPort;
+import NoDam.Demo.plan.repository.TransportPlanRepository;
 import NoDam.Demo.trip.domain.Trip;
 import NoDam.Demo.trip.service.TripSelectService;
 import lombok.NonNull;
@@ -34,9 +36,10 @@ public class PlanFacadeService {
     private final PlaceSelectService placeQueryService;
     private final BehaviourService behaviourService;
 
-    private final PlanSelectService planSelectService;
     private final DatePlanDBPort datePlanDBPort;
+    private final DatePlanDtoPort datePlanDtoPort;
     private final BehaviourDBPort behaviourDBPort;
+    private final TransportPlanRepository transportPlanRepository;
 
     public DatePlanInfo addPlacePlan(
             @NonNull Long datePlanId,
@@ -57,7 +60,7 @@ public class PlanFacadeService {
 
         behaviourService.trySave(datePlan.getId(), clientDatePlanVersion, new AddPlaceBehaviour(previousPlacePlanId, nextPlacePlanId, placeId));
 
-        return planSelectService.findLatestDatePlanInfo(datePlanId);
+        return datePlanDtoPort.selectDatePlanInfo(datePlanDBPort.latestDatePlan(datePlanId).get());
     }
 
     public DatePlanInfo changePlacePlan(
@@ -77,7 +80,7 @@ public class PlanFacadeService {
 
         behaviourService.trySave(datePlan.getId(), clientDatePlanVersion, new ChangePlaceBehaviour(placePlanId, placeId));
 
-        return planSelectService.findLatestDatePlanInfo(datePlanId);
+        return datePlanDtoPort.selectDatePlanInfo(datePlanDBPort.latestDatePlan(datePlanId).get());
     }
 
     public DatePlanInfo movePlacePlan(
@@ -95,7 +98,7 @@ public class PlanFacadeService {
 
         behaviourService.trySave(datePlan.getId(), clientDatePlanVersion, new MovePlaceBehaviour(placePlanId, previousPlacePlanId, nextPlacePlanId));
 
-        return planSelectService.findLatestDatePlanInfo(datePlanId);
+        return datePlanDtoPort.selectDatePlanInfo(datePlanDBPort.latestDatePlan(datePlanId).get());
     }
 
     public DatePlanInfo deletePlacePlan(
@@ -111,7 +114,7 @@ public class PlanFacadeService {
 
         behaviourService.trySave(datePlan.getId(), clientDatePlanVersion, new RemovePlaceBehaviour(placePlanId));
 
-        return planSelectService.findLatestDatePlanInfo(datePlanId);
+        return datePlanDtoPort.selectDatePlanInfo(datePlanDBPort.latestDatePlan(datePlanId).get());
     }
 
     public DatePlanInfo fixPlacePlan(
@@ -128,22 +131,26 @@ public class PlanFacadeService {
 
         behaviourService.trySave(datePlan.getId(), clientDatePlanVersion, new FixPlaceBehaviour(placePlanId, isFixed));
 
-        return planSelectService.findLatestDatePlanInfo(datePlanId);
+        return datePlanDtoPort.selectDatePlanInfo(datePlanDBPort.latestDatePlan(datePlanId).get());
     }
 
     // 확정 테마의 DatePlanInfo 목록. 테마 미확정이면 빈 목록
     public List<DatePlanInfo> getPlans(Long tripId, Long userId) {
         Trip trip = tripSelectService.findById(tripId, userId);
 
-        if (trip.getTripThemeType() == null)
-            return new ArrayList<>();
+        // todo : trip theme summary api로 옮기면 주석 해제
+//        if (trip.getTripThemeType() == null)
+//            return new ArrayList<>();
 
-        return planSelectService.findDatePlanInfos(trip, trip.getTripThemeType());
+        return datePlanDBPort.datePlans(tripId)
+                .stream()
+                .map(datePlanDtoPort::selectDatePlanInfo)
+                .toList();
     }
 
     public PlanStatusResponse getPlanStatus(Long tripId, Long userId) {
         Trip trip = tripSelectService.findById(tripId, userId);
-        List<DatePlan> datePlans = planSelectService.findAllDatePlan(trip);
+        List<DatePlan> datePlans = datePlanDBPort.datePlans(tripId);
 
         // DatePlan이 하나도 없으면(Trip 생성 직후) status는 null
         PlanStatus planStatus = PlanStatus.lowest(datePlans.stream().map(DatePlan::getPlanStatus).toList());
@@ -157,7 +164,8 @@ public class PlanFacadeService {
     }
 
     public TransportPlanInfo getTransportPlanDetail(Long transportPlanId) {
-        TransportPlan transportPlan = planSelectService.findTransportPlanById(transportPlanId);
+        TransportPlan transportPlan = transportPlanRepository.findById(transportPlanId)
+                .orElseThrow(()->new CustomException(ErrorCode.NOT_FOUND));
         return TransportPlanInfo.of(transportPlan);
     }
 

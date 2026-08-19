@@ -19,11 +19,8 @@ public interface PlacePlanRepository extends JpaRepository<PlacePlan, Long> {
 
     List<PlacePlan> findByDatePlanIdOrderByOrderIndexAsc(Long datePlanId);
 
-    @Query("SELECT pp FROM PlacePlan pp LEFT JOIN FETCH pp.fromTransport LEFT JOIN FETCH pp.toTransport WHERE pp.datePlan.id = :datePlanId")
-    List<PlacePlan> findByDatePlanIdWithTransport(@Param("datePlanId") Long datePlanId);
-
-    @Query("SELECT pp FROM PlacePlan pp JOIN FETCH pp.datePlan LEFT JOIN FETCH pp.fromTransport LEFT JOIN FETCH pp.toTransport WHERE pp.id = :id")
-    Optional<PlacePlan> findByIdWithDatePlanAndTransport(@Param("id") Long id);
+    @Query("SELECT pp FROM PlacePlan pp JOIN FETCH pp.datePlan WHERE pp.id = :id")
+    Optional<PlacePlan> findByIdWithDatePlan(@Param("id") Long id);
 
     // trip + theme 기준으로 배정된 place 조회 (공항, 호텔은 제외함)
     @Query("SELECT p FROM PlacePlan pp " +
