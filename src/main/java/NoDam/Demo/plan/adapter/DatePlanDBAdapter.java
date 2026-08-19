@@ -35,13 +35,21 @@ public class DatePlanDBAdapter implements DatePlanDBPort {
     }
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public List<DatePlan> datePlans(Long tripId) {
-        List<DatePlan> datePlans = datePlanRepository.findAllDatePlanWithPlansWithTransport(tripId);
+        List<DatePlan> datePlans = datePlanRepository.findAllDatePlanWithPlans(tripId);
 
-        for(DatePlan each : datePlans) {
-            each.getTransportPlans(); // left join해서 jpa 1차 캐시 안애 있음
-        }
+        if (datePlans.isEmpty()) return datePlans;
+
+        Map<Long, List<TransportPlan>> transportPlansByDatePlanId = new HashMap<>();
+        for (DatePlan datePlan : datePlans)
+            transportPlansByDatePlanId.put(datePlan.getId(), new ArrayList<>());
+
+        for (TransportPlan transportPlan : transportPlanRepository.findByDatePlanIdIn(new ArrayList<>(transportPlansByDatePlanId.keySet())))
+            transportPlansByDatePlanId.get(transportPlan.getDatePlanId()).add(transportPlan);
+
+        for (DatePlan datePlan : datePlans)
+            datePlan.loadTransportPlans(transportPlansByDatePlanId.get(datePlan.getId()));
 
         return datePlans;
     }
@@ -57,6 +65,7 @@ public class DatePlanDBAdapter implements DatePlanDBPort {
 
         saveTransportPlans(datePlan);
         placePlanRepository.saveAll(datePlan.getPlacePlans());
+        datePlanRepository.save(datePlan);
     }
 
     // 끊긴 이동은 지우고 나머지는 저장한다. 채워지지 않았으면(@Transient) 손대지 않는다

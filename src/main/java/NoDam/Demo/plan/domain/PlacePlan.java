@@ -28,11 +28,7 @@ public class PlacePlan extends Plan {
     @Column(nullable = true)
     private Long placeId; // cross-module: place 참조
 
-    @OneToOne(mappedBy = "fromPlacePlan", orphanRemoval = true)
-    private TransportPlan fromTransport;
-
-    @OneToOne(mappedBy = "toPlacePlan", orphanRemoval = true)
-    private TransportPlan toTransport;
+    // TransportPlan은 fromPlacePlanId / toPlacePlanId로만 이 PlacePlan을 가리킨다 (역방향 연관 없음)
 
     @Column(nullable = false)
     /*
@@ -57,7 +53,4 @@ public class PlacePlan extends Plan {
         this.placeId = placeId;
         this.orderIndex = orderIndex;
     }
-
-    public void setFromTransportNull() { fromTransport = null; }
-    public void setToTransportNull() { toTransport = null; }
 }

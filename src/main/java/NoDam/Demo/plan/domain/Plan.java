@@ -26,6 +26,7 @@ public abstract class Plan extends BaseEntity {
     @Column(nullable = true)
     private LocalTime endTime;
 
+    // todo : 모든 plan들이 이 함수를 통해야함으로 time을 제외하지 못하고 있음
     protected Plan(LocalTime startTime, LocalTime endTime) {
         this.startTime = startTime;
         this.endTime = endTime;

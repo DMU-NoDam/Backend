@@ -1,5 +1,6 @@
 package NoDam.Demo.plan.dto.response;
 
+import NoDam.Demo.common.type.TripThemeType;
 import NoDam.Demo.region.dto.response.RegionResponseDto;
 import NoDam.Demo.trip.dto.response.TripInfoDto;
 import lombok.AllArgsConstructor;
@@ -20,6 +21,7 @@ public class DatePlanInfo {
 
     private LocalDate date;
     private TripInfoDto tripInfo;
+    private TripThemeType datePlanTheme;
 
     private RegionResponseDto region;
 

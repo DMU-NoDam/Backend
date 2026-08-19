@@ -106,30 +106,30 @@ public class DatePlan extends BaseEntity {
         return false;
     }
 
-    // 기준 바로 다음 PlacePlan id. 기준이 null이면 맨 앞, 다음이 없으면 null
-    public Long findNextPlacePlanId(Long placePlanId) {
+    // 기준 바로 다음 PlacePlan. 기준이 null이면 맨 앞, 다음이 없으면 null
+    public PlacePlan findNextPlacePlan(Long placePlanId) {
         List<PlacePlan> orderdPlacePlans = orderdPlacePlans();
 
         if (placePlanId == null)
-            return orderdPlacePlans.isEmpty() ? null : orderdPlacePlans.getFirst().getId();
+            return orderdPlacePlans.isEmpty() ? null : orderdPlacePlans.getFirst();
 
         for (int i = 0; i < orderdPlacePlans.size() - 1; i++)
             if (Objects.equals(orderdPlacePlans.get(i).getId(), placePlanId))
-                return orderdPlacePlans.get(i + 1).getId();
+                return orderdPlacePlans.get(i + 1);
 
         return null;
     }
 
-    // 기준 바로 이전 PlacePlan id. 기준이 null이면 맨 뒤, 이전이 없으면 null
-    public Long findPreviousPlacePlanId(Long placePlanId) {
+    // 기준 바로 이전 PlacePlan. 기준이 null이면 맨 뒤, 이전이 없으면 null
+    public PlacePlan findPreviousPlacePlan(Long placePlanId) {
         List<PlacePlan> orderdPlacePlans = orderdPlacePlans();
 
         if (placePlanId == null)
-            return orderdPlacePlans.isEmpty() ? null : orderdPlacePlans.getLast().getId();
+            return orderdPlacePlans.isEmpty() ? null : orderdPlacePlans.getLast();
 
         for (int i = 1; i < orderdPlacePlans.size(); i++)
             if (Objects.equals(orderdPlacePlans.get(i).getId(), placePlanId))
-                return orderdPlacePlans.get(i - 1).getId();
+                return orderdPlacePlans.get(i - 1);
 
         return null;
     }
@@ -220,7 +220,7 @@ public class DatePlan extends BaseEntity {
         Set<Long> connectedPlacePlanIds = new HashSet<>(); // 나가는 이동이 살아있는 PlacePlan
         for (TransportPlan transportPlan : transportPlans)
             if (!transportPlan.getDetached())
-                connectedPlacePlanIds.add(transportPlan.getFromPlacePlan().getId());
+                connectedPlacePlanIds.add(transportPlan.getFromPlacePlanId());
 
         List<PlacePlan> orderdPlacePlans = orderdPlacePlans();
 
@@ -237,11 +237,12 @@ public class DatePlan extends BaseEntity {
 
     // from, to가 이 DatePlan의 것인지 확인하고 넣는다. 같은 구간이 이미 있으면 덮어쓴다
     public void addTransportPlan(TransportLeg leg, RouteInfo info) {
-        // leg는 계산 전 snapshot이므로 지금 목록의 PlacePlan을 다시 잡는다 (이 DatePlan의 것이 아니면 NOT_FOUND)
+
         PlacePlan from = findPlacePlan(leg.from().getId());
         PlacePlan to = findPlacePlan(leg.to().getId());
 
-        if (!Objects.equals(findNextPlacePlanId(from.getId()), to.getId()))
+        PlacePlan next = findNextPlacePlan(from.getId());
+        if (next == null || !Objects.equals(next.getId(), to.getId()))
             return;
 
         detachTransportPlan(from.getId(), to.getId()); // 기존 구간은 버린다
@@ -259,13 +260,13 @@ public class DatePlan extends BaseEntity {
             if (transportPlan.getDetached()) continue;
 
             // target -> after
-            if (Objects.equals(transportPlan.getFromPlacePlan().getId(), placePlanId)) {
+            if (Objects.equals(transportPlan.getFromPlacePlanId(), placePlanId)) {
                 transportPlan.detach();
                 continue;
             }
 
             // before -> target
-            if (Objects.equals(transportPlan.getToPlacePlan().getId(), placePlanId))
+            if (Objects.equals(transportPlan.getToPlacePlanId(), placePlanId))
                 transportPlan.detach();
         }
     }
@@ -274,10 +275,10 @@ public class DatePlan extends BaseEntity {
     private void detachTransportPlan(Long betweenPlacePlanA, Long betweenPlacePlanB) {
         for (TransportPlan transportPlan : transportPlans) {
             if (transportPlan.getDetached()) continue;
-            if (!Objects.equals(transportPlan.getFromPlacePlan().getId(), betweenPlacePlanA)) continue;
-            if (!Objects.equals(transportPlan.getToPlacePlan().getId(), betweenPlacePlanB)) continue;
+            if (!Objects.equals(transportPlan.getFromPlacePlanId(), betweenPlacePlanA)) continue;
+            if (!Objects.equals(transportPlan.getToPlacePlanId(), betweenPlacePlanB)) continue;
 
-            transportPlan.detach();
+            transportPlan.detach(); // 여러개면 모두 detach 한다
         }
     }
 
@@ -298,7 +299,7 @@ public class DatePlan extends BaseEntity {
         return previousOrderIndex + (nextOrderIndex - previousOrderIndex) / 2;
     }
 
-    private PlacePlan findPlacePlan(Long placePlanId) {
+    public PlacePlan findPlacePlan(Long placePlanId) {
         for (PlacePlan placePlan : placePlans)
             if (Objects.equals(placePlan.getId(), placePlanId)) return placePlan;
 

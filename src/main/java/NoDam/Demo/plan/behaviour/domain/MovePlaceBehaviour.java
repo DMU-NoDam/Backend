@@ -79,13 +79,13 @@ public class MovePlaceBehaviour extends Behaviour {
 
         if (nextPlacePlanId != null) {
             if (previousBehaviour.isRemoved(nextPlacePlanId) || previousBehaviour.isMoved(nextPlacePlanId)) {
-                nextPlacePlanId = datePlan.findNextPlacePlanId(previousPlacePlanId);
+                nextPlacePlanId = datePlan.findNextPlacePlan(previousPlacePlanId).getId();
             }
         }
 
         if (previousPlacePlanId != null) {
             if (previousBehaviour.isRemoved(previousPlacePlanId) || previousBehaviour.isMoved(previousPlacePlanId)) {
-                previousPlacePlanId = datePlan.findPreviousPlacePlanId(nextPlacePlanId);
+                previousPlacePlanId = datePlan.findPreviousPlacePlan(nextPlacePlanId).getId();
             }
         }
 
