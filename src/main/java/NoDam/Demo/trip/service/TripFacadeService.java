@@ -104,10 +104,10 @@ public class TripFacadeService {
         trip = tripFixedService.updateTripTheme(trip, themeType);
 
         // delete other themes
-        List<DatePlan> otherDatePlans = planSelectService.findAllDatePlanWithTransport(trip)
-                .stream()
-                .filter(dp->!dp.getTripThemeType().equals(themeType))
-                .toList();
+//        List<DatePlan> otherDatePlans = planSelectService.findAllDatePlanWithTransport(trip)
+//                .stream()
+//                .filter(dp->!dp.getTripThemeType().equals(themeType))
+//                .toList();
         // planDeleteService.deleteDatePlansWithTransports(otherDatePlans);
 
         return trip;
@@ -124,17 +124,17 @@ public class TripFacadeService {
         Trip trip = tripSelectService.findById(tripId, userId); // 멤버가 아니면 NOT_AUTHOR, 없으면 NOT_FOUND
         tripMemberService.requireOwner(tripId, userId); // 멤버지만 OWNER가 아니면 NOT_AUTHOR
 
-        transactionTemplate.execute(status -> {
-            List<DatePlan> datePlans = planSelectService.findAllDatePlanWithTransport(trip);
-            planDeleteService.deleteDatePlansWithTransports(datePlans);
-
-            tripRequestService.deleteByTripId(tripId);
-            tripMemberService.deleteAllByTripId(tripId);
-            tripInvitationService.deleteAllByTripId(tripId);
-
-            tripDeleteService.deleteTrip(trip);
-            return null;
-        });
+//        transactionTemplate.execute(status -> {
+//            List<DatePlan> datePlans = planSelectService.findAllDatePlanWithTransport(trip);
+//            planDeleteService.deleteDatePlansWithTransports(datePlans);
+//
+//            tripRequestService.deleteByTripId(tripId);
+//            tripMemberService.deleteAllByTripId(tripId);
+//            tripInvitationService.deleteAllByTripId(tripId);
+//
+//            tripDeleteService.deleteTrip(trip);
+//            return null;
+//        });
     }
 
 }

@@ -24,25 +24,12 @@ public class PlanDeleteService {
 
     @Transactional
     public void deleteDatePlansWithTransports(List<DatePlan> datePlans) {
-        List<PlacePlan> allPlacePlans = datePlans.stream()
-                .flatMap(datePlan -> datePlan.getPlacePlans().stream())
-                .toList();
-
-        placePlanRepository.deleteAll(allPlacePlans); // delete all place plan, transport plans (by removal)
-        datePlanRepository.deleteAll(datePlans);
+        // todo : publish plan deleted event!
     }
 
     @Transactional
     public void deletePlacePlanWithTransports(Long placePlanId) {
-        PlacePlan target = placePlanRepository.findById(placePlanId).orElseThrow();
-
-        if (target.getToTransport() != null && target.getToTransport().getFromPlacePlan() != null)
-            target.getToTransport().getFromPlacePlan().setFromTransportNull();
-
-        if (target.getFromTransport() != null && target.getFromTransport().getToPlacePlan() != null)
-            target.getFromTransport().getToPlacePlan().setToTransportNull();
-
-        placePlanRepository.delete(target);
+        // todo : publish plan deleted event!
     }
 
 }
