@@ -2,7 +2,6 @@ package NoDam.Demo.plan.repository;
 
 import NoDam.Demo.plan.domain.TransportPlan;
 import java.util.List;
-import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -13,31 +12,12 @@ public interface TransportPlanRepository extends JpaRepository<TransportPlan, Lo
     // 반정규화한 date_plan_id 기준. from/to가 끊긴 것도 함께 조회된다
     List<TransportPlan> findByDatePlanId(Long datePlanId);
 
-    List<TransportPlan> findByFromPlacePlan_DatePlanId(Long datePlanId);
+    // trip 단위 조회용. 여러 DatePlan의 이동을 한번에 읽는다
+    List<TransportPlan> findByDatePlanIdIn(List<Long> datePlanIds);
 
-    @Query("SELECT t FROM TransportPlan t JOIN FETCH t.fromPlacePlan fp JOIN FETCH fp.datePlan WHERE t.id = :id")
-    Optional<TransportPlan> findByIdWithDatePlan(@Param("id") Long id);
-
+    // from/to가 끊긴 것도 함께 지운다 (date_plan_id 기준)
     @Modifying
-    @Query("update TransportPlan t set t.isDeleted = true where t.id = :id")
-    void softDelete(@Param("id") Long transportId);
-
-    @Modifying
-    @Query("update TransportPlan tp set tp.isDeleted = true " +
-            "where tp.toPlacePlan.id = :placePlanId or tp.fromPlacePlan.id = :placePlanId")
-    void softDeleteAllByPlacePlan(@Param("placePlanId") Long placePlanId);
-
-    // TransportPlanRepository
-    @Modifying
-    @Query("UPDATE TransportPlan t SET t.fromPlacePlan = null WHERE t.fromPlacePlan.id = :id")
-    void detachFromPlaceById(@Param("id") Long placeId);
-
-    @Modifying
-    @Query("UPDATE TransportPlan t SET t.toPlacePlan = null WHERE t.toPlacePlan.id = :id")
-    void detachToPlaceById(@Param("id") Long placeId);
-
-    @Modifying
-    @Query("UPDATE TransportPlan t SET t.isDeleted = true WHERE t.fromPlacePlan.id = :id OR t.toPlacePlan.id = :id")
-    void softDeleteByPlaceId(@Param("id") Long placeId);
+    @Query("update TransportPlan tp set tp.isDeleted = true where tp.datePlanId = :datePlanId")
+    void softDeleteAllByDatePlanId(@Param("datePlanId") Long datePlanId);
 
 }

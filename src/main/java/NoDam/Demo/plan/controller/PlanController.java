@@ -15,6 +15,8 @@ import NoDam.Demo.plan.dto.response.TransportPlanInfo;
 import NoDam.Demo.plan.service.PlanFacadeService;
 import NoDam.Demo.user.domain.User;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -136,7 +138,19 @@ public class PlanController {
     ) {
         DatePlanInfo response = planFacadeService.fixPlacePlan(
                 datePlanId, dto.getPlacePlanId(), dto.getIsFixed(), version, user.getId());
-        return ResponseEntity.ok(new SuccessResponse<DatePlanInfo>("success", response));
+        // return ResponseEntity.ok(new SuccessResponse<DatePlanInfo>("success", response));
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(new SuccessResponse<DatePlanInfo>("success", response)); // todo : 기능 구현 전, version은 증가하지만 fix는 적용 안됨
+    }
+
+    @GetMapping("/api/{datePlanId}/reload/{transportPlanId}")
+    public ResponseEntity reloadTransport(
+            @PathVariable(value = "datePlanId") Long datePlanId,
+            @PathVariable(value = "transportPlanId") Long transportPlanId,
+            @AuthenticationPrincipal User user
+    ) {
+        // todo : transport plan이 잘못 생성된다면 구현 예정
+        // todo : front랑 협의 필요 (디자인 확인 필요)
+        return null;
     }
 
 }

@@ -180,8 +180,8 @@ class BehaviourRandomTest {
         for (BehaviourHistory history : histories) {
             Behaviour rebased = copy(findOriginal(originalByApplied, history.getBehaviour()));
 
-            if (!appliedHistories.isEmpty()) // 빈 목록으로는 PreviousBehaviours를 만들 수 없다
-                rebased.rebase(replayDatePlan, new PreviousBehaviours(appliedHistories));
+            // 모든 요청이 version 0에서 출발했으므로 local version은 0이다
+            rebased.rebase(replayDatePlan, new PreviousBehaviours(appliedHistories, 0L));
 
             rebased.apply(replayDatePlan);
             appliedHistories.add(BehaviourHistory.builder()

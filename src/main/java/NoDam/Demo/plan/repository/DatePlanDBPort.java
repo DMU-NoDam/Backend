@@ -15,4 +15,8 @@ public interface DatePlanDBPort {
     // 메모리의 placePlans와 DB를 맞춘다. 목록에서 빠진 것은 삭제, 새로 들어온 것은 저장
     void saveDatePlan(DatePlan datePlan);
 
+    void deleteDatePlan(DatePlan datePlan);
+
+    void deleteDatePlans(List<DatePlan> datePlans);
+
 }

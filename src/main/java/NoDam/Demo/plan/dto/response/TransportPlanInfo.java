@@ -32,8 +32,8 @@ public class TransportPlanInfo {
                 .endTime(transport.getEndTime())
                 .takeTime(transport.getTakeTime())
                 .totalDistanceMeters(transport.getTotalDistanceMeters())
-                .fromPlacePlanId(transport.getFromPlacePlan().getId())
-                .toPlacePlanId(transport.getToPlacePlan().getId())
+                .fromPlacePlanId(transport.getFromPlacePlanId())
+                .toPlacePlanId(transport.getToPlacePlanId())
                 .transportPlanId(transport.getId())
                 .routeInfo(transport.getRouteInfo())
                 .build();
@@ -46,8 +46,8 @@ public class TransportPlanInfo {
                 .endTime(transport.getEndTime())
                 .takeTime(transport.getTakeTime())
                 .totalDistanceMeters(transport.getTotalDistanceMeters())
-                .fromPlacePlanId(transport.getFromPlacePlan().getId())
-                .toPlacePlanId(transport.getToPlacePlan().getId())
+                .fromPlacePlanId(transport.getFromPlacePlanId())
+                .toPlacePlanId(transport.getToPlacePlanId())
                 .transportPlanId(transport.getId())
                 // .route()
                 .build();

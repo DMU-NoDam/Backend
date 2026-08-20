@@ -68,22 +68,22 @@ class DatePlanTest {
         @Test
         @DisplayName("기준이 null이면 맨 앞 / 맨 뒤를 돌려준다")
         void 기준이_null() {
-            assertEquals(1L, datePlan.findNextPlacePlanId(null));
-            assertEquals(3L, datePlan.findPreviousPlacePlanId(null));
+            assertEquals(1L, datePlan.findNextPlacePlan(null).getId());
+            assertEquals(3L, datePlan.findPreviousPlacePlan(null).getId());
         }
 
         @Test
         @DisplayName("끝에서는 다음 / 이전이 없다")
         void 끝() {
-            assertNull(datePlan.findNextPlacePlanId(3L));
-            assertNull(datePlan.findPreviousPlacePlanId(1L));
+            assertNull(datePlan.findNextPlacePlan(3L));
+            assertNull(datePlan.findPreviousPlacePlan(1L));
         }
 
         @Test
         @DisplayName("이 DatePlan의 것이 아니면 null")
         void 없는_id() {
-            assertNull(datePlan.findNextPlacePlanId(99L));
-            assertNull(datePlan.findPreviousPlacePlanId(99L));
+            assertNull(datePlan.findNextPlacePlan(99L));
+            assertNull(datePlan.findPreviousPlacePlan(99L));
         }
 
         @Test
@@ -260,8 +260,8 @@ class DatePlanTest {
             assertEquals(1, datePlan.getTransportPlans().size());
 
             TransportPlan added = datePlan.getTransportPlans().getFirst();
-            assertEquals(1L, added.getFromPlacePlan().getId());
-            assertEquals(2L, added.getToPlacePlan().getId());
+            assertEquals(1L, added.getFromPlacePlanId());
+            assertEquals(2L, added.getToPlacePlanId());
         }
 
         @Test

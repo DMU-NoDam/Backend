@@ -19,12 +19,6 @@ public interface PlacePlanRepository extends JpaRepository<PlacePlan, Long> {
 
     List<PlacePlan> findByDatePlanIdOrderByOrderIndexAsc(Long datePlanId);
 
-    @Query("SELECT pp FROM PlacePlan pp LEFT JOIN FETCH pp.fromTransport LEFT JOIN FETCH pp.toTransport WHERE pp.datePlan.id = :datePlanId")
-    List<PlacePlan> findByDatePlanIdWithTransport(@Param("datePlanId") Long datePlanId);
-
-    @Query("SELECT pp FROM PlacePlan pp JOIN FETCH pp.datePlan LEFT JOIN FETCH pp.fromTransport LEFT JOIN FETCH pp.toTransport WHERE pp.id = :id")
-    Optional<PlacePlan> findByIdWithDatePlanAndTransport(@Param("id") Long id);
-
     // trip + theme 기준으로 배정된 place 조회 (공항, 호텔은 제외함)
     @Query("SELECT p FROM PlacePlan pp " +
            "JOIN Place p ON pp.placeId = p.id " +
@@ -35,12 +29,8 @@ public interface PlacePlanRepository extends JpaRepository<PlacePlan, Long> {
            "AND (dp.hotelPlaceId IS NULL OR pp.placeId <> dp.hotelPlaceId)")
     List<Place> findPlacesByTripIdAndTheme(@Param("tripId") Long tripId, @Param("theme") TripThemeType theme);
 
-    // PlacePlan에 배정된 Place 단건 조회 (cross-module: place 참조)
-    @Query("SELECT p FROM Place p WHERE p.id = :placeId")
-    Optional<Place> findPlaceById(@Param("placeId") Long placeId);
-
     @Modifying
-    @Query("update PlacePlan pp set pp.isDeleted = true where pp.id = :id")
-    void softDelete(@Param("id") Long PlacePlanId);
+    @Query("update PlacePlan pp set pp.isDeleted = true where pp.datePlan.id = :datePlanId")
+    void softDeleteAllByDatePlanId(@Param("datePlanId") Long datePlanId);
 
 }
