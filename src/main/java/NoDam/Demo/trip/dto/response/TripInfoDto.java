@@ -20,9 +20,8 @@ public class TripInfoDto {
     private String startDate;
     private String endDate;
     private boolean isFixed;
-    private Boolean planCreated;
 
-    public static TripInfoDto from(Trip trip, boolean planStatus) {
+    public static TripInfoDto from(Trip trip) {
         return TripInfoDto.builder()
                 .id(trip.getId())
                 .name(trip.getName())
@@ -33,7 +32,6 @@ public class TripInfoDto {
                 .startDate(DateUtil.fromLocalDate(trip.getStartDate()))
                 .endDate(DateUtil.fromLocalDate(trip.getEndDate()))
                 .isFixed(trip.isFixed())
-                .planCreated(planStatus)
                 .build();
     }
 }

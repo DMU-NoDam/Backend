@@ -11,6 +11,7 @@ import NoDam.Demo.trip.repository.TripRequestRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -97,6 +98,7 @@ public class TripRequestService {
         return tripRequestRepository.save(tripRequest);
     }
 
+    @Transactional
     public void deleteByTripId(Long tripId) {
         tripRequestRepository.deleteByTripId(tripId);
     }

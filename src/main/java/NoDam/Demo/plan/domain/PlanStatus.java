@@ -30,6 +30,10 @@ public enum PlanStatus {
         return this.ordinal() >= other.ordinal();
     }
 
+    public boolean isReady() {
+        return this.isAfterOrEqual(AI_PLANNED);
+    }
+
     // 여러 DatePlan 중 가장 뒤처진 상태 = trip 전체의 진행 상태
     public static PlanStatus lowest(List<PlanStatus> statuses) {
         PlanStatus lowest = null;

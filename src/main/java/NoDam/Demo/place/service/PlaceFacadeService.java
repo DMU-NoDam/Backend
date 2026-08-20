@@ -20,7 +20,11 @@ import NoDam.Demo.plan.domain.DatePlan;
 import NoDam.Demo.plan.domain.PlacePlan;
 import NoDam.Demo.plan.dto.ai.AiRecommendPlaceRequestDto;
 import NoDam.Demo.plan.dto.ai.AiRecommendPlaceResponseDto;
+import NoDam.Demo.plan.dto.ai.DatePlanDto;
 import NoDam.Demo.plan.dto.response.RouteInfo;
+import NoDam.Demo.plan.repository.DatePlanDBPort;
+import NoDam.Demo.plan.repository.DatePlanDtoPort;
+import NoDam.Demo.plan.repository.PlacePlanRepository;
 import NoDam.Demo.plan.service.PlanSelectService;
 import NoDam.Demo.region.domain.Region;
 import NoDam.Demo.region.service.RegionQueryService;
@@ -36,6 +40,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -51,13 +56,14 @@ public class PlaceFacadeService {
     private final GooglePort googlePort;
     private final RoutePort routePort;
     private final RegionQueryService regionQueryService;
-    private final PlanSelectService planSelectService;
     private final TripSelectService tripSelectService;
     private final AiPort aiPort;
+    private final DatePlanDBPort datePlanDBPort;
 
     private final boolean isMockAi;
 
     private final Logger logger = LoggerFactory.getLogger(PlaceFacadeService.class);
+    private final PlacePlanRepository placePlanRepository;
 
     public Place findByGoogleId(String googleId) {
         if(googleId == null || googleId.isEmpty())
@@ -89,33 +95,30 @@ public class PlaceFacadeService {
 
     // todo : plan facade랑 코드 곂침
     public List<RecommendedPlaceInfo> recommendPlace(RecommendPlaceRequestDto dto, Long userId, WeatherType weather) {
-        PlacePlan targetPlan = planSelectService.findPlacePlanWithDatePlanAndTransport(dto.getPlacePlanId());
-        DatePlan datePlan = targetPlan.getDatePlan();
+        Long datePlanId = placePlanRepository.findById(dto.getPlacePlanId())
+                .orElseThrow(()->new CustomException(ErrorCode.NOT_FOUND))
+                .getDatePlan().getId(); // todo : request dto를 수정할 수 없음, dto에서 date plan id값도 알려줬어야함
+
+        DatePlan datePlan = datePlanDBPort.latestDatePlan(datePlanId)
+                .orElseThrow(()->new CustomException(ErrorCode.NOT_FOUND));
         Trip trip = tripSelectService.findById(datePlan.getTripId(), userId);
+        PlacePlan targetPlacePlan = datePlan.findPlacePlan(dto.getPlacePlanId());
 
         PlaceType placeType = dto.getPlaceType() != null
                 ? dto.getPlaceType()
-                : placeSelectService.findById(targetPlan.getPlaceId()).getPlaceType();
+                : placeSelectService.findById(targetPlacePlan.getPlaceId()).getPlaceType();
 
         Region region = regionQueryService.findById(datePlan.getRegionId());
-        List<Place> placedPlaces = planSelectService.findPlacedPlaces(trip, datePlan.getTripThemeType());
+        List<Long> placeIds = ListUtil.map(datePlan.getPlacePlans(), PlacePlan::getPlaceId);
 
-        List<PlacePlan> allPlans = planSelectService.findPlacePlansByDatePlan(datePlan)
-                .stream()
-                .sorted(Comparator.comparing(PlacePlan::getStartTime))
-                .toList();
+        Map<Long, Place> placeMap = new HashMap<>();
+        for (Place place : placeSelectService.findAllById(placeIds))
+            placeMap.put(place.getId(), place);
 
-        int targetIndex = IntStream.range(0, allPlans.size())
-                .filter(i -> allPlans.get(i).getId().equals(targetPlan.getId()))
-                .findFirst()
-                .orElse(-1);
+        List<Place> placedPlaces = ListUtil.map(placeIds, placeMap::get);
 
-        PlaceInfo previousPlace = targetIndex > 0
-                ? PlaceInfo.of(placeSelectService.findById(allPlans.get(targetIndex - 1).getPlaceId()))
-                : null;
-        PlaceInfo nextPlace = targetIndex < allPlans.size() - 1
-                ? PlaceInfo.of(placeSelectService.findById(allPlans.get(targetIndex + 1).getPlaceId()))
-                : null;
+        PlaceInfo previousPlaceInfo = PlaceInfo.of(placeMap.get(datePlan.findPreviousPlacePlan(targetPlacePlan.getId()).getPlaceId()));
+        PlaceInfo nextPlaceInfo = PlaceInfo.of(placeMap.get(datePlan.findNextPlacePlan(targetPlacePlan.getId()).getPlaceId()));
 
         return recommend(
                 placeType, region,
@@ -126,8 +129,8 @@ public class PlaceFacadeService {
                 trip.getScheduleType(),
                 placedPlaces,
                 dto.getUserLat(), dto.getUserLon(),
-                targetPlan.getStartTime(), targetPlan.getEndTime(),
-                previousPlace, nextPlace
+                targetPlacePlan.getStartTime(), targetPlacePlan.getEndTime(),
+                previousPlaceInfo, nextPlaceInfo
         );
     }
 
@@ -171,7 +174,7 @@ public class PlaceFacadeService {
             PlaceInfo previousPlace,
             PlaceInfo nextPlace
     ) {
-        if(true)
+        if(isMockAi)
             return candidates.stream()
                     .limit(5)
                     .map(pair -> RecommendedPlaceInfo.of(pair.getFirst().getPlace(), pair.getSecond(), oldStartTime, oldEndTime))

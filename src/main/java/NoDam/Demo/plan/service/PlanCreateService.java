@@ -1,11 +1,14 @@
 package NoDam.Demo.plan.service;
 
+import NoDam.Demo.common.excetion.CustomException;
+import NoDam.Demo.common.excetion.ErrorCode;
 import NoDam.Demo.plan.domain.DatePlan;
 import NoDam.Demo.plan.domain.PlacePlan;
 import NoDam.Demo.plan.domain.PlanStatus;
 import NoDam.Demo.plan.domain.TransportPlan;
 import NoDam.Demo.plan.dto.request.DatePlanRequestDto;
 import NoDam.Demo.plan.dto.request.PlacePlanRequestDto;
+import NoDam.Demo.plan.repository.DatePlanDBPort;
 import NoDam.Demo.plan.repository.DatePlanRepository;
 import NoDam.Demo.plan.repository.PlanRepository;
 import NoDam.Demo.plan.repository.TransportPlanRepository;
@@ -25,6 +28,7 @@ public class PlanCreateService {
     private final PlanRepository planRepository;
     private final DatePlanRepository datePlanRepository;
     private final TransportPlanRepository transportPlanRepository;
+    private final DatePlanDBPort datePlanDBPort;
 
     // date plans 를 생성하는 함수
     public List<DatePlan> createDatePlans(
@@ -54,17 +58,22 @@ public class PlanCreateService {
             DatePlan datePlan,
             List<PlacePlanRequestDto> plans
     ) {
+        DatePlan latestDatePlan = datePlanDBPort.latestDatePlan(datePlan.getId())
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
+
         List<PlacePlan> entities = plans.stream()
                 .map(dto -> PlacePlan.builder()
-                        .datePlan(datePlan)
+                        .datePlan(latestDatePlan)
                         .startTime(dto.getStartTime())
                         .endTime(dto.getEndTime())
                         .placeId(dto.getPlaceId())
                         .build())
                 .toList();
 
-        planRepository.saveAll(entities);
-        return datePlanRepository.findById(datePlan.getId()).get();
+        latestDatePlan.addAll(entities); // orderIndex는 DatePlan이 매긴다
+        datePlanDBPort.saveDatePlan(latestDatePlan);
+
+        return latestDatePlan;
     }
 
     // 공항(첫날/마지막날), 호텔(저녁·아침) 고정 PlacePlan 생성 + 저장, 상태를 FIXED_PLANNED로 전이

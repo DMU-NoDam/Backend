@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class ChangePlacePlanRequestDto {
 
-    private Long oldPlacePlanId;
-    private Long newPlaceId;
+    private Long placePlanId;
+    private Long placeId;
 
 }

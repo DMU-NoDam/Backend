@@ -63,7 +63,7 @@ public class TripController {
     ) {
         // trip domain 생성 + 요청 스냅샷 저장까지만 담당 (2~5단계는 각각 별도 async api로 분리)
         Trip trip = tripFacadeService.createTrip(user.getId(), request);
-        return ResponseEntity.ok().body(new SuccessResponse<>("success", TripInfoDto.from(trip, false)));
+        return ResponseEntity.ok().body(new SuccessResponse<>("success", TripInfoDto.from(trip)));
     }
 
     @PostMapping("/api/{tripId}/date-plans")
@@ -74,7 +74,12 @@ public class TripController {
     ) {
         // 2번(google -> place 변환) 완료 후 3번(DatePlan 생성) 실행 : 순서 의존이므로 thenCompose로 연결한다
         autoCreatePlanService.translateGooglePlaceToDbPlace(tripId, user.getId())
-                .thenCompose(tripRequest -> autoCreatePlanService.generateAllDatePlans(tripId, user.getId()));
+                .thenCompose(tripRequest -> autoCreatePlanService.generateAllDatePlans(tripId, user.getId()))
+                // 응답은 이미 202로 나갔고 future를 아무도 소비하지 않으므로, 여기서 안 남기면 실패가 조용히 사라진다
+                .exceptionally(e -> {
+                    logger.error("generateDatePlans fail tripId={}, userId={}", tripId, user.getId(), e);
+                    return null;
+                });
         return ResponseEntity.accepted().body(new SuccessResponse<>("accepted", null));
     }
 
@@ -84,7 +89,11 @@ public class TripController {
             @AuthenticationPrincipal User user,
             @PathVariable Long tripId
     ) {
-        autoCreatePlanService.autoGenerateAllPlans(tripId, user.getId());
+        autoCreatePlanService.autoGenerateAllPlans(tripId, user.getId())
+                .exceptionally(e -> {
+                    logger.error("generatePlacePlans fail tripId={}, userId={}", tripId, user.getId(), e);
+                    return null;
+                });
         return ResponseEntity.accepted().body(new SuccessResponse<>("accepted", null));
     }
 
@@ -94,7 +103,11 @@ public class TripController {
             @AuthenticationPrincipal User user,
             @PathVariable Long tripId
     ) {
-        autoCreatePlanService.autoGenerateAllThemeTransportPlans(tripId, user.getId());
+        autoCreatePlanService.autoGenerateAllThemeTransportPlans(tripId, user.getId())
+                .exceptionally(e -> {
+                    logger.error("generateTransportPlans fail tripId={}, userId={}", tripId, user.getId(), e);
+                    return null;
+                });
         return ResponseEntity.accepted().body(new SuccessResponse<>("accepted", null));
     }
 
@@ -152,7 +165,17 @@ public class TripController {
             @RequestBody TripUpdateDto request
     ) {
         Trip trip = tripFacadeService.updateTripInfo(user.getId(), tripId, request);
-        return ResponseEntity.ok().body(new SuccessResponse<>("success", TripInfoDto.from(trip, false)));
+        return ResponseEntity.ok().body(new SuccessResponse<>("success", TripInfoDto.from(trip)));
+    }
+
+    @DeleteMapping("/api/{tripId}")
+    @Operation(summary = "여행 삭제 (OWNER 전용, 연관 일정/멤버/초대 데이터 함께 정리)")
+    public ResponseEntity<SuccessResponse<Void>> deleteTrip(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long tripId
+    ) {
+        tripFacadeService.deleteTrip(user.getId(), tripId);
+        return ResponseEntity.ok().body(new SuccessResponse<>("success", null));
     }
 
 }

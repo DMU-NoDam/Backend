@@ -11,6 +11,7 @@ import NoDam.Demo.place.dto.PlaceInfo;
 import NoDam.Demo.place.dto.RecommendPlaceResult;
 import NoDam.Demo.region.domain.Region;
 import NoDam.Demo.region.service.RegionQueryService;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -44,18 +45,20 @@ public class PlaceSelectService {
         return ListUtil.sortByRequestOrder(googleIds, selectedPlaces, (p)->p.getGoogleId());
     }
 
-    // todo : 한번의 query로 처리 고려할 것
     public Map<PlaceType, List<RecommendPlaceResult>> recommendPlacesByType(
-            Region region, // not null
+            @NonNull Region region, // not null
             PriceType priceType, // can null
             SeasonType recommendSeason, // can null
             TripThemeType recommendTripTheme, // can null
             WeatherType recommendWeatherType, // can null
-            List<Place> excludePlaces, // 제외할 place 목록
+            @NonNull List<Place> excludePlaces, // 제외할 place 목록, can empty
+            @NonNull List<PlaceType> includePlaceTypes, // can empty
             int count
     ) {
+        includePlaceTypes = !includePlaceTypes.isEmpty() ? includePlaceTypes : List.of(PlaceType.values());
         Map<PlaceType, List<RecommendPlaceResult>> result = new HashMap<>();
-        for (PlaceType placeType : PlaceType.values()) {
+
+        for (PlaceType placeType : includePlaceTypes) {
             result.put(placeType, recommendPlaces(
                     placeType, region, priceType, recommendSeason,
                     recommendTripTheme, recommendWeatherType, excludePlaces, count));

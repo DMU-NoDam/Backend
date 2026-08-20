@@ -9,6 +9,7 @@ import NoDam.Demo.place.domain.Place;
 import NoDam.Demo.place.dto.PlaceInfo;
 import NoDam.Demo.adapter.ai.AiPort;
 import NoDam.Demo.plan.dto.response.RouteInfo;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,7 +64,13 @@ public class NavitimeRouteApi implements RoutePort{
     }
 
     @Override
-    public RouteInfo computeRoutesFromPlace(Place start, Place end, LocalTime startTime) {
+    public RouteInfo computeRoutesFromPlace(
+            @NonNull Place start,
+            @NonNull Place end,
+            LocalTime startTime // can null
+    ) {
+        if (start == null || end == null) return null; // 계산할 구간이 없음
+
         RouteInfo routes = callNavitime(start.getLat(), start.getLon(), end.getLat(), end.getLon(), startTime);
         routes.setStartAndEndName(start.getName(), end.getName());
         translateRouteNames(routes, "ja", "ko");
@@ -73,7 +80,10 @@ public class NavitimeRouteApi implements RoutePort{
     private RouteInfo callNavitime(Double startLat, Double startLon, Double endtLat, Double endLon, LocalTime startTime) {
         String startCoord = startLat + "," + startLon;
         String goalCoord = endtLat + "," + endLon;
-        String startTimeStr = LocalDateTime.of(LocalDate.now(), startTime).format(NAVITIME_START_TIME_FORMATTER);
+
+        // todo : place plan에서 start time, end time을 계산하지 않기 때문에 depart time이 null이 들어올 수 있다
+        LocalTime departTime = startTime != null ? startTime : LocalTime.of(12,00);
+        String startTimeStr = LocalDateTime.of(LocalDate.now(), departTime).format(NAVITIME_START_TIME_FORMATTER);
 
         NavitimeRouteResponseDto response = WebClient.create()
                 .get()

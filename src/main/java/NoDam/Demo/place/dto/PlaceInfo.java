@@ -28,6 +28,9 @@ public class PlaceInfo {
     private Double lat; // y
 
     public static PlaceInfo of(Place place) {
+        if(place == null)
+            return PlaceInfo.empty();
+
         return PlaceInfo.builder()
                 .id(place.getId())
                 .regionId(place.getRegionId())

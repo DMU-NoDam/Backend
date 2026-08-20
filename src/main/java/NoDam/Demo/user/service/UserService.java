@@ -56,7 +56,8 @@ public class UserService {
     }
 
     public void deleteUser(User user) {
-        userRepository.delete(user);
+        // todo : 유저 삭제 구현
+        // userRepository.delete(user);
     }
 
 }

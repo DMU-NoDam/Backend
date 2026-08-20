@@ -21,4 +21,7 @@ public interface UserFixedTripRepository extends JpaRepository<UserFixedTrip, Us
     List<UserFixedTrip> findAllByUserIdAndDateRange(@Param("userId") Long userId, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
 
     void deleteByUserIdAndTrip(Long userId, Trip trip);
+
+    // 여행 삭제용. 해당 여행을 고정해둔 모든 사용자의 기록을 지운다
+    void deleteAllByTrip(Trip trip);
 }
