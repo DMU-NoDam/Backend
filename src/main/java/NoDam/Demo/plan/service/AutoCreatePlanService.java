@@ -250,18 +250,21 @@ public class AutoCreatePlanService {
 
         return tripLockService.runWithLock(trip, () -> {
             List<DatePlan> datePlans = datePlanDBPort.datePlans(tripId);
-            List<Place> excludePlaces = new ArrayList<>();
+            // DatePlan은 날짜 x 테마로 만들어지므로 제외 목록도 테마별로 분리한다 (테마끼리 후보를 뺏지 않도록)
+            Map<TripThemeType, List<Place>> excludePlacesByTheme = new HashMap<>();
 
             // 1. 공항, 호텔 생성
-            for (DatePlan datePlan : datePlans) {
+            for (int i = 0; i < datePlans.size(); i++) {
+                DatePlan datePlan = datePlans.get(i);
                 PlanStatus status = datePlan.getPlanStatus();
 
                 if (status.isBefore(PlanStatus.FIXED_PLANNED)) {
-                    planCreateService.createFixedPlans(trip, datePlan);
+                    datePlan = planCreateService.createFixedPlans(trip, datePlan); // 공항, 호텔이 반영된 domain으로 교체
+                    datePlans.set(i, datePlan);
                 }
 
                 List<Place> placedPlaces = placeSelectService.findAllById(datePlan.getPlacePlans().stream().map(PlacePlan::getPlaceId).toList());
-                excludePlaces.addAll(placedPlaces);
+                excludePlacesByTheme.computeIfAbsent(datePlan.getTripThemeType(), t -> new ArrayList<>()).addAll(placedPlaces);
             }
 
             // 3. ai 일정 생성
@@ -272,10 +275,12 @@ public class AutoCreatePlanService {
                 if (status.isBefore(PlanStatus.AI_PLANNED)) {
                     List<Place> necessaryPlaces = placeSelectService.findAllById(datePlan.getNecessaryPlaces());
                     Region region = regionQueryService.findById(datePlan.getRegionId());
+                    List<Place> excludePlaces = excludePlacesByTheme.computeIfAbsent(datePlan.getTripThemeType(), t -> new ArrayList<>());
 
                     // 후보 조회
                     Map<PlaceType, List<RecommendPlaceResult>> candidates = placeSelectService.recommendPlacesByType(
-                            region, trip.getPriceType(), null, datePlan.getTripThemeType(), null, excludePlaces, 5
+                            region, trip.getPriceType(), null, datePlan.getTripThemeType(), null,
+                            excludePlaces, List.of(PlaceType.RESTAURANT, PlaceType.CAFE, PlaceType.SIGHT, PlaceType.SHOP), 5
                     );
 
                     // AI 일정 생성
@@ -301,6 +306,7 @@ public class AutoCreatePlanService {
                     }
 
                     planCreateService.createPlacePlans(datePlan, generatedPlans);
+                    excludePlaces.addAll(places); // 같은 테마의 뒤 날짜 후보에서 제외한다
                 }
             }
 
