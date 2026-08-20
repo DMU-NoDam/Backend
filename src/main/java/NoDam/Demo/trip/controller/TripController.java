@@ -63,7 +63,7 @@ public class TripController {
     ) {
         // trip domain 생성 + 요청 스냅샷 저장까지만 담당 (2~5단계는 각각 별도 async api로 분리)
         Trip trip = tripFacadeService.createTrip(user.getId(), request);
-        return ResponseEntity.ok().body(new SuccessResponse<>("success", TripInfoDto.from(trip, false)));
+        return ResponseEntity.ok().body(new SuccessResponse<>("success", TripInfoDto.from(trip)));
     }
 
     @PostMapping("/api/{tripId}/date-plans")
@@ -165,7 +165,7 @@ public class TripController {
             @RequestBody TripUpdateDto request
     ) {
         Trip trip = tripFacadeService.updateTripInfo(user.getId(), tripId, request);
-        return ResponseEntity.ok().body(new SuccessResponse<>("success", TripInfoDto.from(trip, false)));
+        return ResponseEntity.ok().body(new SuccessResponse<>("success", TripInfoDto.from(trip)));
     }
 
     @DeleteMapping("/api/{tripId}")

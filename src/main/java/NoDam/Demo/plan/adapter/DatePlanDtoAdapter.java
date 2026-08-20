@@ -69,7 +69,7 @@ public class DatePlanDtoAdapter implements DatePlanDtoPort {
         return DatePlanInfo.builder()
                 .id(datePlan.getId())
                 .date(datePlan.getDate())
-                .tripInfo(TripInfoDto.from(trip, datePlan.getPlanStatus().isReady()))
+                .tripInfo(TripInfoDto.from(trip))
                 .datePlanTheme(datePlan.getTripThemeType())
                 .region(RegionResponseDto.from(region))
                 .placePlanInfos(placePlanInfos)

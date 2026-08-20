@@ -6,7 +6,6 @@ import NoDam.Demo.place.domain.Place;
 import NoDam.Demo.place.service.PlaceSelectService;
 import NoDam.Demo.plan.domain.DatePlan;
 import NoDam.Demo.plan.repository.DatePlanDBPort;
-import NoDam.Demo.plan.service.PlanSelectService;
 import NoDam.Demo.trip.domain.Trip;
 import NoDam.Demo.trip.dto.request.TripCreateFacadeRequestDto;
 import NoDam.Demo.trip.dto.request.TripUpdateDto;
@@ -15,7 +14,6 @@ import NoDam.Demo.trip.repository.UserFixedTripRepository;
 
 import java.time.LocalTime;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import NoDam.Demo.trip.dto.response.TripInfoDto;
@@ -33,7 +31,6 @@ public class TripFacadeService {
     private final TripSelectService tripSelectService;
     private final TripDeleteService tripDeleteService;
     private final TripMemberService tripMemberService;
-    private final PlanSelectService planSelectService;
     private final TransactionTemplate transactionTemplate; // deleteTrip 원자성 처리용
     private final DatePlanDBPort datePlanDBPort;
     private final TripInvitationService tripInvitationService;
@@ -49,19 +46,17 @@ public class TripFacadeService {
 
     public List<TripInfoDto> getTripList(Long userId) {
         List<Trip> trips = tripSelectService.getTripList(userId);
-        Map<Trip, Boolean> tripStatus = planSelectService.getTripStatus(trips);
 
         return trips
                 .stream()
-                .map(t->TripInfoDto.from(t, tripStatus.get(t)))
+                .map(TripInfoDto::from)
                 .toList();
     }
 
     public TripInfoDto getTrip(Long userId, Long tripId) {
         Trip trip = tripSelectService.findById(tripId, userId);
-        boolean status = planSelectService.getTripStatus(trip);
 
-        return TripInfoDto.from(trip, status);
+        return TripInfoDto.from(trip);
     }
 
     public Optional<TripInfoDto> getTodayTrip(Long userId) {
@@ -70,7 +65,7 @@ public class TripFacadeService {
         if(tripOpt.isEmpty())
             return Optional.empty();
 
-        return Optional.of(TripInfoDto.from(tripOpt.get(), planSelectService.getTripStatus(tripOpt.get())));
+        return Optional.of(TripInfoDto.from(tripOpt.get()));
     }
 
     public Trip updateTripFixed(Long userId, Long tripId, boolean isFixed) {
