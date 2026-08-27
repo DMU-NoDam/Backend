@@ -1,5 +1,6 @@
 package NoDam.Demo.conf.security;
 
+import NoDam.Demo.common.excetion.CustomException;
 import NoDam.Demo.user.domain.User;
 import NoDam.Demo.user.jwt.JWTException;
 import NoDam.Demo.user.repository.UserRepository;
@@ -19,12 +20,14 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.web.servlet.HandlerExceptionResolver;
 
 @RequiredArgsConstructor
 public class AccessTokenFilter extends OncePerRequestFilter {
 
     private final JWTService jwtService;
     private final UserRepository userRepository;
+    private final HandlerExceptionResolver handlerExceptionResolver;
 
     private final Logger log = LoggerFactory.getLogger("AccessTokenFilter :: ");
 
@@ -42,6 +45,9 @@ public class AccessTokenFilter extends OncePerRequestFilter {
         Long userId;
         try {
             userId = jwtService.decodeAccessToken(token);
+        } catch (CustomException e) {
+            handlerExceptionResolver.resolveException(request, response, null, e);
+            return;
         } catch (JWTException e) {
             // invalid token todo : add log, add black list
             filterChain.doFilter(request, response);

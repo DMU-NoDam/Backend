@@ -6,6 +6,8 @@ public enum ErrorCode {
 
     INVALID_REQUEST_PARAMETER(HttpStatus.BAD_REQUEST, "잘못된 입력 파라미터입니다"),
 
+    EXPIRED_TOKEN(HttpStatus.UNAUTHORIZED, "만료된 토큰입니다"),
+
     NOT_FOUND(HttpStatus.NOT_FOUND, "not found"),
     NOT_AUTHOR(HttpStatus.BAD_REQUEST, "작성자가 아닙니다"),
     CONFLICT(HttpStatus.CONFLICT, "conflict"),

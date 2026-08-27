@@ -5,6 +5,7 @@ import NoDam.Demo.user.domain.UserRole;
 import NoDam.Demo.user.repository.UserRepository;
 import NoDam.Demo.user.service.JWTService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
@@ -15,6 +16,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.logout.LogoutFilter;
+import org.springframework.web.servlet.HandlerExceptionResolver;
 
 @Configuration
 @EnableWebSecurity
@@ -25,7 +27,10 @@ public class SecurityConfig {
     private final JWTService jwtService;
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(
+            HttpSecurity http,
+            @Qualifier("handlerExceptionResolver") HandlerExceptionResolver handlerExceptionResolver
+    ) throws Exception {
         http
                 .cors(Customizer.withDefaults())
                 .csrf(csrf -> csrf.disable())
@@ -45,7 +50,7 @@ public class SecurityConfig {
                         .anyRequest().permitAll()
                 )
 
-                .addFilterBefore(new AccessTokenFilter(jwtService, userRepository), LogoutFilter.class)
+                .addFilterBefore(new AccessTokenFilter(jwtService, userRepository, handlerExceptionResolver), LogoutFilter.class)
         ;
 
         return http.build();
