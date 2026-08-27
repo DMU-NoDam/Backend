@@ -1,10 +1,11 @@
 package NoDam.Demo.conf.security;
 
-import NoDam.Demo.common.excetion.CustomException;
+import NoDam.Demo.common.excetion.ErrorCode;
 import NoDam.Demo.user.domain.User;
 import NoDam.Demo.user.jwt.JWTException;
 import NoDam.Demo.user.repository.UserRepository;
 import NoDam.Demo.user.service.JWTService;
+import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -16,18 +17,15 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
-import org.springframework.web.servlet.HandlerExceptionResolver;
 
 @RequiredArgsConstructor
 public class AccessTokenFilter extends OncePerRequestFilter {
 
     private final JWTService jwtService;
     private final UserRepository userRepository;
-    private final HandlerExceptionResolver handlerExceptionResolver;
 
     private final Logger log = LoggerFactory.getLogger("AccessTokenFilter :: ");
 
@@ -45,11 +43,14 @@ public class AccessTokenFilter extends OncePerRequestFilter {
         Long userId;
         try {
             userId = jwtService.decodeAccessToken(token);
-        } catch (CustomException e) {
-            handlerExceptionResolver.resolveException(request, response, null, e);
-            return;
         } catch (JWTException e) {
-            // invalid token todo : add log, add black list
+            // invalid token
+
+            if (e.getCause() instanceof ExpiredJwtException) {
+                SecurityContextHolder.getContext().setAuthentication(new ErrorTokenAuthentication(ErrorCode.EXPIRED_TOKEN));
+            }
+            // todo : add other case (ex strange token, ...)
+
             filterChain.doFilter(request, response);
             return;
         }

@@ -1,11 +1,8 @@
 package NoDam.Demo.user.service;
 
-import NoDam.Demo.common.excetion.CustomException;
-import NoDam.Demo.common.excetion.ErrorCode;
 import NoDam.Demo.user.jwt.JWTException;
 import NoDam.Demo.user.jwt.JWTUtil;
 import NoDam.Demo.user.jwt.JWTUtil.TokenDto;
-import io.jsonwebtoken.ExpiredJwtException;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -31,24 +28,13 @@ public class JWTService {
     }
 
     public Long decodeAccessToken(String token) throws JWTException {
-        TokenDto tokenDto = decodeToken(token);
+        TokenDto tokenDto = JWTUtil.decodeToken(token, secretKey);
         return Long.valueOf(tokenDto.getSubject().toString());
     }
 
     public Long decodeRefreshToken(String token) throws JWTException {
-        TokenDto tokenDto = decodeToken(token);
+        TokenDto tokenDto = JWTUtil.decodeToken(token, secretKey);
         return Long.valueOf(tokenDto.getSubject().toString());
-    }
-
-    private TokenDto decodeToken(String token) throws JWTException {
-        try {
-            return JWTUtil.decodeToken(token, secretKey);
-        } catch (JWTException e) {
-            if (e.getCause() instanceof ExpiredJwtException) {
-                throw new CustomException(ErrorCode.EXPIRED_TOKEN);
-            }
-            throw e;
-        }
     }
 
 }

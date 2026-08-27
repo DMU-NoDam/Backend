@@ -1,6 +1,7 @@
 package NoDam.Demo.common.excetion;
 
 import NoDam.Demo.common.SuccessResponse;
+import NoDam.Demo.conf.security.CustomAuthenticationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -15,6 +16,13 @@ public class CustomExceptionHandler {
         e.printStackTrace();
         return ResponseEntity.status(e.errorCode.status)
                 .body(new SuccessResponse<>(e.errorCode.message, null));
+    }
+
+    @ExceptionHandler(CustomAuthenticationException.class)
+    public ResponseEntity<SuccessResponse<String>> handleCustomAuthenticationException(CustomAuthenticationException e) {
+        e.printStackTrace();
+        return ResponseEntity.status(e.getErrorCode().status)
+                .body(new SuccessResponse<>(e.getErrorCode().message, null));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
