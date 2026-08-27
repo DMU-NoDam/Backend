@@ -1,6 +1,6 @@
 package NoDam.Demo.common.excetion;
 
-import NoDam.Demo.common.SuccessResponse;
+import NoDam.Demo.common.ErrorResponse;
 import NoDam.Demo.conf.security.CustomAuthenticationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -12,37 +12,38 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 public class CustomExceptionHandler {
 
     @ExceptionHandler(CustomException.class)
-    public ResponseEntity<SuccessResponse<String>> handleCustomException(CustomException e) {
+    public ResponseEntity<ErrorResponse> handleCustomException(CustomException e) {
         e.printStackTrace();
         return ResponseEntity.status(e.errorCode.status)
-                .body(new SuccessResponse<>(e.errorCode.message, null));
+                .body(ErrorResponse.of(e.errorCode));
     }
 
     @ExceptionHandler(CustomAuthenticationException.class)
-    public ResponseEntity<SuccessResponse<String>> handleCustomAuthenticationException(CustomAuthenticationException e) {
+    public ResponseEntity<ErrorResponse> handleCustomAuthenticationException(CustomAuthenticationException e) {
         e.printStackTrace();
         return ResponseEntity.status(e.getErrorCode().status)
-                .body(new SuccessResponse<>(e.getErrorCode().message, null));
+                .body(ErrorResponse.of(e.getErrorCode()));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<SuccessResponse<String>> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
+    public ResponseEntity<ErrorResponse> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
         e.printStackTrace();
         return ResponseEntity.status(ErrorCode.INVALID_REQUEST_PARAMETER.status)
-                .body(new SuccessResponse<>(ErrorCode.INVALID_REQUEST_PARAMETER.message, null));
+                .body(ErrorResponse.of(ErrorCode.INVALID_REQUEST_PARAMETER));
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ResponseEntity<SuccessResponse<String>> handleHttpMessageNotReadableException(HttpMessageNotReadableException e) {
+    public ResponseEntity<ErrorResponse> handleHttpMessageNotReadableException(HttpMessageNotReadableException e) {
         e.printStackTrace();
         return ResponseEntity.status(ErrorCode.INVALID_REQUEST_PARAMETER.status)
-                .body(new SuccessResponse<>(ErrorCode.INVALID_REQUEST_PARAMETER.message, null));
+                .body(ErrorResponse.of(ErrorCode.INVALID_REQUEST_PARAMETER));
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<SuccessResponse<String>> handleException(Exception e) {
+    public ResponseEntity<ErrorResponse> handleException(Exception e) {
         e.printStackTrace();
-        return ResponseEntity.status(500)
-                .body(new SuccessResponse<>("Internal Server Error", e.getMessage()));
+        return ResponseEntity.status(ErrorCode.INTERNAL_SERVER_ERROR.status)
+                .body(ErrorResponse.of(ErrorCode.INTERNAL_SERVER_ERROR));
     }
+
 }
