@@ -26,6 +26,7 @@ public class PlaceInfo {
     private PriceType priceType;
     private Double lon; // x
     private Double lat; // y
+    private String summary; // can null
 
     public static PlaceInfo of(Place place) {
         if(place == null)
@@ -41,6 +42,7 @@ public class PlaceInfo {
                 .lon(place.getLon())
                 .lat(place.getLat())
                 .priceType(place.getPriceType())
+                .summary(place.getSummary())
                 .build();
     }
 

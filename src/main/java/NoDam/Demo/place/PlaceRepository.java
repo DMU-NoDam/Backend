@@ -26,7 +26,8 @@ public interface PlaceRepository extends JpaRepository<Place, Long> {
     @Query("SELECT p FROM Place p" +
            " WHERE p.placeType = :placeType" +
            " AND p.regionId = :regionId" +
-           " AND p.id NOT IN :excludeIds" +
+           " AND p.id NOT IN :excludeIds " +
+           " AND p.status = PlaceStatus.CRAWLED" + // 크롤링 완료된 place들만 사용자들에게 사용됨
            " ORDER BY (" +
            "     CASE WHEN p.priceType              = :priceType THEN :#{T(NoDam.Demo.place.domain.TypeWeight).PRICE.getWeight()}   ELSE 0 END" +
            "   + CASE WHEN p.recommendSeasonType    = :season    THEN :#{T(NoDam.Demo.place.domain.TypeWeight).SEASON.getWeight()}  ELSE 0 END" +
