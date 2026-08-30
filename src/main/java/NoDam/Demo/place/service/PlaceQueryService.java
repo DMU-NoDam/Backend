@@ -1,5 +1,6 @@
 package NoDam.Demo.place.service;
 
+import NoDam.Demo.common.type.PlaceStatus;
 import NoDam.Demo.place.PlaceRepository;
 import NoDam.Demo.place.domain.Place;
 import NoDam.Demo.place.dto.PlaceRequestDto;
@@ -19,6 +20,7 @@ public class PlaceQueryService {
                 .stream()
                 .map(dto-> Place
                         .builder()
+                        .status(PlaceStatus.CREATED) // 앱 lazy 생성 → 크롤 전 상태
                         .regionId(dto.getRegion().getId())
                         .placeType(dto.getPlaceType())
                         .googleId(dto.getGoogleId())
