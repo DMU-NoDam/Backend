@@ -55,6 +55,9 @@ mysql -u <user> -p < insert_places.sql
 
 # 5) 정상 기동
 java -jar build/libs/Demo-0.0.1-SNAPSHOT.jar --spring.jpa.hibernate.ddl-auto=update
+
+# 6) data init checker없이 기동
+java -jar build/libs/Demo-0.0.1-SNAPSHOT.jar --spring.jpa.hibernate.ddl-auto=update --init-data-check=false
 ```
 
 - 3)에서 테이블은 만들어지지만 `InitDataChecker`가 초기 데이터 누락을 잡아 앱을 종료시킵니다. 그대로 4)로 넘어가면 됩니다. (→ 발생 가능한 에러 ⑨)
