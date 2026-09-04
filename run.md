@@ -41,26 +41,23 @@ DB를 완전히 비우고 처음 상태로 되돌리는 절차입니다. 프로�
 (`<user>`는 `.env`의 `DB_USERNAME` 값)
 
 ```bash
-# 1) 스키마 삭제 후 재생성 (되돌릴 수 없음, .env의 DB_URL이 로컬인지 먼저 확인)
-mysql -u <user> -p -e "DROP DATABASE IF EXISTS NoDam; CREATE DATABASE NoDam DEFAULT CHARACTER SET utf8mb4;"
+# 1) 스키마 삭제 후 재생성 + 테이블 생성 (되돌릴 수 없음, .env의 DB_URL이 로컬인지 먼저 확인)
+mysql --default-character-set=utf8mb4 -u <user> -p < create.sql
 
 # 2) 빌드
 ./gradlew clean build -x test
 
-# 3) 테이블 생성 (초기 데이터가 없어 기동이 중단되고 종료됨 — 정상)
-java -jar build/libs/Demo-0.0.1-SNAPSHOT.jar --spring.jpa.hibernate.ddl-auto=create
+# 3) 초기 데이터 적재
+mysql --default-character-set=utf8mb4 -u <user> -p < insert_places.sql
 
-# 4) 초기 데이터 적재
-mysql -u <user> -p < insert_places.sql
-
-# 5) 정상 기동
+# 4) 정상 기동
 java -jar build/libs/Demo-0.0.1-SNAPSHOT.jar --spring.jpa.hibernate.ddl-auto=update
 
-# 6) data init checker없이 기동
+# 5) data init checker없이 기동
 java -jar build/libs/Demo-0.0.1-SNAPSHOT.jar --spring.jpa.hibernate.ddl-auto=update --init-data-check=false
 ```
 
-- 3)에서 테이블은 만들어지지만 `InitDataChecker`가 초기 데이터 누락을 잡아 앱을 종료시킵니다. 그대로 4)로 넘어가면 됩니다. (→ 발생 가능한 에러 ⑨)
+- `create.sql`은 `DROP DATABASE` → `CREATE DATABASE` → 테이블 생성까지 한 번에 처리합니다. 앱을 띄우지 않으므로 ⑨ 에러가 나지 않습니다.
 - `insert_places.sql`이 넣는 값: `region` 13건(일본 12 + 대한민국 id `9999`), 공항 `place` 10건(한국 id `1`~`6`, 일본 id `10`~`13`), mock `place` 7건, 공항 영업시간(`place-open`).
 - 공항 `place`의 **id는 고정값**입니다. `AirportCode` enum이 이 id를 직접 참조하므로 바꾸면 항공 기능이 깨집니다.
 - 초기화 결과 확인:
@@ -69,7 +66,7 @@ java -jar build/libs/Demo-0.0.1-SNAPSHOT.jar --spring.jpa.hibernate.ddl-auto=upd
   ```
   기대값 — `region` 13, `place` 17, `AIRPORT` 10
 - `sql/backfill_trip_member_owner.sql`은 **기존 데이터 보정용**이라 새로 초기화할 때는 실행할 필요가 없습니다.
-- 2회차부터는 위 5)만 실행하면 됩니다.
+- 2회차부터는 위 4)만 실행하면 됩니다.
 
 ---
 
