@@ -67,48 +67,35 @@ public class TripController {
     }
 
     @PostMapping("/api/{tripId}/date-plans")
-    @Operation(summary = "2/3. DatePlan 생성 (비동기)")
+    @Operation(summary = "2/3. DatePlan 생성")
     public ResponseEntity<SuccessResponse<Void>> generateDatePlans(
             @AuthenticationPrincipal User user,
             @PathVariable Long tripId
     ) {
-        // 2번(google -> place 변환) 완료 후 3번(DatePlan 생성) 실행 : 순서 의존이므로 thenCompose로 연결한다
-        autoCreatePlanService.translateGooglePlaceToDbPlace(tripId, user.getId())
-                .thenCompose(tripRequest -> autoCreatePlanService.generateAllDatePlans(tripId, user.getId()))
-                // 응답은 이미 202로 나갔고 future를 아무도 소비하지 않으므로, 여기서 안 남기면 실패가 조용히 사라진다
-                .exceptionally(e -> {
-                    logger.error("generateDatePlans fail tripId={}, userId={}", tripId, user.getId(), e);
-                    return null;
-                });
-        return ResponseEntity.accepted().body(new SuccessResponse<>("accepted", null));
+        // 2번(google -> place 변환) 완료 후 3번(DatePlan 생성) 실행 : 순서 의존이므로 순차 호출한다
+        autoCreatePlanService.translateGooglePlaceToDbPlace(tripId, user.getId());
+        autoCreatePlanService.generateAllDatePlans(tripId, user.getId());
+        return ResponseEntity.ok().body(new SuccessResponse<>("success", null));
     }
 
     @PostMapping("/api/{tripId}/place-plans")
-    @Operation(summary = "4. 각 DatePlan의 PlacePlan(AI 일정) 생성 (비동기)")
+    @Operation(summary = "4. 각 DatePlan의 PlacePlan(AI 일정) 생성")
     public ResponseEntity<SuccessResponse<Void>> generatePlacePlans(
             @AuthenticationPrincipal User user,
             @PathVariable Long tripId
     ) {
-        autoCreatePlanService.autoGenerateAllPlans(tripId, user.getId())
-                .exceptionally(e -> {
-                    logger.error("generatePlacePlans fail tripId={}, userId={}", tripId, user.getId(), e);
-                    return null;
-                });
-        return ResponseEntity.accepted().body(new SuccessResponse<>("accepted", null));
+        autoCreatePlanService.autoGenerateAllPlans(tripId, user.getId());
+        return ResponseEntity.ok().body(new SuccessResponse<>("success", null));
     }
 
     @PostMapping("/api/{tripId}/transport-plans")
-    @Operation(summary = "5. TransportPlan 생성 (비동기)")
+    @Operation(summary = "5. TransportPlan 생성")
     public ResponseEntity<SuccessResponse<Void>> generateTransportPlans(
             @AuthenticationPrincipal User user,
             @PathVariable Long tripId
     ) {
-        autoCreatePlanService.autoGenerateAllThemeTransportPlans(tripId, user.getId())
-                .exceptionally(e -> {
-                    logger.error("generateTransportPlans fail tripId={}, userId={}", tripId, user.getId(), e);
-                    return null;
-                });
-        return ResponseEntity.accepted().body(new SuccessResponse<>("accepted", null));
+        autoCreatePlanService.autoGenerateAllThemeTransportPlans(tripId, user.getId());
+        return ResponseEntity.ok().body(new SuccessResponse<>("success", null));
     }
 
     @GetMapping("/api")

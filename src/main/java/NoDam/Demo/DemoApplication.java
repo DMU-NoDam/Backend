@@ -7,7 +7,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.scheduling.annotation.EnableAsync;
 
 @SpringBootApplication
-@EnableAsync
+//@EnableAsync
 @EnableConfigurationProperties(AirLabsProperties.class)
 public class DemoApplication {
 
