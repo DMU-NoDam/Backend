@@ -30,6 +30,9 @@ public class Place extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = true)
+    private Long crawlId;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 15)
     private PlaceStatus status;
