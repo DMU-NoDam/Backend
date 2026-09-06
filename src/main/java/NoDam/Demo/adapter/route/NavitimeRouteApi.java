@@ -138,7 +138,17 @@ public class NavitimeRouteApi implements RoutePort{
         if (allPoints.isEmpty()) return routeInfo;
 
         List<String> names = allPoints.stream().map(RouteInfo.Point::getName).toList();
-        List<String> translated = aiPort.translate(names, sourceLang, targetLang);
+
+        List<String> translated;
+        try {
+            translated = aiPort.translate(names, sourceLang, targetLang);
+
+            if (translated == null || translated.size() != allPoints.size())
+                throw new RuntimeException("route name translate size mismatch: request=" + allPoints.size() + ", response=" + (translated == null ? 0 : translated.size()));
+        } catch (RuntimeException e) {
+            logger.error("route name translate failed, keep original names", e);
+            return routeInfo;
+        }
 
         for (int i = 0; i < allPoints.size(); i++) {
             allPoints.get(i).setName(translated.get(i));
