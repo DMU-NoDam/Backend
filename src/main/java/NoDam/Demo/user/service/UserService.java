@@ -6,7 +6,6 @@ import NoDam.Demo.user.domain.User;
 import NoDam.Demo.user.dto.request.UpdateUserInfoDto;
 import NoDam.Demo.user.oauth.OAuthUserInfo;
 import NoDam.Demo.user.repository.UserRepository;
-import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -59,11 +58,6 @@ public class UserService {
     public void deleteUser(User user) {
         // todo : 유저 삭제 구현
         // userRepository.delete(user);
-    }
-
-    // 다른 domain(facade)에서 여러 사용자의 이름 등을 함께 보여줘야 할 때 사용 (예: 여행 멤버 목록)
-    public List<User> findAllByIds(List<Long> userIds) {
-        return userRepository.findAllById(userIds);
     }
 
 }
