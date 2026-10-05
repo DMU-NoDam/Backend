@@ -2,6 +2,7 @@ package NoDam.Demo.trip.service;
 
 import NoDam.Demo.common.type.TripThemeType;
 import NoDam.Demo.common.util.TimeUtil;
+import NoDam.Demo.memo.service.MemoService;
 import NoDam.Demo.place.domain.Place;
 import NoDam.Demo.place.service.PlaceSelectService;
 import NoDam.Demo.plan.domain.DatePlan;
@@ -35,6 +36,7 @@ public class TripFacadeService {
     private final DatePlanDBPort datePlanDBPort;
     private final TripInvitationService tripInvitationService;
     private final UserFixedTripRepository userFixedTripRepository;
+    private final MemoService memoService; // memo domain : 여행 삭제 시 메모 정리
 
     // trip domain 생성 + 요청 스냅샷(TripRequest) 저장 까지만 (ai생성은 다른 api 분리, transaction 때문!)
     // transactional (사용 금지!)
@@ -106,6 +108,7 @@ public class TripFacadeService {
             tripMemberService.deleteAllByTripId(tripId);
             tripInvitationService.deleteAllByTripId(tripId);
             userFixedTripRepository.deleteAllByTrip(trip);
+            memoService.deleteAllByTripId(tripId);
 
             tripDeleteService.deleteTrip(trip);
             return null;
