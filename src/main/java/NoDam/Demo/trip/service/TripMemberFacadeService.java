@@ -1,5 +1,6 @@
 package NoDam.Demo.trip.service;
 
+import NoDam.Demo.memo.service.MemoService;
 import NoDam.Demo.trip.domain.TripMember;
 import NoDam.Demo.trip.domain.TripMemberRole;
 import NoDam.Demo.trip.dto.response.TripMemberInfo;
@@ -13,6 +14,7 @@ import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionTemplate;
 
 @Service
 @RequiredArgsConstructor
@@ -21,6 +23,8 @@ public class TripMemberFacadeService {
     private final TripMemberService tripMemberService;
     private final UserService userService;
     private final TripFacadeService tripFacadeService; // 혼자인 OWNER가 나갈 때 여행 삭제로 위임하기 위함
+    private final MemoService memoService; // memo domain : 나가는 사용자의 메모 정리
+    private final TransactionTemplate transactionTemplate; // 나가기 + 메모 삭제 원자성 처리용
 
     private static final String UNKNOWN_USER_NAME = "(알 수 없음)";
 
@@ -52,7 +56,12 @@ public class TripMemberFacadeService {
             return;
         }
 
-        tripMemberService.leave(tripId, userId, newOwnerUserId);
+        // 나가기 처리와 본인 메모 삭제를 하나의 트랜잭션으로 묶는다
+        transactionTemplate.execute(status -> {
+            tripMemberService.leave(tripId, userId, newOwnerUserId);
+            memoService.deleteAllByTripIdAndUserId(tripId, userId);
+            return null;
+        });
     }
 
 }
