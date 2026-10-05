@@ -22,6 +22,8 @@ public class TripMemberFacadeService {
     private final UserService userService;
     private final TripFacadeService tripFacadeService; // 혼자인 OWNER가 나갈 때 여행 삭제로 위임하기 위함
 
+    private static final String UNKNOWN_USER_NAME = "(알 수 없음)";
+
     // 멤버 목록 조회는 해당 여행의 멤버만 가능
     public List<TripMemberInfo> getMembers(Long tripId, Long requesterUserId) {
         tripMemberService.requireRole(tripId, requesterUserId); // 멤버가 아니면 NOT_AUTHOR

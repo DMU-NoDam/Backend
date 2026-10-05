@@ -65,4 +65,9 @@ public class UserService {
         // userRepository.delete(user);
     }
 
+    // 다른 domain(facade)에서 여러 사용자의 이름 등을 함께 보여줘야 할 때 사용 (예: 여행 멤버 목록)
+    public List<User> findAllByIds(List<Long> userIds) {
+        return userRepository.findAllById(userIds);
+    }
+
 }
