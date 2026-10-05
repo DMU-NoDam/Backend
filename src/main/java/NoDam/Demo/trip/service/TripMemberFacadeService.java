@@ -3,8 +3,13 @@ package NoDam.Demo.trip.service;
 import NoDam.Demo.trip.domain.TripMember;
 import NoDam.Demo.trip.domain.TripMemberRole;
 import NoDam.Demo.trip.dto.response.TripMemberInfo;
+import NoDam.Demo.user.domain.User;
+import NoDam.Demo.user.service.UserService;
 
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -14,14 +19,24 @@ import org.springframework.stereotype.Service;
 public class TripMemberFacadeService {
 
     private final TripMemberService tripMemberService;
+    private final UserService userService;
     private final TripFacadeService tripFacadeService; // 혼자인 OWNER가 나갈 때 여행 삭제로 위임하기 위함
 
     // 멤버 목록 조회는 해당 여행의 멤버만 가능
     public List<TripMemberInfo> getMembers(Long tripId, Long requesterUserId) {
         tripMemberService.requireRole(tripId, requesterUserId); // 멤버가 아니면 NOT_AUTHOR
 
-        return tripMemberService.getMembers(tripId).stream()
-                .map(TripMemberInfo::from)
+        List<TripMember> members = tripMemberService.getMembers(tripId);
+
+        List<Long> userIds = members.stream()
+                .map(TripMember::getUserId)
+                .toList();
+
+        Map<Long, User> userMap = userService.getUsers(userIds).stream()
+                .collect(Collectors.toMap(User::getId, Function.identity()));
+        
+        return members.stream()
+                .map(member -> TripMemberInfo.from(member, userMap.get(member.getUserId())))
                 .toList();
     }
 

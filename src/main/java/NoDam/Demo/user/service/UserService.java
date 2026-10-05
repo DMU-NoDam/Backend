@@ -6,6 +6,7 @@ import NoDam.Demo.user.domain.User;
 import NoDam.Demo.user.dto.request.UpdateUserInfoDto;
 import NoDam.Demo.user.oauth.OAuthUserInfo;
 import NoDam.Demo.user.repository.UserRepository;
+import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -44,6 +45,10 @@ public class UserService {
             });
             return newUser;
         }
+    }
+
+    public List<User> getUsers(List<Long> userIds) {
+        return userRepository.findAllById(userIds);
     }
 
     public User updateUserInfo(
