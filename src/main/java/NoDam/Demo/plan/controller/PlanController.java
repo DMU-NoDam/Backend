@@ -10,6 +10,7 @@ import NoDam.Demo.plan.dto.request.MovePlacePlanRequestDto;
 import NoDam.Demo.plan.dto.request.RemovePlacePlanRequestDto;
 import NoDam.Demo.plan.dto.response.DatePlanInfo;
 import NoDam.Demo.plan.dto.response.PlacePlanInfo;
+import NoDam.Demo.plan.dto.response.PlacePlanTransportInfo;
 import NoDam.Demo.plan.dto.response.PlanStatusResponse;
 import NoDam.Demo.plan.dto.response.TransportPlanInfo;
 import NoDam.Demo.plan.service.PlanFacadeService;
@@ -79,6 +80,16 @@ public class PlanController {
     ) {
         TransportPlanInfo response = planFacadeService.getTransportPlanDetail(transportPlanId);
         return ResponseEntity.ok(new SuccessResponse<TransportPlanInfo>("success", response));
+    }
+
+    // polling용. PlacePlan 기준 앞뒤 transport를 통째로 내려준다
+    @GetMapping("/api/{datePlanId}/place-plan/{placePlanId}/transport")
+    public ResponseEntity<SuccessResponse<PlacePlanTransportInfo>> selectPlacePlanTransport(
+            @PathVariable Long datePlanId,
+            @PathVariable Long placePlanId
+    ) {
+        PlacePlanTransportInfo response = planFacadeService.getPlacePlanTransport(datePlanId, placePlanId);
+        return ResponseEntity.ok(new SuccessResponse<PlacePlanTransportInfo>("success", response));
     }
 
     @PostMapping("/api/{datePlanId}/add-place")

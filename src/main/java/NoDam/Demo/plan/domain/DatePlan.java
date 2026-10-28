@@ -134,6 +134,30 @@ public class DatePlan extends BaseEntity {
         return null;
     }
 
+    // 기준 PlacePlan으로 들어오는 이동 (before -> target). 없거나 계산 전이면 null
+    public TransportPlan findPreviousTransportPlan(Long placePlanId) {
+        findPlacePlan(placePlanId); // 이 DatePlan의 PlacePlan인지 확인, 없으면 NOT_FOUND
+
+        for (TransportPlan transportPlan : transportPlans) {
+            if (transportPlan.getDetached()) continue;
+            if (Objects.equals(transportPlan.getToPlacePlanId(), placePlanId)) return transportPlan;
+        }
+
+        return null;
+    }
+
+    // 기준 PlacePlan에서 나가는 이동 (target -> after). 없거나 계산 전이면 null
+    public TransportPlan findNextTransportPlan(Long placePlanId) {
+        findPlacePlan(placePlanId); // 이 DatePlan의 PlacePlan인지 확인, 없으면 NOT_FOUND
+
+        for (TransportPlan transportPlan : transportPlans) {
+            if (transportPlan.getDetached()) continue;
+            if (Objects.equals(transportPlan.getFromPlacePlanId(), placePlanId)) return transportPlan;
+        }
+
+        return null;
+    }
+
     // previous, next 사이에 새 PlacePlan을 넣는다
     public PlacePlan addPlacePlan(Long placeId, Long previousPlacePlanId, Long nextPlacePlanId) {
         PlacePlan placePlan = PlacePlan.builder()

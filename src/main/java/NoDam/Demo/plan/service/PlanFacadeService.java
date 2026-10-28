@@ -14,6 +14,7 @@ import NoDam.Demo.plan.domain.PlacePlan;
 import NoDam.Demo.plan.domain.TransportPlan;
 import NoDam.Demo.plan.dto.response.DatePlanInfo;
 import NoDam.Demo.plan.dto.response.PlacePlanInfo;
+import NoDam.Demo.plan.dto.response.PlacePlanTransportInfo;
 import NoDam.Demo.plan.dto.response.PlanStatusResponse;
 import NoDam.Demo.plan.dto.response.TransportPlanInfo;
 import NoDam.Demo.plan.repository.DatePlanDBPort;
@@ -167,6 +168,18 @@ public class PlanFacadeService {
         TransportPlan transportPlan = transportPlanRepository.findById(transportPlanId)
                 .orElseThrow(()->new CustomException(ErrorCode.NOT_FOUND));
         return TransportPlanInfo.of(transportPlan);
+    }
+
+    // polling용. PlacePlan 앞뒤 이동. 앞뒤 장소가 없거나 계산 전이면 null
+    public PlacePlanTransportInfo getPlacePlanTransport(@NonNull Long datePlanId, @NonNull Long placePlanId) {
+        DatePlan datePlan = datePlanDBPort.latestDatePlan(datePlanId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
+
+        return PlacePlanTransportInfo.of(
+                placePlanId,
+                datePlan.findPreviousTransportPlan(placePlanId),
+                datePlan.findNextTransportPlan(placePlanId)
+        );
     }
 
 }
