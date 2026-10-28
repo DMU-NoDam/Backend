@@ -117,8 +117,10 @@ public class PlaceFacadeService {
 
         List<Place> placedPlaces = ListUtil.map(placeIds, placeMap::get);
 
-        PlaceInfo previousPlaceInfo = PlaceInfo.of(placeMap.get(datePlan.findPreviousPlacePlan(targetPlacePlan.getId()).getPlaceId()));
-        PlaceInfo nextPlaceInfo = PlaceInfo.of(placeMap.get(datePlan.findNextPlacePlan(targetPlacePlan.getId()).getPlaceId()));
+        PlacePlan previousPlacePlan = datePlan.findPreviousPlacePlan(targetPlacePlan.getId());
+        PlacePlan nextPlacePlan = datePlan.findNextPlacePlan(targetPlacePlan.getId());
+        PlaceInfo previousPlaceInfo = previousPlacePlan != null ? PlaceInfo.of(placeMap.get(previousPlacePlan.getPlaceId())) : null;
+        PlaceInfo nextPlaceInfo = nextPlacePlan != null ? PlaceInfo.of(placeMap.get(nextPlacePlan.getPlaceId())) : null;
 
         return recommend(
                 placeType, region,
