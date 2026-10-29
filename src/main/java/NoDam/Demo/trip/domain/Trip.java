@@ -1,5 +1,6 @@
 package NoDam.Demo.trip.domain;
 
+import NoDam.Demo.common.converter.StringListConverter;
 import NoDam.Demo.common.domain.BaseEntity;
 import NoDam.Demo.common.type.PriceType;
 import NoDam.Demo.common.type.ScheduleType;
@@ -7,6 +8,7 @@ import NoDam.Demo.common.type.TripThemeType;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -66,10 +68,16 @@ public class Trip extends BaseEntity {
     @Column(nullable = false)
     private Boolean isPlanning = false;
 
+    // 사용자가 고른 region code 목록 (예: jp-tokyo). TripRequest는 일정 생성 후 삭제되므로 trip에도 남긴다.
+    // 이 컬럼 추가 전에 만든 trip은 null → 빈 목록으로 읽힌다 (StringListConverter)
+    @Convert(converter = StringListConverter.class)
+    @Column(nullable = true)
+    private List<String> regionCodes;
+
     @Builder
     public Trip(String name, Long userId, String uuid, int personCount,
                 ScheduleType scheduleType, PriceType priceType,
-                LocalDate startDate, LocalDate endDate, boolean isFixed) {
+                LocalDate startDate, LocalDate endDate, boolean isFixed, List<String> regionCodes) {
         this.name = name;
         this.userId = userId;
         this.uuid = uuid;
@@ -79,6 +87,7 @@ public class Trip extends BaseEntity {
         this.startDate = startDate;
         this.endDate = endDate;
         this.isFixed = isFixed;
+        this.regionCodes = regionCodes != null ? regionCodes : List.of();
     }
 
     public void updateFixed(boolean isFixed) {
