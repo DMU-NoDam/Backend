@@ -8,6 +8,8 @@ import NoDam.Demo.trip.domain.Trip;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.util.List;
+
 @Getter
 @Builder
 public class TripInfoDto {
@@ -20,6 +22,7 @@ public class TripInfoDto {
     private String startDate;
     private String endDate;
     private boolean isFixed;
+    private List<String> regionCodes; // 사용자가 고른 region code (예: jp-tokyo), 컬럼 추가 전 trip은 빈 목록
 
     public static TripInfoDto from(Trip trip) {
         return TripInfoDto.builder()
@@ -32,6 +35,7 @@ public class TripInfoDto {
                 .startDate(DateUtil.fromLocalDate(trip.getStartDate()))
                 .endDate(DateUtil.fromLocalDate(trip.getEndDate()))
                 .isFixed(trip.isFixed())
+                .regionCodes(trip.getRegionCodes() != null ? trip.getRegionCodes() : List.of())
                 .build();
     }
 }
