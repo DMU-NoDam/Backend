@@ -90,3 +90,6 @@ external:
   navitime:
     base-url: https://navitime-route-totalnavi.p.rapidapi.com
     rapid-api-key: ${NAVITIME_RAPID_API_KEY}
+  freecurrency:
+    base-url: https://api.freecurrencyapi.com/v1/latest
+    api-key: ${FREECURRENCY_API_KEY:} # 없어도 서버는 기동되고 환율 조회만 실패한다
