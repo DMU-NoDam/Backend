@@ -41,7 +41,7 @@ public class TripFacadeService {
     // trip domain 생성 + 요청 스냅샷(TripRequest) 저장 까지만 (ai생성은 다른 api 분리, transaction 때문!)
     // transactional (사용 금지!)
     public Trip createTrip(Long userId, TripCreateFacadeRequestDto request) {
-        Trip trip = tripCreateService.createTrip(userId, request.getTrip());
+        Trip trip = tripCreateService.createTrip(userId, request.getTrip(), request.getRegion());
         tripRequestService.create(trip.getId(), request);
         return trip;
     }

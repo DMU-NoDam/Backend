@@ -7,6 +7,7 @@ import NoDam.Demo.trip.domain.TripMemberRole;
 import NoDam.Demo.trip.dto.request.TripCreateDto;
 import NoDam.Demo.trip.repository.TripRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 import lombok.RequiredArgsConstructor;
@@ -26,7 +27,7 @@ public class TripCreateService {
      * 여행 일정 생성 (DB Unique 제약 조건 기반 멱등성 처리)
      * 신규 생성된 경우에만 OWNER TripMember를 함께 등록한다 (멱등성 재호출 시 catch 경로에서는 등록하지 않음 - 이미 등록되어 있음).
      */
-    public Trip createTrip(Long userId, TripCreateDto request) {
+    public Trip createTrip(Long userId, TripCreateDto request, List<String> regionCodes) {
         Trip trip = Trip.builder()
                 .name(request.getName())
                 .userId(userId)
@@ -36,6 +37,7 @@ public class TripCreateService {
                 .priceType(request.getPriceType())
                 .startDate(DateUtil.toLocalDate(request.getStartDate()))
                 .endDate(DateUtil.toLocalDate(request.getEndDate()))
+                .regionCodes(regionCodes)
                 .build();
 
         try {
