@@ -10,6 +10,16 @@ import java.util.List;
 @Setter
 public class OpenMeteoResponseDto {
     private Daily daily;
+    private Current current;
+
+    @Getter
+    @Setter
+    public static class Current {
+        @JsonProperty("temperature_2m")
+        private Double temperature;
+        @JsonProperty("weather_code")
+        private Integer weatherCode;
+    }
 
     @Getter
     @Setter

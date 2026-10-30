@@ -68,9 +68,18 @@ public class WeatherService {
             }
         }
 
+        WeatherResponseDto.CurrentWeather current = null;
+        if (apiResponse != null && apiResponse.getCurrent() != null) {
+            current = WeatherResponseDto.CurrentWeather.builder()
+                    .temperature(apiResponse.getCurrent().getTemperature())
+                    .weatherCode(apiResponse.getCurrent().getWeatherCode())
+                    .build();
+        }
+
         return WeatherResponseDto.builder()
                 .cityName(request.getCityName())
                 .forecast(dailyForecasts)
+                .current(current)
                 .message("날씨 예보 조회 성공")
                 .build();
     }
