@@ -11,7 +11,15 @@ import java.util.List;
 public class WeatherResponseDto {
     private String cityName;
     private List<DailyWeather> forecast;
+    private CurrentWeather current; // 지금 날씨 (예보 조회일 때만, 기후 정보면 null)
     private String message;
+
+    @Getter
+    @Builder
+    public static class CurrentWeather {
+        private Double temperature;
+        private Integer weatherCode;
+    }
 
     @Getter
     @Builder

@@ -30,6 +30,7 @@ public class OpenMeteoService {
                         .queryParam("latitude", lat)
                         .queryParam("longitude", lon)
                         .queryParam("daily", "weathercode,temperature_2m_max,temperature_2m_min")
+                        .queryParam("current", "temperature_2m,weather_code")
                         .queryParam("timezone", "Asia/Tokyo")
                         .build())
                 .retrieve()
